@@ -1,3 +1,5 @@
 <x-layout>
-    <h1>Admin Home</h1>
+    <x-navbar title="Dashboard" :includeSidebar="true" :user="Auth::user()">
+
+    </x-navbar>
 </x-layout>
