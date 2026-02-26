@@ -24,6 +24,8 @@ return new class extends Migration
 
             $table->text('purpose');
 
+            $table->unsignedTinyInteger('status')->default(0);
+
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('received_by')->nullable()->constrained('users');
 
