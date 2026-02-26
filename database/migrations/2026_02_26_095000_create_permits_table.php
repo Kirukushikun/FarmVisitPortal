@@ -19,6 +19,8 @@ return new class extends Migration
 
             $table->timestamp('date_of_visit');
 
+            $table->unsignedInteger('expected_duration_seconds')->nullable();
+
             $table->foreignId('previous_farm_location_id')->nullable()->constrained('locations');
             $table->timestamp('date_of_visit_previous_farm')->nullable();
 
