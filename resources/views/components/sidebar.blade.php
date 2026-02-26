@@ -12,9 +12,9 @@
         $sidebarItems = [
             [
                 'label' => 'Dashboard',
-                'href' => '/admin/dashboard',
+                'href' => '/admin/home',
                 'icon' => 'dashboard',
-                'active' => 'admin/dashboard*',
+                'active' => 'admin/home*',
             ],
             [
                 'label' => 'Users',
@@ -22,15 +22,21 @@
                 'icon' => 'users',
                 'active' => 'admin/users*'
             ],
+            [
+                'label' => 'Locations',
+                'href' => '/admin/locations',
+                'icon' => 'forms',
+                'active' => 'admin/locations*'
+            ],
         ];
     } else {
         // Hatchery user sidebar items (limited access)
         $sidebarItems = [
             [
                 'label' => 'Dashboard',
-                'href' => '/user/dashboard',
+                'href' => '/user/home',
                 'icon' => 'dashboard',
-                'active' => 'user/dashboard*',
+                'active' => 'user/home*',
             ],
         ];
     }

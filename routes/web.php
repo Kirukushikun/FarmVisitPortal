@@ -1,15 +1,15 @@
 <?php
 
-use App\Http\Controllers\LoginController;
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-Route::get('/', [LoginController::class, 'show'])->name('login');
+Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 
-Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
+Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 
-Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::middleware('auth')->group(function () {
     Route::get('/user/home', function (Request $request) {
@@ -38,6 +38,24 @@ Route::middleware('auth')->group(function () {
 
         return view('admin.home');
     })->name('admin.home');
+
+    Route::get('/admin/users', function (Request $request) {
+        $user = $request->user();
+        if ((int) ($user->user_type ?? 0) !== 1) {
+            abort(403);
+        }
+
+        return view('admin.users');
+    })->name('admin.users');
+
+    Route::get('/admin/locations', function (Request $request) {
+        $user = $request->user();
+        if ((int) ($user->user_type ?? 0) !== 1) {
+            abort(403);
+        }
+
+        return view('admin.locations');
+    })->name('admin.locations');
 
     Route::get('/admin/change-password', function (Request $request) {
         $user = $request->user();

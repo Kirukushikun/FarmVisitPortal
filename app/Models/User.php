@@ -22,6 +22,7 @@ class User extends Authenticatable
         'last_name',
         'username',
         'user_type',
+        'is_disabled',
         'password',
     ];
 
@@ -42,6 +43,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            'is_disabled' => 'boolean',
             'user_type' => 'integer',
             'password' => 'hashed',
         ];

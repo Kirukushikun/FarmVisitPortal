@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class LoginController extends Controller
+class AuthController extends Controller
 {
-    public function show()
+    public function showLogin(): mixed
     {
         return view('auth.login');
     }
 
-    public function login(Request $request)
+    public function login(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'role' => ['required', 'in:user,admin'],
@@ -34,6 +35,7 @@ class LoginController extends Controller
 
             return back()->withErrors(['username' => 'This account is disabled.'])->onlyInput('username');
         }
+
         $isAdmin = (int) ($user->user_type ?? 0) === 1;
         $expectedAdmin = $validated['role'] === 'admin';
 
@@ -50,7 +52,7 @@ class LoginController extends Controller
         return redirect()->route($expectedAdmin ? 'admin.home' : 'user.home');
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request): RedirectResponse
     {
         Auth::logout();
         $request->session()->invalidate();

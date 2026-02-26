@@ -31,6 +31,13 @@ class LoginForm extends Component
         session()->regenerate();
 
         $user = Auth::user();
+        if (($user->is_disabled ?? false) === true) {
+            Auth::logout();
+            session()->invalidate();
+            session()->regenerateToken();
+            $this->addError('username', 'This account is disabled.');
+            return;
+        }
         $isAdmin = (int) ($user->user_type ?? 0) === 1;
         $expectedAdmin = $this->role === 'admin';
 
