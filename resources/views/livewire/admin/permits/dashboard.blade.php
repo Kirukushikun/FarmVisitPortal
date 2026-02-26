@@ -1,3 +1,4 @@
+<div>
 @php
     function permitStatusPill(int $status): string {
         switch ($status) {
@@ -221,6 +222,13 @@
                                     >
                                         View
                                     </a>
+                                    <a
+                                        href="{{ route('admin.permits.edit', ['permit' => $permit, 'return' => request()->getRequestUri()]) }}"
+                                        class="px-3 py-1 text-xs font-medium text-orange-600 bg-orange-50 rounded-md hover:bg-orange-100 transition-colors"
+                                        title="Edit Permit"
+                                    >
+                                        Edit
+                                    </a>
                                     <button
                                         type="button"
                                         wire:click="deletePermit({{ $permit->id }})"
@@ -271,6 +279,12 @@
                             title="View Details">
                             View
                         </a>
+                        <a
+                            href="{{ route('admin.permits.edit', ['permit' => $permit, 'return' => request()->getRequestUri()]) }}"
+                            class="px-3 py-1 text-xs font-medium text-orange-600 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/50 rounded-md hover:bg-orange-100 dark:hover:bg-orange-900/70 transition-colors"
+                            title="Edit Permit">
+                            Edit
+                        </a>
                         <button
                             type="button"
                             wire:click="deletePermit({{ $permit->id }})"
@@ -304,4 +318,7 @@
             </div>
         @endif
     </div>
+</div>
+
+@include('livewire.admin.permits.delete-permit')
 </div>

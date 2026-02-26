@@ -10,7 +10,7 @@
             :show-progress="$this->showProgress()"
         >
             <div data-step="1" class="space-y-4" @style(["display:none" => $currentStep !== 1])>
-                <x-title>CREATE PERMIT</x-title>
+                <x-title>EDIT PERMIT</x-title>
 
                 <x-text-input
                     label="Area"
@@ -29,7 +29,7 @@
                     required
                 >
                     @foreach($this->farmLocations as $location)
-                        <option value="{{ $location->id }}">{{ $location->name }}</option>
+                        <option value="{{ $location->id }}" {{ $farmLocationId == $location->id ? 'selected' : '' }}>{{ $location->name }}</option>
                     @endforeach
                 </x-dropdown>
 
@@ -64,7 +64,7 @@
                     required
                 >
                     @foreach($this->destinationLocations as $location)
-                        <option value="{{ $location->id }}">{{ $location->name }}</option>
+                        <option value="{{ $location->id }}" {{ $destinationLocationId == $location->id ? 'selected' : '' }}>{{ $location->name }}</option>
                     @endforeach
                 </x-dropdown>
 
@@ -120,8 +120,9 @@
                     placeholder="Select previous farm (optional)"
                     wire:model.live="previousFarmLocationId"
                 >
+                    <option value="">None</option>
                     @foreach($this->previousFarmLocations as $location)
-                        <option value="{{ $location->id }}">{{ $location->name }}</option>
+                        <option value="{{ $location->id }}" {{ $previousFarmLocationId == $location->id ? 'selected' : '' }}>{{ $location->name }}</option>
                     @endforeach
                 </x-dropdown>
 

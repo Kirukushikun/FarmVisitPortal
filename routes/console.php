@@ -2,7 +2,14 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+// Schedule permit status update to run every day at midnight
+Schedule::command('permits:update-statuses')
+    ->daily()
+    ->description('Update permit statuses based on visit dates')
+    ->withoutOverlapping();

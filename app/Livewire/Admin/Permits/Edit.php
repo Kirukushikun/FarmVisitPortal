@@ -1,15 +1,14 @@
 <?php
 
-namespace App\Livewire\User\Permits;
+namespace App\Livewire\Admin\Permits;
 
 use App\Models\Location;
 use App\Models\Permit;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use Livewire\Component;
 
-class Create extends Component
+class Edit extends Component
 {
     public int $currentStep = 1;
 
@@ -42,19 +41,49 @@ class Create extends Component
 
     public ?string $returnUrl = null;
 
+    public Permit $permit;
+
     public function mount(): void
     {
+        // Get permit from route parameters
+        $permitId = request()->route('permit');
+        if ($permitId instanceof Permit) {
+            $this->permit = $permitId;
+        } else {
+            $this->permit = Permit::findOrFail($permitId);
+        }
+        
+        $this->populateForm();
+
         $return = request()->query('return');
         if (is_string($return) && $return !== '' && str_starts_with($return, '/')) {
             $this->returnUrl = $return;
         }
     }
 
+    private function populateForm(): void
+    {
+        $this->area = $this->permit->area ?? '';
+        $this->farmLocationId = (string) ($this->permit->farm_location_id ?? '');
+        $this->names = $this->permit->names ?? '';
+        $this->areaToVisit = $this->permit->area_to_visit ?? '';
+        $this->destinationLocationId = (string) ($this->permit->destination_location_id ?? '');
+        $this->dateOfVisit = $this->permit->date_of_visit?->format('Y-m-d') ?? '';
+        
+        // Parse duration
+        $totalSeconds = $this->permit->expected_duration_seconds ?? 0;
+        $this->expectedDurationHours = intdiv($totalSeconds, 3600);
+        $this->expectedDurationMinutes = intdiv($totalSeconds % 3600, 60);
+        $this->expectedDurationSeconds = $totalSeconds % 60;
+        
+        $this->previousFarmLocationId = (string) ($this->permit->previous_farm_location_id ?? '');
+        $this->dateOfVisitPreviousFarm = $this->permit->date_of_visit_previous_farm?->format('Y-m-d') ?? '';
+        $this->purpose = $this->permit->purpose ?? '';
+    }
+
     public function nextStep(): void
     {
-        $this->validate($this->rulesForStep($this->currentStep));
-
-        if ($this->currentStep < 3) {
+        if ($this->currentStep < (int) end($this->visibleStepIds)) {
             $this->currentStep++;
         }
     }
@@ -78,41 +107,26 @@ class Create extends Component
         $this->validate($this->rulesForSubmit());
 
         $durationSeconds = $this->calculateExpectedDurationSeconds();
-        
-        // Determine status based on date
-        $status = 0; // Default to Scheduled
-        if ($this->dateOfVisit) {
-            $visitDate = Carbon::parse($this->dateOfVisit)->startOfDay();
-            $today = now()->startOfDay();
-            
-            if ($visitDate->isSameDay($today)) {
-                $status = 1; // In Progress
-            } elseif ($visitDate->isAfter($today)) {
-                $status = 0; // Scheduled
-            }
-            // Past dates keep default status (can be manually changed later)
-        }
 
-        $permit = Permit::create([
+        // Update permit
+        $this->permit->update([
             'area' => $this->area,
             'farm_location_id' => (int) $this->farmLocationId,
             'names' => $this->names,
             'area_to_visit' => $this->areaToVisit,
             'destination_location_id' => (int) $this->destinationLocationId,
-            'date_of_visit' => Carbon::parse($this->dateOfVisit),
+            'date_of_visit' => $this->dateOfVisit !== '' ? Carbon::parse($this->dateOfVisit) : null,
             'expected_duration_seconds' => $durationSeconds,
             'previous_farm_location_id' => $this->previousFarmLocationId !== '' ? (int) $this->previousFarmLocationId : null,
             'date_of_visit_previous_farm' => $this->dateOfVisitPreviousFarm !== '' ? Carbon::parse($this->dateOfVisitPreviousFarm) : null,
             'purpose' => $this->purpose !== '' ? $this->purpose : null,
-            'status' => $status,
-            'created_by' => (int) Auth::id(),
-            'received_by' => null,
         ]);
 
-        unset($permit);
+        // Auto-update status based on date
+        $this->updatePermitStatus();
 
         session()->flash('toast', [
-            'message' => 'Permit has been created successfully!',
+            'message' => 'Permit has been updated successfully!',
             'type' => 'success',
         ]);
 
@@ -120,7 +134,24 @@ class Create extends Component
             return redirect()->to($this->returnUrl);
         }
 
-        return redirect()->route('user.home');
+        return redirect()->route('admin.permits.index');
+    }
+
+    private function updatePermitStatus(): void
+    {
+        if (!$this->permit->date_of_visit) {
+            return;
+        }
+
+        $today = now()->startOfDay();
+        $visitDate = $this->permit->date_of_visit->startOfDay();
+
+        if ($visitDate->isSameDay($today)) {
+            $this->permit->update(['status' => 1]); // In Progress
+        } elseif ($visitDate->isAfter($today)) {
+            $this->permit->update(['status' => 0]); // Scheduled
+        }
+        // Don't change status for past dates (keep existing status)
     }
 
     public function canProceed(): bool
@@ -168,62 +199,35 @@ class Create extends Component
             ->get();
     }
 
-    protected function rulesForStep(int $step): array
+    protected function rulesForSubmit(): array
     {
-        if ($step === 1) {
-            return [
-                'area' => ['required', 'string', 'min:2', 'max:255'],
-                'farmLocationId' => ['required', 'integer', Rule::exists('locations', 'id')],
-                'names' => ['required', 'string', 'min:2'],
-                'areaToVisit' => ['required', 'string', 'min:2'],
-            ];
-        }
-
-        if ($step === 2) {
-            $farmId = (int) $this->farmLocationId;
-            return [
-                'destinationLocationId' => [
-                    'required',
-                    'integer',
-                    Rule::exists('locations', 'id'),
-                    Rule::notIn([$farmId]),
-                ],
-                'dateOfVisit' => ['required', 'date'],
-                'expectedDurationHours' => ['nullable', 'integer', 'min:0'],
-                'expectedDurationMinutes' => ['nullable', 'integer', 'min:0', 'max:59'],
-                'expectedDurationSeconds' => ['nullable', 'integer', 'min:0', 'max:59'],
-            ];
-        }
-
         return [
-            'previousFarmLocationId' => ['nullable', 'integer', Rule::exists('locations', 'id')],
+            'area' => ['required', 'string', 'max:255'],
+            'farmLocationId' => ['required', 'integer', 'exists:locations,id'],
+            'names' => ['required', 'string'],
+            'areaToVisit' => ['required', 'string'],
+            'destinationLocationId' => ['required', 'integer', 'exists:locations,id'],
+            'dateOfVisit' => ['required', 'date'],
+            'expectedDurationHours' => ['nullable', 'integer', 'min:0'],
+            'expectedDurationMinutes' => ['nullable', 'integer', 'min:0', 'max:59'],
+            'expectedDurationSeconds' => ['nullable', 'integer', 'min:0', 'max:59'],
+            'previousFarmLocationId' => ['nullable', 'integer', 'exists:locations,id'],
             'dateOfVisitPreviousFarm' => ['nullable', 'date', 'before_or_equal:today'],
-            'purpose' => ['nullable', 'string', 'min:2'],
+            'purpose' => ['nullable', 'string'],
         ];
     }
 
-    protected function rulesForSubmit(): array
+    private function calculateExpectedDurationSeconds(): int
     {
-        return array_merge(
-            $this->rulesForStep(1),
-            $this->rulesForStep(2),
-            $this->rulesForStep(3),
-        );
-    }
+        $hours = $this->expectedDurationHours ?? 0;
+        $minutes = $this->expectedDurationMinutes ?? 0;
+        $seconds = $this->expectedDurationSeconds ?? 0;
 
-    protected function calculateExpectedDurationSeconds(): ?int
-    {
-        $hours = (int) ($this->expectedDurationHours ?? 0);
-        $minutes = (int) ($this->expectedDurationMinutes ?? 0);
-        $seconds = (int) ($this->expectedDurationSeconds ?? 0);
-
-        $total = ($hours * 3600) + ($minutes * 60) + $seconds;
-
-        return $total > 0 ? $total : null;
+        return ($hours * 3600) + ($minutes * 60) + $seconds;
     }
 
     public function render()
     {
-        return view('livewire.user.permits.create');
+        return view('livewire.admin.permits.edit');
     }
 }

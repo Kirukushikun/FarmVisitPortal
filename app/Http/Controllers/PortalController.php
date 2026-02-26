@@ -95,6 +95,17 @@ class PortalController extends Controller
         return view('admin.permits.create');
     }
 
+    public function adminEditPermit(Request $request, Permit $permit): mixed
+    {
+        $user = $request->user();
+
+        if ((int) ($user->user_type ?? 0) !== 1) {
+            abort(403);
+        }
+
+        return view('admin.permits.edit');
+    }
+
     public function adminShowPermit(Request $request, Permit $permit): mixed
     {
         $user = $request->user();

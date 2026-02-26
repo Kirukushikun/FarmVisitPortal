@@ -39,6 +39,8 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
 
     Route::get('/admin/permits/create', [PortalController::class, 'adminCreatePermit'])->name('admin.permits.create');
 
+    Route::get('/admin/permits/{permit}/edit', [PortalController::class, 'adminEditPermit'])->name('admin.permits.edit');
+
     Route::get('/admin/permits/{permit}', [PortalController::class, 'adminShowPermit'])->name('admin.permits.show');
 
     Route::get('/admin/change-password', [PortalController::class, 'adminChangePassword'])->name('admin.change-password');

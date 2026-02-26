@@ -26,6 +26,10 @@ class Dashboard extends Component
 
     public bool $showFilterDropdown = false;
 
+    public bool $showDeleteModal = false;
+
+    public $permitToDelete = null;
+
     protected array $queryString = [
         'search' => ['except' => ''],
         'page' => ['except' => 1],
@@ -44,6 +48,12 @@ class Dashboard extends Component
         $this->statusFilter = (string) request()->query('statusFilter', 'all');
         $this->dateFrom = (string) request()->query('dateFrom', '');
         $this->dateTo = (string) request()->query('dateTo', '');
+
+        $toast = session()->get('toast');
+        if (is_array($toast) && isset($toast['message'])) {
+            $this->dispatch('showToast', message: (string) $toast['message'], type: (string) ($toast['type'] ?? 'success'));
+            session()->forget('toast');
+        }
     }
 
     public function updatingSearch(): void
@@ -126,8 +136,24 @@ class Dashboard extends Component
             return;
         }
 
-        $permit->delete();
+        $this->permitToDelete = $permit;
+        $this->showDeleteModal = true;
+    }
 
+    public function closeDeleteModal(): void
+    {
+        $this->showDeleteModal = false;
+        $this->permitToDelete = null;
+    }
+
+    public function confirmDeletePermit(): void
+    {
+        if (!$this->permitToDelete) {
+            return;
+        }
+
+        $this->permitToDelete->delete();
+        $this->closeDeleteModal();
         $this->dispatch('showToast', message: 'Permit deleted successfully!', type: 'success');
     }
 
