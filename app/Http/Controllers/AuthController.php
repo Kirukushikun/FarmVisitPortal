@@ -2,15 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Location;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    public function showLogin(): mixed
+    public function showUserLogin(Request $request): mixed
     {
-        return view('auth.login');
+        $locationId = $request->query('location');
+        if ($locationId !== null) {
+            $request->session()->put('selected_location_id', (int) $locationId);
+        }
+
+        $request->session()->put('ui_mode', 'user');
+
+        $selectedLocationId = (int) $request->session()->get('selected_location_id', 0);
+        $selectedLocationName = Location::whereKey($selectedLocationId)->value('name');
+
+        return view('auth.login', [
+            'forcedRole' => 'user',
+            'selectedLocationName' => $selectedLocationName,
+        ]);
+    }
+
+    public function showAdminLogin(Request $request): mixed
+    {
+        $request->session()->forget('selected_location_id');
+        $request->session()->forget('ui_mode');
+
+        return view('auth.login', [
+            'forcedRole' => 'admin',
+            'selectedLocationName' => null,
+        ]);
     }
 
     public function login(Request $request): RedirectResponse
@@ -58,6 +83,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->route('landing');
     }
 }

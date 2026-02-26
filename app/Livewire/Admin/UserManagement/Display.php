@@ -41,11 +41,11 @@ class Display extends Component
 
     public function mount(): void
     {
-        $this->search = (string) request()->get('search', '');
-        $this->page = (int) request()->get('page', 1);
-        $this->statusFilter = (string) request()->get('statusFilter', 'all');
-        $this->dateFrom = (string) request()->get('dateFrom', '');
-        $this->dateTo = (string) request()->get('dateTo', '');
+        $this->search = (string) request()->query('search', '');
+        $this->page = (int) request()->query('page', 1);
+        $this->statusFilter = (string) request()->query('statusFilter', 'all');
+        $this->dateFrom = (string) request()->query('dateFrom', '');
+        $this->dateTo = (string) request()->query('dateTo', '');
     }
 
     public function updatingSearch(): void

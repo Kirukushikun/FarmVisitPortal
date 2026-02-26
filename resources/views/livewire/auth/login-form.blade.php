@@ -2,33 +2,18 @@
     <div class="w-full max-w-sm">
         <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6">
             <div>
-                <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Farm Visit Portal</h1>
+                <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Farm Visit Portal</h1>
             </div>
 
             <form wire:submit.prevent="submit" class="space-y-4">
-                <div>
-                    <div class="flex items-center justify-between">
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">Sign in as</label>
-                        <div class="flex items-center rounded-full bg-gray-100 dark:bg-gray-700 p-0.5 ring-1 ring-gray-200 dark:ring-gray-600">
-                            <button
-                                type="button"
-                                wire:click="$set('role','user')"
-                                class="rounded-full px-2.5 py-1 text-xs font-medium transition {{ $role === 'user' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-gray-200 dark:ring-gray-600' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100' }}"
-                                aria-pressed="{{ $role === 'user' ? 'true' : 'false' }}"
-                            >
-                                User
-                            </button>
-                            <button
-                                type="button"
-                                wire:click="$set('role','admin')"
-                                class="rounded-full px-2.5 py-1 text-xs font-medium transition {{ $role === 'admin' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-gray-200 dark:ring-gray-600' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100' }}"
-                                aria-pressed="{{ $role === 'admin' ? 'true' : 'false' }}"
-                            >
-                                Admin
-                            </button>
-                        </div>
+                @if ($role === 'user')
+                    <div class="rounded-xl bg-gray-50 dark:bg-gray-900/30 ring-1 ring-gray-200 dark:ring-gray-700 px-4 py-3">
+                        <p class="text-xs font-medium text-gray-600 dark:text-gray-300">Selected location</p>
+                        <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            {{ $selectedLocationName ?: 'Not selected' }}
+                        </p>
                     </div>
-                </div>
+                @endif
 
                 <div>
                     <label for="username" class="block text-xs font-medium text-gray-600 dark:text-gray-300">Username</label>

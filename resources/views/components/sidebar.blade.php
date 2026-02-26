@@ -5,7 +5,7 @@
 
 @php
     // Define sidebar items based on user type
-    $isAdmin = ($user && ((int) $user->user_type) === 1);
+    $isAdmin = ($user && ((int) $user->user_type) === 1 && (string) session()->get('ui_mode') !== 'user');
     
     if ($isAdmin) {
         // Admin sidebar items
