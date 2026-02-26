@@ -1,4 +1,4 @@
-@props(['hideDate' => false, 'includeSidebar' => false, 'user' => null, 'title' => null])
+@props(['hideDate' => false, 'includeSidebar' => false, 'user' => null, 'title' => null, 'breadcrumbs' => null])
 
 @php
     $isAdmin = ($user && ((int) $user->user_type) === 1 && (string) session()->get('ui_mode') !== 'user');
@@ -44,7 +44,27 @@
                                             </li>
                                         @endif
                                         
-                                        @if($title)
+                                        @if(is_array($breadcrumbs) && count($breadcrumbs) > 0)
+                                            @foreach($breadcrumbs as $crumb)
+                                                @php
+                                                    $crumbLabel = is_array($crumb) ? ($crumb['label'] ?? null) : null;
+                                                    $crumbHref = is_array($crumb) ? ($crumb['href'] ?? null) : null;
+                                                @endphp
+
+                                                @if($crumbLabel)
+                                                    <li class="flex items-center">
+                                                        <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                                        </svg>
+                                                        @if(is_string($crumbHref) && $crumbHref !== '')
+                                                            <a href="{{ $crumbHref }}" class="ml-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">{{ $crumbLabel }}</a>
+                                                        @else
+                                                            <span class="ml-1 text-gray-900 dark:text-gray-100 font-medium">{{ $crumbLabel }}</span>
+                                                        @endif
+                                                    </li>
+                                                @endif
+                                            @endforeach
+                                        @elseif($title)
                                             <li class="flex items-center">
                                                 <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>

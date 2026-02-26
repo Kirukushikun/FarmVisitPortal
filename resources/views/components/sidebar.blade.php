@@ -28,6 +28,12 @@
                 'icon' => 'locations',
                 'active' => 'admin/locations*'
             ],
+            [
+                'label' => 'Permits',
+                'href' => '/admin/permits',
+                'icon' => 'forms',
+                'active' => 'admin/permits*',
+            ],
         ];
     } else {
         // Hatchery user sidebar items (limited access)

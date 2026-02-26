@@ -11,6 +11,8 @@ return new class extends Migration
         Schema::create('permits', function (Blueprint $table) {
             $table->id();
 
+            $table->string('permit_id')->unique();
+
             $table->string('area');
             $table->foreignId('farm_location_id')->constrained('locations');
             $table->text('names');
@@ -24,7 +26,7 @@ return new class extends Migration
             $table->foreignId('previous_farm_location_id')->nullable()->constrained('locations');
             $table->timestamp('date_of_visit_previous_farm')->nullable();
 
-            $table->text('purpose');
+            $table->text('purpose')->nullable();
 
             $table->unsignedTinyInteger('status')->default(0); //0:Schedulled, 1:In Progress, 2:Completed, 3:Cancelled
 

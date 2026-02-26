@@ -27,11 +27,19 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
 
     Route::get('/user/change-password', [PortalController::class, 'userChangePassword'])->name('user.change-password');
 
+    Route::get('/user/permits/create', [PortalController::class, 'userCreatePermit'])->name('user.permits.create');
+
     Route::get('/admin/home', [PortalController::class, 'adminHome'])->name('admin.home');
 
     Route::get('/admin/users', [PortalController::class, 'adminUsers'])->name('admin.users');
 
     Route::get('/admin/locations', [PortalController::class, 'adminLocations'])->name('admin.locations');
+
+    Route::get('/admin/permits', [PortalController::class, 'adminPermits'])->name('admin.permits.index');
+
+    Route::get('/admin/permits/create', [PortalController::class, 'adminCreatePermit'])->name('admin.permits.create');
+
+    Route::get('/admin/permits/{permit}', [PortalController::class, 'adminShowPermit'])->name('admin.permits.show');
 
     Route::get('/admin/change-password', [PortalController::class, 'adminChangePassword'])->name('admin.change-password');
 });
