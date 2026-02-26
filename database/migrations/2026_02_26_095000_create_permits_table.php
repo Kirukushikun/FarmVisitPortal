@@ -24,7 +24,7 @@ return new class extends Migration
 
             $table->text('purpose');
 
-            $table->unsignedTinyInteger('status')->default(0);
+            $table->unsignedTinyInteger('status')->default(0); //0:Schedulled, 1:In Progress, 2:Completed, 3:Cancelled
 
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('received_by')->nullable()->constrained('users');
