@@ -80,6 +80,9 @@ class AuthController extends Controller
     public function logout(Request $request): RedirectResponse
     {
         Auth::logout();
+
+        $request->session()->forget('selected_location_id');
+        $request->session()->forget('ui_mode');
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

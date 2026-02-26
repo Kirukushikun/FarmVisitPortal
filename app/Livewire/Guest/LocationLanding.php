@@ -52,14 +52,17 @@ class LocationLanding extends Component
 
     protected function baseQuery(): Builder
     {
-        return Location::query()
-            ->select('locations.*')
-            ->selectSub(
-                DB::table('permits')
-                    ->selectRaw('count(*)')
-                    ->whereColumn('destination_location_id', 'locations.id'),
-                'destination_permits_count'
-            )
+        $query = Location::query();
+        $query->addSelect('locations.*');
+
+        $query->getQuery()->selectSub(
+            DB::table('permits')
+                ->selectRaw('count(*)')
+                ->whereColumn('destination_location_id', 'locations.id'),
+            'destination_permits_count'
+        );
+
+        return $query
             ->where('is_disabled', false)
             ->where('name', 'like', '%' . $this->search . '%');
     }
