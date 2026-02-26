@@ -212,6 +212,12 @@
                             </td>
                             <td class="p-3 md:p-4 py-4 md:py-5 text-center">
                                 {!! permitStatusPill((int) $permit->status) !!}
+                                @if(((int) $permit->status) === 2 && $permit->receivedBy)
+                                    <p class="mt-1 text-[11px] md:text-xs text-slate-500 dark:text-slate-400">
+                                        Received by:
+                                        {{ trim(($permit->receivedBy->first_name ?? '') . ' ' . ($permit->receivedBy->last_name ?? '')) ?: ($permit->receivedBy->username ?? '') }}
+                                    </p>
+                                @endif
                             </td>
                             <td class="p-3 md:p-4 py-4 md:py-5 text-center">
                                 <div class="flex items-center justify-center gap-2">

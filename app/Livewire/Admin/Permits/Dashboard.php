@@ -159,7 +159,7 @@ class Dashboard extends Component
 
     protected function baseQuery(): Builder
     {
-        $permits = Permit::query()->with(['destinationLocation']);
+        $permits = Permit::query()->with(['destinationLocation', 'receivedBy']);
 
         $search = trim($this->search);
         if ($search !== '') {

@@ -58,7 +58,9 @@ class LocationLanding extends Component
         $query->getQuery()->selectSub(
             DB::table('permits')
                 ->selectRaw('count(*)')
-                ->whereColumn('destination_location_id', 'locations.id'),
+                ->whereColumn('destination_location_id', 'locations.id')
+                ->where('status', 1)
+                ->whereDate('date_of_visit', now()->toDateString()),
             'destination_permits_count'
         );
 
