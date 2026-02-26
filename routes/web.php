@@ -1,50 +1,47 @@
 <?php
 
-use App\Http\Controllers\LoginController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PortalController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-Route::get('/', [LoginController::class, 'show'])->name('login');
+Route::get('/', function () {
+    return view('guest.landing');
+})->name('landing');
 
-Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
+Route::get('/login', function () {
+    return redirect()->route('landing');
+})->name('login');
 
-Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
+Route::get('/login/user', [AuthController::class, 'showUserLogin'])->name('login.user');
 
-Route::middleware('auth')->group(function () {
-    Route::get('/user/home', function (Request $request) {
-        $user = $request->user();
-        if ((int) ($user->user_type ?? 0) === 1) {
-            return redirect()->route('admin.home');
-        }
+Route::get('/login/admin', [AuthController::class, 'showAdminLogin'])->name('login.admin');
 
-        return view('user.home');
-    })->name('user.home');
+Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 
-    Route::get('/user/change-password', function (Request $request) {
-        $user = $request->user();
-        if ((int) ($user->user_type ?? 0) === 1) {
-            abort(403);
-        }
+Route::post('/logout', [AuthController::class, 'logout'])->middleware(['auth', 'no-cache'])->name('logout');
 
-        return view('auth.change-password-page');
-    })->name('user.change-password');
+Route::middleware(['auth', 'no-cache'])->group(function () {
+    Route::get('/user/home', [PortalController::class, 'userHome'])->name('user.home');
 
-    Route::get('/admin/home', function (Request $request) {
-        $user = $request->user();
-        if ((int) ($user->user_type ?? 0) !== 1) {
-            abort(403);
-        }
+    Route::get('/user/change-password', [PortalController::class, 'userChangePassword'])->name('user.change-password');
 
-        return view('admin.home');
-    })->name('admin.home');
+    Route::get('/user/permits/create', [PortalController::class, 'userCreatePermit'])->name('user.permits.create');
 
-    Route::get('/admin/change-password', function (Request $request) {
-        $user = $request->user();
-        if ((int) ($user->user_type ?? 0) !== 1) {
-            abort(403);
-        }
+    Route::get('/admin/home', [PortalController::class, 'adminHome'])->name('admin.home');
 
-        return view('auth.change-password-page');
-    })->name('admin.change-password');
+    Route::get('/admin/users', [PortalController::class, 'adminUsers'])->name('admin.users');
+
+    Route::get('/admin/locations', [PortalController::class, 'adminLocations'])->name('admin.locations');
+
+    Route::get('/admin/permits', [PortalController::class, 'adminPermits'])->name('admin.permits.index');
+
+    Route::get('/admin/permits/create', [PortalController::class, 'adminCreatePermit'])->name('admin.permits.create');
+
+    Route::get('/admin/permits/{permit}/edit', [PortalController::class, 'adminEditPermit'])->name('admin.permits.edit');
+
+    Route::get('/admin/permits/{permit}', [PortalController::class, 'adminShowPermit'])->name('admin.permits.show');
+
+    Route::get('/admin/change-password', [PortalController::class, 'adminChangePassword'])->name('admin.change-password');
 });

@@ -1,7 +1,7 @@
-@props(['hideDate' => false, 'includeSidebar' => false, 'user' => null, 'title' => null])
+@props(['hideDate' => false, 'includeSidebar' => false, 'user' => null, 'title' => null, 'breadcrumbs' => null])
 
 @php
-    $isAdmin = ($user && ((int) $user->user_type) === 1);
+    $isAdmin = ($user && ((int) $user->user_type) === 1 && (string) session()->get('ui_mode') !== 'user');
     $displayName = $user
         ? trim((string) ($user->first_name ?? '') . ' ' . (string) ($user->last_name ?? ''))
         : '';
@@ -28,22 +28,14 @@
                                     <ol class="flex items-center space-x-1">
                                         <li>
                                             <a href="{{ $isAdmin ? route('admin.home') : route('user.home') }}" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
-                                                @if($isAdmin)
-                                                    <!-- Admin: Dashboard icon -->
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                                                    </svg>
-                                                @else
-                                                    <!-- Regular User: Forms icon -->
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                    </svg>
-                                                @endif
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                                                </svg>
                                             </a>
                                         </li>
                                         
                                         <!-- Admin Dashboard breadcrumb for admin dashboard pages (except when already on admin dashboard) -->
-                                        @if($isAdmin && request()->is('admin/*dashboard*') && !request()->is('admin/dashboard'))
+                                        @if($isAdmin && request()->is('admin/*home*') && !request()->is('admin/home'))
                                             <li class="flex items-center">
                                                 <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
@@ -52,7 +44,27 @@
                                             </li>
                                         @endif
                                         
-                                        @if($title)
+                                        @if(is_array($breadcrumbs) && count($breadcrumbs) > 0)
+                                            @foreach($breadcrumbs as $crumb)
+                                                @php
+                                                    $crumbLabel = is_array($crumb) ? ($crumb['label'] ?? null) : null;
+                                                    $crumbHref = is_array($crumb) ? ($crumb['href'] ?? null) : null;
+                                                @endphp
+
+                                                @if($crumbLabel)
+                                                    <li class="flex items-center">
+                                                        <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                                        </svg>
+                                                        @if(is_string($crumbHref) && $crumbHref !== '')
+                                                            <a href="{{ $crumbHref }}" class="ml-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">{{ $crumbLabel }}</a>
+                                                        @else
+                                                            <span class="ml-1 text-gray-900 dark:text-gray-100 font-medium">{{ $crumbLabel }}</span>
+                                                        @endif
+                                                    </li>
+                                                @endif
+                                            @endforeach
+                                        @elseif($title)
                                             <li class="flex items-center">
                                                 <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
@@ -236,7 +248,7 @@
                                 </li>
                                 
                                 <!-- Admin Dashboard breadcrumb for admin dashboard pages (except when already on admin dashboard) -->
-                                @if($isAdmin && request()->is('admin/*dashboard*') && !request()->is('admin/dashboard'))
+                                @if($isAdmin && request()->is('admin/*home*') && !request()->is('admin/home'))
                                     <li class="flex items-center">
                                         <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>

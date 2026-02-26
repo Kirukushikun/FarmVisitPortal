@@ -27,6 +27,13 @@ class LoginController extends Controller
         $request->session()->regenerate();
 
         $user = $request->user();
+        if (($user->is_disabled ?? false) === true) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()->withErrors(['username' => 'This account is disabled.'])->onlyInput('username');
+        }
         $isAdmin = (int) ($user->user_type ?? 0) === 1;
         $expectedAdmin = $validated['role'] === 'admin';
 

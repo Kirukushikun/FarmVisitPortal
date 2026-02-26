@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('last_name');
             $table->string('username')->unique();
             $table->unsignedTinyInteger('user_type')->default(0); //0 = user, 1 = admin
+            $table->unsignedTinyInteger('is_disabled')->default(0); //0 = active, 1 = disabled
             $table->string('password');
             $table->timestamps();
         });
