@@ -106,7 +106,12 @@ class Edit extends Component
     {
         $this->validate($this->rulesForSubmit());
 
+        $originalDateOfVisit = $this->permit->date_of_visit?->format('Y-m-d');
         $durationSeconds = $this->calculateExpectedDurationSeconds();
+
+        $newDateOfVisit = $this->dateOfVisit !== '' ? Carbon::parse($this->dateOfVisit) : null;
+        $newDateOfVisitString = $newDateOfVisit?->format('Y-m-d');
+        $isRescheduled = $originalDateOfVisit !== $newDateOfVisitString;
 
         // Update permit
         $this->permit->update([
@@ -115,18 +120,21 @@ class Edit extends Component
             'names' => $this->names,
             'area_to_visit' => $this->areaToVisit,
             'destination_location_id' => (int) $this->destinationLocationId,
-            'date_of_visit' => $this->dateOfVisit !== '' ? Carbon::parse($this->dateOfVisit) : null,
+            'date_of_visit' => $newDateOfVisit,
             'expected_duration_seconds' => $durationSeconds,
             'previous_farm_location_id' => $this->previousFarmLocationId !== '' ? (int) $this->previousFarmLocationId : null,
             'date_of_visit_previous_farm' => $this->dateOfVisitPreviousFarm !== '' ? Carbon::parse($this->dateOfVisitPreviousFarm) : null,
             'purpose' => $this->purpose !== '' ? $this->purpose : null,
+            'completed_at' => $isRescheduled ? null : $this->permit->completed_at,
         ]);
 
         // Auto-update status based on date
         $this->updatePermitStatus();
 
+        $permitId = (string) ($this->permit->permit_id ?? '');
+        $suffix = $permitId !== '' ? " (" . $permitId . ")" : '';
         session()->flash('toast', [
-            'message' => 'Permit has been updated successfully!',
+            'message' => 'Permit has been updated successfully!' . $suffix,
             'type' => 'success',
         ]);
 
@@ -147,9 +155,9 @@ class Edit extends Component
         $visitDate = $this->permit->date_of_visit->startOfDay();
 
         if ($visitDate->isSameDay($today)) {
-            $this->permit->update(['status' => 1]); // In Progress
+            $this->permit->update(['status' => 1, 'completed_at' => null]); // In Progress
         } elseif ($visitDate->isAfter($today)) {
-            $this->permit->update(['status' => 0]); // Scheduled
+            $this->permit->update(['status' => 0, 'completed_at' => null]); // Scheduled
         }
         // Don't change status for past dates (keep existing status)
     }

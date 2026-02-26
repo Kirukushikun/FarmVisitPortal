@@ -25,6 +25,7 @@ class Permit extends Model
         'status',
         'created_by',
         'received_by',
+        'completed_at',
     ];
 
     protected function casts(): array
@@ -39,6 +40,7 @@ class Permit extends Model
             'expected_duration_seconds' => 'integer',
             'date_of_visit' => 'datetime',
             'date_of_visit_previous_farm' => 'datetime',
+            'completed_at' => 'datetime',
         ];
     }
 

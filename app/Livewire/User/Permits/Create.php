@@ -109,10 +109,10 @@ class Create extends Component
             'received_by' => null,
         ]);
 
-        unset($permit);
-
+        $permitId = (string) ($permit->permit_id ?? '');
+        $suffix = $permitId !== '' ? " (" . $permitId . ")" : '';
         session()->flash('toast', [
-            'message' => 'Permit has been created successfully!',
+            'message' => 'Permit has been created successfully!' . $suffix,
             'type' => 'success',
         ]);
 

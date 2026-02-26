@@ -167,7 +167,10 @@ class Dashboard extends Component
                 $query
                     ->where('permit_id', 'like', '%' . $search . '%')
                     ->orWhere('area', 'like', '%' . $search . '%')
-                    ->orWhere('names', 'like', '%' . $search . '%');
+                    ->orWhere('names', 'like', '%' . $search . '%')
+                    ->orWhereHas('destinationLocation', function (Builder $q) use ($search) {
+                        $q->where('name', 'like', '%' . $search . '%');
+                    });
             });
         }
 

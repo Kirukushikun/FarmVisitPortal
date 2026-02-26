@@ -1,7 +1,7 @@
 <x-layout>
     <x-navbar :breadcrumbs="[
         ['label' => 'Permits', 'href' => route('admin.permits.index')],
-        ['label' => 'Permit ' . ($permit->permit_id ?? '')],
+        ['label' => 'View Permit'],
     ]" :includeSidebar="true" :user="Auth::user()">
         <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
             <div class="p-4">

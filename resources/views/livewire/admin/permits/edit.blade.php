@@ -10,7 +10,7 @@
             :show-progress="$this->showProgress()"
         >
             <div data-step="1" class="space-y-4" @style(["display:none" => $currentStep !== 1])>
-                <x-title>EDIT PERMIT</x-title>
+                <x-title>EDIT PERMIT {{ $permit->permit_id ?? '' }}</x-title>
 
                 <x-text-input
                     label="Area"
