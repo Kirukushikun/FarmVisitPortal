@@ -124,7 +124,7 @@
                 </div>
 
                 <a
-                    href="{{ route('admin.permits.create', ['return' => request()->getRequestUri()]) }}"
+                    href="{{ route('admin.permits.create', ['return' => $returnUrl]) }}"
                     class="inline-flex items-center justify-center px-4 py-3 text-sm font-medium text-white bg-orange-600 border border-orange-600 rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-150 whitespace-nowrap shrink-0 md:px-4 cursor-pointer"
                 >
                     <span class="hidden md:inline">Create Permit</span>
@@ -228,8 +228,18 @@
                                     >
                                         View
                                     </a>
+                                    @if (((int) ($permit->status ?? 0)) === 3)
+                                        <button
+                                            type="button"
+                                            wire:click="reschedulePermit({{ $permit->id }})"
+                                            class="px-3 py-1 text-xs font-medium text-purple-600 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors"
+                                            title="Reschedule Permit"
+                                        >
+                                            Reschedule
+                                        </button>
+                                    @endif
                                     <a
-                                        href="{{ route('admin.permits.edit', ['permit' => $permit, 'return' => request()->getRequestUri()]) }}"
+                                        href="{{ route('admin.permits.edit', ['permit' => $permit, 'return' => $returnUrl]) }}"
                                         class="px-3 py-1 text-xs font-medium text-orange-600 bg-orange-50 rounded-md hover:bg-orange-100 transition-colors"
                                         title="Edit Permit"
                                     >
@@ -285,8 +295,17 @@
                             title="View Details">
                             View
                         </a>
+                        @if (((int) ($permit->status ?? 0)) === 3)
+                            <button
+                                type="button"
+                                wire:click="reschedulePermit({{ $permit->id }})"
+                                class="px-3 py-1 text-xs font-medium text-purple-600 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/50 rounded-md hover:bg-purple-100 dark:hover:bg-purple-900/70 transition-colors"
+                                title="Reschedule Permit">
+                                Reschedule
+                            </button>
+                        @endif
                         <a
-                            href="{{ route('admin.permits.edit', ['permit' => $permit, 'return' => request()->getRequestUri()]) }}"
+                            href="{{ route('admin.permits.edit', ['permit' => $permit, 'return' => $returnUrl]) }}"
                             class="px-3 py-1 text-xs font-medium text-orange-600 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/50 rounded-md hover:bg-orange-100 dark:hover:bg-orange-900/70 transition-colors"
                             title="Edit Permit">
                             Edit
@@ -327,4 +346,5 @@
 </div>
 
 @include('livewire.admin.permits.delete-permit')
+@include('livewire.admin.permits.reschedule-permit')
 </div>

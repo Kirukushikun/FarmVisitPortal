@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin\Permits;
 
 use App\Models\Permit;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 
@@ -30,6 +32,14 @@ class Dashboard extends Component
 
     public $permitToDelete = null;
 
+    public bool $showRescheduleModal = false;
+
+    public ?Permit $permitToReschedule = null;
+
+    public string $rescheduleDateOfVisit = '';
+
+    public string $returnUrl = '';
+
     protected array $queryString = [
         'search' => ['except' => ''],
         'page' => ['except' => 1],
@@ -43,6 +53,8 @@ class Dashboard extends Component
 
     public function mount(): void
     {
+        $this->returnUrl = (string) request()->getRequestUri();
+
         $this->search = (string) request()->query('search', '');
         $this->page = (int) request()->query('page', 1);
         $this->statusFilter = (string) request()->query('statusFilter', 'all');
@@ -155,6 +167,86 @@ class Dashboard extends Component
         $this->permitToDelete->delete();
         $this->closeDeleteModal();
         $this->dispatch('showToast', message: 'Permit deleted successfully!', type: 'success');
+    }
+
+    public function reschedulePermit(int $permitId): void
+    {
+        $permit = Permit::query()->find($permitId);
+        if (! $permit) {
+            $this->dispatch('showToast', message: 'Permit not found.', type: 'error');
+            return;
+        }
+
+        if ((int) ($permit->status ?? 0) !== 3) {
+            $this->dispatch('showToast', message: 'Only cancelled permits can be rescheduled.', type: 'error');
+            return;
+        }
+
+        $this->permitToReschedule = $permit;
+        $this->rescheduleDateOfVisit = $permit->date_of_visit?->format('Y-m-d') ?? '';
+        $this->resetValidation();
+        $this->showRescheduleModal = true;
+    }
+
+    public function closeRescheduleModal(): void
+    {
+        $this->showRescheduleModal = false;
+        $this->permitToReschedule = null;
+        $this->rescheduleDateOfVisit = '';
+        $this->resetValidation();
+    }
+
+    public function confirmReschedulePermit(): void
+    {
+        if (! $this->permitToReschedule) {
+            return;
+        }
+
+        $this->validate([
+            'rescheduleDateOfVisit' => ['required', 'date'],
+        ]);
+
+        $permit = Permit::query()->find((int) $this->permitToReschedule->id);
+        if (! $permit) {
+            $this->dispatch('showToast', message: 'Permit not found.', type: 'error');
+            $this->closeRescheduleModal();
+            return;
+        }
+
+        if ((int) ($permit->status ?? 0) !== 3) {
+            $this->dispatch('showToast', message: 'Only cancelled permits can be rescheduled.', type: 'error');
+            $this->closeRescheduleModal();
+            return;
+        }
+
+        $newDateOfVisit = Carbon::parse($this->rescheduleDateOfVisit)->startOfDay();
+        $today = now()->startOfDay();
+
+        $status = 0;
+        $completedAt = null;
+        $receivedBy = null;
+
+        if ($newDateOfVisit->isSameDay($today)) {
+            $status = 1;
+        } elseif ($newDateOfVisit->isAfter($today)) {
+            $status = 0;
+        } else {
+            $status = 2;
+            $completedAt = now();
+            $receivedBy = (int) Auth::id();
+        }
+
+        $permit->update([
+            'date_of_visit' => $newDateOfVisit,
+            'status' => $status,
+            'completed_at' => $completedAt,
+            'received_by' => $receivedBy,
+        ]);
+
+        $permitId = (string) ($permit->permit_id ?? '');
+        $suffix = $permitId !== '' ? " (" . $permitId . ")" : '';
+        $this->closeRescheduleModal();
+        $this->dispatch('showToast', message: 'Permit rescheduled successfully!' . $suffix, type: 'success');
     }
 
     protected function baseQuery(): Builder
