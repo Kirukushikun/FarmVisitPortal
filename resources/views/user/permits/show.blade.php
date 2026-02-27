@@ -206,7 +206,7 @@
                 </div>
 
                 <!-- Action Buttons -->
-                @if ($permit->status < 3)
+                @if ((int) ($permit->status ?? 0) === 1)
                     <div class="no-print mt-6 flex flex-col sm:flex-row gap-4 justify-center md:hidden">
                         <form method="POST" action="{{ route('user.permits.complete', $permit) }}" class="flex-1">
                             @csrf
