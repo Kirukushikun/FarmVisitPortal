@@ -93,7 +93,12 @@ class Edit extends Component
         $this->populateForm();
 
         $return = request()->query('return');
-        if (is_string($return) && $return !== '' && str_starts_with($return, '/')) {
+        $isSafeReturn = is_string($return)
+            && $return !== ''
+            && str_starts_with($return, '/')
+            && ! preg_match('/^\/livewire-[^\/]+\/update$/', $return);
+
+        if ($isSafeReturn) {
             $this->returnUrl = $return;
         }
     }
