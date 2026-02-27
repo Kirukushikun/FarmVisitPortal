@@ -27,6 +27,18 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
 
     Route::get('/user/change-password', [PortalController::class, 'userChangePassword'])->name('user.change-password');
 
+    Route::get('/user/permits/scheduled', [PortalController::class, 'userScheduledPermits'])->name('user.permits.scheduled');
+
+    Route::get('/user/permits/my-permits', [PortalController::class, 'userMyPermits'])->name('user.permits.my');
+
+    Route::get('/user/permits/cancelled', [PortalController::class, 'userCancelledPermits'])->name('user.permits.cancelled');
+
+    Route::get('/user/permits/{permit}', [PortalController::class, 'userShowPermit'])->name('user.permits.show');
+
+    Route::post('/user/permits/{permit}/complete', [PortalController::class, 'completePermit'])->name('user.permits.complete');
+
+    Route::post('/user/permits/{permit}/cancel', [PortalController::class, 'cancelPermit'])->name('user.permits.cancel');
+
     Route::get('/admin/home', [PortalController::class, 'adminHome'])->name('admin.home');
 
     Route::get('/admin/users', [PortalController::class, 'adminUsers'])->name('admin.users');

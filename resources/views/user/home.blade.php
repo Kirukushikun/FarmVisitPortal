@@ -1,5 +1,5 @@
 <x-layout>
-    <x-navbar title="Dashboard" :includeSidebar="true" :user="Auth::user()">
-
+    <x-navbar title="Permits Today" :includeSidebar="true" :user="Auth::user()">
+        <livewire:permit-dashboard />
     </x-navbar>
 </x-layout>

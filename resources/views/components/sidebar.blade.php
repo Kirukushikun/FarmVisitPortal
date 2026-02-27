@@ -39,10 +39,28 @@
         // Hatchery user sidebar items (limited access)
         $sidebarItems = [
             [
-                'label' => 'Dashboard',
+                'label' => 'Permits Today',
                 'href' => '/user/home',
-                'icon' => 'dashboard',
+                'icon' => 'forms',
                 'active' => 'user/home*',
+            ],
+            [
+                'label' => 'Scheduled Permits',
+                'href' => '/user/permits/scheduled',
+                'icon' => 'scheduled',
+                'active' => 'user/permits/scheduled*',
+            ],
+            [
+                'label' => 'My Permits',
+                'href' => '/user/permits/my-permits',
+                'icon' => 'my_permits',
+                'active' => 'user/permits/my-permits*',
+            ],
+            [
+                'label' => 'Cancelled Permits',
+                'href' => '/user/permits/cancelled',
+                'icon' => 'cancelled',
+                'active' => 'user/permits/cancelled*',
             ],
         ];
     }
@@ -332,6 +350,18 @@ x-cloak>
                             @if($item['icon'] === 'dashboard')
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                                </svg>
+                            @elseif($item['icon'] === 'scheduled')
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M12,2 C17.5228475,2 22,6.4771525 22,12 C22,17.5228475 17.5228475,22 12,22 C6.4771525,22 2,17.5228475 2,12 C2,6.4771525 6.4771525,2 12,2 Z M12,4 C7.581722,4 4,7.581722 4,12 C4,16.418278 7.581722,20 12,20 C16.418278,20 20,16.418278 20,12 C20,7.581722 16.418278,4 12,4 Z M12,6 C12.5128358,6 12.9355072,6.38604019 12.9932723,6.88337887 L13,7 L13,11.5857864 L14.7071068,13.2928932 C15.0976311,13.6834175 15.0976311,14.3165825 14.7071068,14.7071068 C14.3466228,15.0675907 13.7793918,15.0953203 13.3871006,14.7902954 L13.2928932,14.7071068 L11.2928932,12.7071068 C11.1366129,12.5508265 11.0374017,12.3481451 11.0086724,12.131444 L11,12 L11,7 C11,6.44771525 11.4477153,6 12,6 Z"/>
+                                </svg>
+                            @elseif($item['icon'] === 'my_permits')
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21,20a2,2,0,0,1-2,2H5a2,2,0,0,1-2-2,6,6,0,0,1,6-6h6A6,6,0,0,1,21,20Zm-9-8A5,5,0,1,0,7,7,5,5,0,0,0,12,12Z" />
+                                </svg>
+                            @elseif($item['icon'] === 'cancelled')
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 455 455" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M227.5,0C101.761,0,0,101.75,0,227.5C0,353.239,101.75,455,227.5,455C353.239,455,455,353.25,455,227.5C455.001,101.761,353.251,0,227.5,0z M310.759,268.333c11.715,11.716,11.715,30.711,0,42.427c-5.858,5.858-13.536,8.787-21.213,8.787s-15.355-2.929-21.213-8.787L227.5,269.927l-40.832,40.832c-5.858,5.858-13.536,8.787-21.213,8.787s-15.355-2.929-21.213-8.787c-11.715-11.716-11.715-30.711,0-42.427l40.832-40.832l-40.832-40.832c-11.715-11.716-11.715-30.711,0-42.427c11.716-11.716,30.711-11.716,42.427,0l40.832,40.832l40.832-40.832c11.716-11.716,30.711-11.716,42.427,0c11.715,11.716,11.715,30.711,0,42.427L269.927,227.5L310.759,268.333z"/>
                                 </svg>
                             @elseif($item['icon'] === 'locations')
                                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
