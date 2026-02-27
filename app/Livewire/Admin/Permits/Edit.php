@@ -43,6 +43,43 @@ class Edit extends Component
 
     public Permit $permit;
 
+    protected array $messages = [
+        'required' => 'Please fill in this field.',
+        'integer' => 'Please enter a valid number.',
+        'string' => 'Please enter valid text.',
+        'date' => 'Please select a valid date.',
+        'before_or_equal' => 'Please select a valid date.',
+        'max' => 'Please enter a valid value.',
+        'min' => 'Please enter a valid value.',
+        'exists' => 'Please select a valid option.',
+        'not_in' => 'Please select a valid option.',
+
+        'farmLocationId.required' => 'Please select a farm.',
+        'farmLocationId.exists' => 'Please select a valid farm.',
+        'destinationLocationId.required' => 'Please select a destination.',
+        'destinationLocationId.exists' => 'Please select a valid destination.',
+        'destinationLocationId.not_in' => 'Destination must be different from the farm.',
+        'dateOfVisit.required' => 'Please select the date of visit.',
+
+        'expectedDurationMinutes.max' => 'Minutes must be between 0 and 59.',
+        'expectedDurationSeconds.max' => 'Seconds must be between 0 and 59.',
+    ];
+
+    protected array $validationAttributes = [
+        'area' => 'area',
+        'farmLocationId' => 'farm',
+        'names' => 'names',
+        'areaToVisit' => 'area to visit',
+        'destinationLocationId' => 'destination',
+        'dateOfVisit' => 'date of visit',
+        'expectedDurationHours' => 'expected duration (hours)',
+        'expectedDurationMinutes' => 'expected duration (minutes)',
+        'expectedDurationSeconds' => 'expected duration (seconds)',
+        'previousFarmLocationId' => 'previous farm visited',
+        'dateOfVisitPreviousFarm' => 'previous farm visit date',
+        'purpose' => 'purpose',
+    ];
+
     public function mount(): void
     {
         // Get permit from route parameters

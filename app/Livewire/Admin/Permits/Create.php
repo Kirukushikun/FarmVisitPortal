@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\User\Permits;
+namespace App\Livewire\Admin\Permits;
 
 use App\Models\Location;
 use App\Models\Permit;
@@ -42,6 +42,43 @@ class Create extends Component
 
     public ?string $returnUrl = null;
 
+    protected array $messages = [
+        'required' => 'Please fill in this field.',
+        'integer' => 'Please enter a valid number.',
+        'string' => 'Please enter valid text.',
+        'date' => 'Please select a valid date.',
+        'before_or_equal' => 'Please select a valid date.',
+        'max' => 'Please enter a valid value.',
+        'min' => 'Please enter a valid value.',
+        'exists' => 'Please select a valid option.',
+        'not_in' => 'Please select a valid option.',
+
+        'farmLocationId.required' => 'Please select a farm.',
+        'farmLocationId.exists' => 'Please select a valid farm.',
+        'destinationLocationId.required' => 'Please select a destination.',
+        'destinationLocationId.exists' => 'Please select a valid destination.',
+        'destinationLocationId.not_in' => 'Destination must be different from the farm.',
+        'dateOfVisit.required' => 'Please select the date of visit.',
+
+        'expectedDurationMinutes.max' => 'Minutes must be between 0 and 59.',
+        'expectedDurationSeconds.max' => 'Seconds must be between 0 and 59.',
+    ];
+
+    protected array $validationAttributes = [
+        'area' => 'area',
+        'farmLocationId' => 'farm',
+        'names' => 'names',
+        'areaToVisit' => 'area to visit',
+        'destinationLocationId' => 'destination',
+        'dateOfVisit' => 'date of visit',
+        'expectedDurationHours' => 'expected duration (hours)',
+        'expectedDurationMinutes' => 'expected duration (minutes)',
+        'expectedDurationSeconds' => 'expected duration (seconds)',
+        'previousFarmLocationId' => 'previous farm visited',
+        'dateOfVisitPreviousFarm' => 'previous farm visit date',
+        'purpose' => 'purpose',
+    ];
+
     public function mount(): void
     {
         $return = request()->query('return');
@@ -78,19 +115,17 @@ class Create extends Component
         $this->validate($this->rulesForSubmit());
 
         $durationSeconds = $this->calculateExpectedDurationSeconds();
-        
-        // Determine status based on date
-        $status = 0; // Default to Scheduled
+
+        $status = 0; // Scheduled
         if ($this->dateOfVisit) {
             $visitDate = Carbon::parse($this->dateOfVisit)->startOfDay();
             $today = now()->startOfDay();
-            
+
             if ($visitDate->isSameDay($today)) {
                 $status = 1; // In Progress
             } elseif ($visitDate->isAfter($today)) {
                 $status = 0; // Scheduled
             }
-            // Past dates keep default status (can be manually changed later)
         }
 
         $permit = Permit::create([
@@ -110,7 +145,7 @@ class Create extends Component
         ]);
 
         $permitId = (string) ($permit->permit_id ?? '');
-        $suffix = $permitId !== '' ? " (" . $permitId . ")" : '';
+        $suffix = $permitId !== '' ? ' (' . $permitId . ')' : '';
         session()->flash('toast', [
             'message' => 'Permit has been created successfully!' . $suffix,
             'type' => 'success',
@@ -120,7 +155,7 @@ class Create extends Component
             return redirect()->to($this->returnUrl);
         }
 
-        return redirect()->route('user.home');
+        return redirect()->route('admin.permits.index');
     }
 
     public function canProceed(): bool
@@ -224,6 +259,6 @@ class Create extends Component
 
     public function render()
     {
-        return view('livewire.user.permits.create');
+        return view('livewire.admin.permits.create');
     }
 }

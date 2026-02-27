@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(11)->create();
 
-                User::factory()->create([
+        User::factory()->create([
             'first_name' => 'Jeff',
             'last_name' => 'Montiano',
             'username' => 'JMontiano',
@@ -44,7 +44,7 @@ class DatabaseSeeder extends Seeder
             'username' => 'RRoque',
             'user_type' => '1',
         ]);
-        
+
         User::factory()->create([
             'first_name' => 'Jenny',
             'last_name' => 'Santos',
