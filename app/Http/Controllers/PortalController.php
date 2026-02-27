@@ -79,12 +79,12 @@ class PortalController extends Controller
             abort(403);
         }
 
-        if ($permit->status >= 3) {
+        if ($permit->status >= 2) {
             return redirect()->back()->with('error', 'Permit cannot be completed.');
         }
 
         $permit->update([
-            'status' => 3, // Completed
+            'status' => 2, // Completed
             'completed_at' => now(),
             'received_by' => $user->id,
         ]);
@@ -100,12 +100,12 @@ class PortalController extends Controller
             abort(403);
         }
 
-        if ($permit->status >= 4) {
+        if ($permit->status >= 3) {
             return redirect()->back()->with('error', 'Permit cannot be cancelled.');
         }
 
         $permit->update([
-            'status' => 4, // Cancelled
+            'status' => 3, // Cancelled
             'received_by' => $user->id,
         ]);
 

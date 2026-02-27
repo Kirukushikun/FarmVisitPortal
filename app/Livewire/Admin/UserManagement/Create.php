@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin\UserManagement;
 
 use App\Models\User;
+use App\Support\CacheKeys;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -56,6 +58,8 @@ class Create extends Component
         ]);
 
         unset($user);
+
+        Cache::forget(CacheKeys::usersAll());
 
         $this->closeModal();
         $fullName = trim($this->firstName . ' ' . $this->lastName);

@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin\UserManagement;
 
 use App\Models\User;
+use App\Support\CacheKeys;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class Disable extends Component
@@ -21,7 +23,9 @@ class Disable extends Component
 
     public function openModal($userId): void
     {
-        $user = User::where('user_type', 0)->find((int) $userId);
+        $userId = (int) $userId;
+        $cacheKey = CacheKeys::user($userId);
+        $user = Cache::remember($cacheKey, 300, fn () => User::where('user_type', 0)->find($userId));
         if (! $user) {
             return;
         }
@@ -51,6 +55,9 @@ class Disable extends Component
             $user->update([
                 'is_disabled' => ! $this->isCurrentlyDisabled,
             ]);
+
+            Cache::forget(CacheKeys::usersAll());
+            Cache::forget(CacheKeys::user((int) $this->userId));
 
             $action = $this->isCurrentlyDisabled ? 'enabled' : 'disabled';
             $userName = (string) $this->userName;

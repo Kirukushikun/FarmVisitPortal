@@ -192,11 +192,24 @@ class Edit extends Component
         $visitDate = $this->permit->date_of_visit->startOfDay();
 
         if ($visitDate->isSameDay($today)) {
-            $this->permit->update(['status' => 1, 'completed_at' => null]); // In Progress
+            $this->permit->update([
+                'status' => 1, // In Progress
+                'completed_at' => null,
+                'received_by' => null,
+            ]);
         } elseif ($visitDate->isAfter($today)) {
-            $this->permit->update(['status' => 0, 'completed_at' => null]); // Scheduled
+            $this->permit->update([
+                'status' => 0, // Scheduled
+                'completed_at' => null,
+                'received_by' => null,
+            ]);
+        } else {
+            $this->permit->update([
+                'status' => 2, // Completed
+                'completed_at' => now(),
+                'received_by' => (int) Auth::id(),
+            ]);
         }
-        // Don't change status for past dates (keep existing status)
     }
 
     public function canProceed(): bool

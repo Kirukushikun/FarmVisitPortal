@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin\LocationManagement;
 
 use App\Models\Location;
+use App\Support\CacheKeys;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
@@ -19,12 +21,14 @@ class Edit extends Component
 
     public function openModal($locationId): void
     {
-        $location = Location::find((int) $locationId);
+        $locationId = (int) $locationId;
+        $cacheKey = CacheKeys::location($locationId);
+        $location = Cache::remember($cacheKey, 300, fn () => Location::find($locationId));
         if (! $location) {
             return;
         }
 
-        $this->locationId = (int) $locationId;
+        $this->locationId = $locationId;
         $this->name = (string) $location->name;
         $this->resetValidation();
         $this->showModal = true;
@@ -53,6 +57,9 @@ class Edit extends Component
         $location->update([
             'name' => $this->name,
         ]);
+
+        Cache::forget(CacheKeys::locationsAll());
+        Cache::forget(CacheKeys::location((int) $this->locationId));
 
         $locationName = trim($this->name);
         $this->closeModal();

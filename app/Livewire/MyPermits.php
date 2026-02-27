@@ -22,11 +22,6 @@ class MyPermits extends Component
         $this->resetPage();
     }
 
-    public function resetPage()
-    {
-        $this->reset();
-    }
-
     public function viewPermit($permitId)
     {
         return redirect()->route('user.permits.show', $permitId);
@@ -35,10 +30,10 @@ class MyPermits extends Component
     public function getStatusLabel($status)
     {
         $labels = [
-            1 => 'Pending',
-            2 => 'In Progress',
-            3 => 'Completed',
-            4 => 'Cancelled',
+            0 => 'Scheduled',
+            1 => 'In Progress',
+            2 => 'Completed',
+            3 => 'Cancelled',
         ];
         
         return $labels[$status] ?? 'Unknown';
@@ -47,10 +42,10 @@ class MyPermits extends Component
     public function getStatusColor($status)
     {
         $colors = [
-            1 => 'yellow',
-            2 => 'blue',
-            3 => 'green',
-            4 => 'red',
+            0 => 'yellow',
+            1 => 'blue',
+            2 => 'green',
+            3 => 'red',
         ];
         
         return $colors[$status] ?? 'gray';
@@ -62,7 +57,7 @@ class MyPermits extends Component
         
         $query = Permit::with(['farmLocation', 'destinationLocation', 'receivedBy'])
             ->where('received_by', $user->id)
-            ->whereIn('status', [3, 4]) // Completed or cancelled
+            ->where('status', 2) // Completed
             ->orderBy('date_of_visit', 'desc');
 
         // Only filter by location if user has location_id

@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin\LocationManagement;
 
 use App\Models\Location;
+use App\Support\CacheKeys;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class Disable extends Component
@@ -21,7 +23,9 @@ class Disable extends Component
 
     public function openModal($locationId): void
     {
-        $location = Location::find((int) $locationId);
+        $locationId = (int) $locationId;
+        $cacheKey = CacheKeys::location($locationId);
+        $location = Cache::remember($cacheKey, 300, fn () => Location::find($locationId));
         if (! $location) {
             return;
         }
@@ -51,6 +55,9 @@ class Disable extends Component
             $location->update([
                 'is_disabled' => ! $this->isCurrentlyDisabled,
             ]);
+
+            Cache::forget(CacheKeys::locationsAll());
+            Cache::forget(CacheKeys::location((int) $this->locationId));
 
             $action = $this->isCurrentlyDisabled ? 'enabled' : 'disabled';
             $locationName = (string) $this->locationName;
