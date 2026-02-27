@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Permit;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\Console\Command\Command as SymfonyCommand;
 
 class UpdatePermitStatuses extends Command
 {
@@ -60,6 +61,6 @@ class UpdatePermitStatuses extends Command
             'run_date' => $today->toDateString()
         ]);
         
-        return Command::SUCCESS;
+        return SymfonyCommand::SUCCESS;
     }
 }

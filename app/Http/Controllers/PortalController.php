@@ -29,6 +29,89 @@ class PortalController extends Controller
         return view('auth.change-password-page');
     }
 
+    public function userShowPermit(Request $request, Permit $permit): mixed
+    {
+        $user = $request->user();
+
+        $permit->load([
+            'farmLocation',
+            'destinationLocation',
+            'previousFarmLocation',
+        ]);
+
+        return view('user.permits.show', [
+            'permit' => $permit,
+        ]);
+    }
+
+    public function userScheduledPermits(Request $request): mixed
+    {
+        $user = $request->user();
+
+        return view('user.permits.scheduled', [
+            'user' => $user,
+        ]);
+    }
+
+    public function userMyPermits(Request $request): mixed
+    {
+        $user = $request->user();
+
+        return view('user.permits.my-permits', [
+            'user' => $user,
+        ]);
+    }
+
+    public function userCancelledPermits(Request $request): mixed
+    {
+        $user = $request->user();
+
+        return view('user.permits.cancelled', [
+            'user' => $user,
+        ]);
+    }
+
+    public function completePermit(Request $request, Permit $permit): mixed
+    {
+        $user = $request->user();
+
+        if ((int) ($user->user_type ?? 0) === 1) {
+            abort(403);
+        }
+
+        if ($permit->status >= 3) {
+            return redirect()->back()->with('error', 'Permit cannot be completed.');
+        }
+
+        $permit->update([
+            'status' => 3, // Completed
+            'completed_at' => now(),
+            'received_by' => $user->id,
+        ]);
+
+        return redirect()->route('user.home')->with('success', 'Permit marked as completed successfully!');
+    }
+
+    public function cancelPermit(Request $request, Permit $permit): mixed
+    {
+        $user = $request->user();
+
+        if ((int) ($user->user_type ?? 0) === 1) {
+            abort(403);
+        }
+
+        if ($permit->status >= 4) {
+            return redirect()->back()->with('error', 'Permit cannot be cancelled.');
+        }
+
+        $permit->update([
+            'status' => 4, // Cancelled
+            'received_by' => $user->id,
+        ]);
+
+        return redirect()->route('user.home')->with('success', 'Permit cancelled successfully!');
+    }
+
     public function adminHome(Request $request): mixed
     {
         $user = $request->user();
