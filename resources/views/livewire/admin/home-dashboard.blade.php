@@ -4,24 +4,24 @@
             <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Admin Dashboard</h1>
             <p class="text-sm text-gray-600 dark:text-gray-400">Permit statistics</p>
         </div>
-
-        <div class="flex w-full sm:w-auto rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
-            <button type="button" wire:click="setRange('week')" :class="range === 'week' ? 'bg-orange-600 text-white' : 'bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-medium transition-colors cursor-pointer text-center whitespace-nowrap">
-                Week
-            </button>
-            <button type="button" wire:click="setRange('month')" :class="range === 'month' ? 'bg-orange-600 text-white' : 'bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-medium transition-colors cursor-pointer text-center whitespace-nowrap">
-                Month
-            </button>
-            <button type="button" wire:click="setRange('year')" :class="range === 'year' ? 'bg-orange-600 text-white' : 'bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-medium transition-colors cursor-pointer text-center whitespace-nowrap">
-                Year
-            </button>
-        </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <div class="lg:col-span-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white">New Permits / Users / Locations ({{ ucfirst($range) }})</h3>
+
+                <div class="flex w-full sm:w-auto rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
+                    <button type="button" wire:click="setRange('week')" :class="range === 'week' ? 'bg-orange-600 text-white' : 'bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-medium transition-colors cursor-pointer text-center whitespace-nowrap">
+                        Week
+                    </button>
+                    <button type="button" wire:click="setRange('month')" :class="range === 'month' ? 'bg-orange-600 text-white' : 'bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-medium transition-colors cursor-pointer text-center whitespace-nowrap">
+                        Month
+                    </button>
+                    <button type="button" wire:click="setRange('year')" :class="range === 'year' ? 'bg-orange-600 text-white' : 'bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-medium transition-colors cursor-pointer text-center whitespace-nowrap">
+                        Year
+                    </button>
+                </div>
             </div>
             <div class="relative h-80" wire:ignore>
                 <canvas id="fvAdminHomeTotalPermitsChart"></canvas>
@@ -30,7 +30,7 @@
 
         <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Permits Breakdown</h3>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">New Permits / Users / Locations</h3>
 
                 <div class="flex rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
                     <button type="button" wire:click="setPieRange('year')" class="flex-1 px-3 py-2 text-xs font-medium transition-colors cursor-pointer text-center whitespace-nowrap {{ ($pieRange ?? 'year') === 'year' ? 'bg-orange-600 text-white' : 'bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700' }}">
@@ -233,6 +233,7 @@
                     updateCharts(event.detail.charts, event.detail.range);
                 }
 
+                // Only update pie if data is present (not null); range changes send null to skip
                 if (event.detail.pie && event.detail.pieRange) {
                     updatePie(event.detail.pie, event.detail.pieRange);
                 }

@@ -44,7 +44,7 @@ class HomeDashboard extends Component
 
         $this->range = $range;
         $this->loadData();
-        $this->dispatch('adminHomeDashboardUpdated', charts: $this->charts, pie: $this->pie, pieRange: $this->pieRange, cards: $this->cards, calendar: $this->calendar, range: $this->range);
+        $this->dispatch('adminHomeDashboardUpdated', charts: $this->charts, pie: null, pieRange: null, cards: $this->cards, calendar: $this->calendar, range: $this->range);
     }
 
     public function setPieRange(string $range): void
@@ -127,45 +127,40 @@ class HomeDashboard extends Component
         ];
 
         $this->pie = [
-            'year' => $this->permitStatusPieChart($yearStart, $yearEnd),
-            'overall' => $this->permitStatusPieChart(null, null),
+            'year' => $this->newEntitiesPieChart($yearStart, $yearEnd),
+            'overall' => $this->newEntitiesPieChart(null, null),
         ];
 
         $this->calendar = $this->buildCalendar($this->calendarMonth, $this->selectedDay);
     }
 
-    protected function permitStatusPieChart(?Carbon $start, ?Carbon $end): array
+    protected function newEntitiesPieChart(?Carbon $start, ?Carbon $end): array
     {
-        $query = Permit::query();
+        $permits = Permit::query();
+        $users = User::query();
+        $locations = Location::query();
+
         if ($start !== null && $end !== null) {
-            $query->whereBetween('date_of_visit', [$start, $end]);
+            $permits->whereBetween('created_at', [$start, $end]);
+            $users->whereBetween('created_at', [$start, $end]);
+            $locations->whereBetween('created_at', [$start, $end]);
         }
 
-        $row = $query
-            ->selectRaw('COUNT(*) as total')
-            ->addSelect(DB::raw('SUM(CASE WHEN date_of_visit > CURRENT_DATE THEN 1 ELSE 0 END) as scheduled'))
-            ->addSelect(DB::raw('SUM(CASE WHEN DATE(date_of_visit) = CURRENT_DATE AND received_by IS NULL AND status != 3 THEN 1 ELSE 0 END) as in_progress'))
-            ->addSelect(DB::raw('SUM(CASE WHEN date_of_visit <= CURRENT_DATE AND received_by IS NOT NULL THEN 1 ELSE 0 END) as received'))
-            ->addSelect(DB::raw('SUM(CASE WHEN (date_of_visit < CURRENT_DATE AND received_by IS NULL) OR (DATE(date_of_visit) = CURRENT_DATE AND status = 3) THEN 1 ELSE 0 END) as cancelled'))
-            ->first();
-
-        $scheduled = (int) ($row->scheduled ?? 0);
-        $inProgress = (int) ($row->in_progress ?? 0);
-        $received = (int) ($row->received ?? 0);
-        $cancelled = (int) ($row->cancelled ?? 0);
+        $permitsCount = (int) $permits->count();
+        $usersCount = (int) $users->count();
+        $locationsCount = (int) $locations->count();
 
         return [
-            'labels' => ['Scheduled', 'In Progress', 'Received', 'Cancelled'],
+            'labels' => ['Permits', 'Users', 'Locations'],
             'datasets' => [
                 [
-                    'data' => [$scheduled, $inProgress, $received, $cancelled],
+                    'data' => [$permitsCount, $usersCount, $locationsCount],
                     'backgroundColor' => [
                         'rgba(249,115,22,0.70)',
                         'rgba(59,130,246,0.70)',
                         'rgba(16,185,129,0.70)',
-                        'rgba(239,68,68,0.70)',
                     ],
-                    'borderColor' => ['#f97316', '#3b82f6', '#10b981', '#ef4444'],
+                    'borderColor' => ['#f97316', '#3b82f6', '#10b981'],
                     'borderWidth' => 1,
                 ],
             ],
