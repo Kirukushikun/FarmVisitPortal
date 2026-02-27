@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin\LocationManagement;
 
 use App\Models\Location;
+use App\Support\CacheKeys;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
@@ -37,6 +39,8 @@ class Create extends Component
             'name' => $this->name,
             'is_disabled' => false,
         ]);
+
+        Cache::forget(CacheKeys::locationsAll());
 
         $locationName = trim($this->name);
         $this->closeModal();

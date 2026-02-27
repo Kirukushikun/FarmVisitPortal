@@ -6,7 +6,7 @@
         </div>
     @endif
 
-    <div class="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+    <div wire:poll.30s class="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
         <div class="max-w-6xl mx-auto">
             <!-- Header -->
             <div class="mb-8">

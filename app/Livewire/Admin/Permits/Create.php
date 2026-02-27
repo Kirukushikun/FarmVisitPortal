@@ -116,16 +116,21 @@ class Create extends Component
 
         $durationSeconds = $this->calculateExpectedDurationSeconds();
 
-        $status = 0; // Scheduled
-        if ($this->dateOfVisit) {
-            $visitDate = Carbon::parse($this->dateOfVisit)->startOfDay();
-            $today = now()->startOfDay();
+        $visitDate = Carbon::parse($this->dateOfVisit)->startOfDay();
+        $today = now()->startOfDay();
 
-            if ($visitDate->isSameDay($today)) {
-                $status = 1; // In Progress
-            } elseif ($visitDate->isAfter($today)) {
-                $status = 0; // Scheduled
-            }
+        $status = 0; // Scheduled
+        $completedAt = null;
+        $receivedBy = null;
+
+        if ($visitDate->isSameDay($today)) {
+            $status = 1; // In Progress
+        } elseif ($visitDate->isAfter($today)) {
+            $status = 0; // Scheduled
+        } else {
+            $status = 2; // Completed
+            $completedAt = now();
+            $receivedBy = (int) Auth::id();
         }
 
         $permit = Permit::create([
@@ -141,7 +146,8 @@ class Create extends Component
             'purpose' => $this->purpose !== '' ? $this->purpose : null,
             'status' => $status,
             'created_by' => (int) Auth::id(),
-            'received_by' => null,
+            'received_by' => $receivedBy,
+            'completed_at' => $completedAt,
         ]);
 
         $permitId = (string) ($permit->permit_id ?? '');

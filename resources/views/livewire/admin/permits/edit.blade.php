@@ -73,7 +73,6 @@
                     name="dateOfVisit"
                     type="date"
                     :wireModel="'dateOfVisit'"
-                    :min="now()->toDateString()"
                 />
 
                 <div>

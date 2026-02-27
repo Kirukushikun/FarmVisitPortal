@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin\UserManagement;
 
 use App\Models\User;
+use App\Support\CacheKeys;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
@@ -22,12 +24,14 @@ class Edit extends Component
 
     public function openModal($userId): void
     {
-        $user = User::where('user_type', 0)->find((int) $userId);
+        $userId = (int) $userId;
+        $cacheKey = CacheKeys::user($userId);
+        $user = Cache::remember($cacheKey, 300, fn () => User::where('user_type', 0)->find($userId));
         if (! $user) {
             return;
         }
 
-        $this->userId = (int) $userId;
+        $this->userId = $userId;
         $this->firstName = (string) $user->first_name;
         $this->lastName = (string) $user->last_name;
         $this->resetValidation();
@@ -64,6 +68,9 @@ class Edit extends Component
             'last_name' => $this->lastName,
             'username' => $username,
         ]);
+
+        Cache::forget(CacheKeys::usersAll());
+        Cache::forget(CacheKeys::user((int) $this->userId));
 
         $fullName = trim($this->firstName . ' ' . $this->lastName);
         $this->closeModal();
