@@ -1,11 +1,4 @@
 <div>
-    <!-- Flash Messages -->
-    @if (session()->has('success'))
-        <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-            <p class="text-green-800 dark:text-green-200">{{ session('success') }}</p>
-        </div>
-    @endif
-
     <div class="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
         <div class="max-w-6xl mx-auto">
             <!-- Header -->

@@ -75,7 +75,8 @@ class PortalController extends Controller
     {
         $user = $request->user();
 
-        if ((int) ($user->user_type ?? 0) === 1) {
+        $isAdmin = (int) ($user->user_type ?? 0) === 1;
+        if (! $isAdmin && (int) ($permit->created_by ?? 0) !== (int) ($user->id ?? 0)) {
             abort(403);
         }
 
@@ -96,7 +97,8 @@ class PortalController extends Controller
     {
         $user = $request->user();
 
-        if ((int) ($user->user_type ?? 0) === 1) {
+        $isAdmin = (int) ($user->user_type ?? 0) === 1;
+        if (! $isAdmin && (int) ($permit->created_by ?? 0) !== (int) ($user->id ?? 0)) {
             abort(403);
         }
 
