@@ -29,17 +29,6 @@ class PortalController extends Controller
         return view('auth.change-password-page');
     }
 
-    public function userCreatePermit(Request $request): mixed
-    {
-        $user = $request->user();
-
-        if ((int) ($user->user_type ?? 0) === 1 && (string) $request->session()->get('ui_mode') !== 'user') {
-            abort(403);
-        }
-
-        return view('user.permits.create');
-    }
-
     public function adminHome(Request $request): mixed
     {
         $user = $request->user();
