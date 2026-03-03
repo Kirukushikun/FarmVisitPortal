@@ -53,7 +53,7 @@
                 />
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expected Duration</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expected Duration <span class="text-red-500">*</span></label>
                     <div class="grid grid-cols-1 sm:grid-cols-1 gap-4">
                         <div>
                             <x-text-input

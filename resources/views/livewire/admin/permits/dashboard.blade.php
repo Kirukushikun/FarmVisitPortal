@@ -202,7 +202,7 @@
                                     <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200 font-medium">{{ $permit->permit_id }}</p>
                                     <p class="block text-[11px] md:text-xs text-slate-500 dark:text-slate-400">{{ $permit->created_at ? $permit->created_at->format('d M, Y g:i A') : 'N/A' }}</p>
                                 </div>
-                            </td>hur
+                            </td>
                             <td class="p-3 md:p-4 py-4 md:py-5 text-left">
                                 <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ $permit->date_of_visit ? $permit->date_of_visit->format('d M, Y') : 'N/A' }}</p>
                             </td>
@@ -274,7 +274,7 @@
         <div class="md:hidden">
             @forelse($permits as $permit)
                 <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm dark:shadow-lg p-4 space-y-3 mb-4">
-                    <div class="flex justify-between items-start">hur
+                    <div class="flex justify-between items-start">
                         <div class="space-y-1">
                             <p class="text-xs text-gray-500 dark:text-gray-400">{{ $permit->created_at ? $permit->created_at->format('d M, Y g:i A') : 'N/A' }}</p>
                             <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $permit->permit_id }}</p>

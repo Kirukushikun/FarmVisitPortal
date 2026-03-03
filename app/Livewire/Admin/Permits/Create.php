@@ -74,9 +74,8 @@ class Create extends Component
 
     public function nextStep(): void
     {
-        $this->validate($this->rulesForStep($this->currentStep));
-
         if ($this->currentStep < 2) {
+            $this->resetValidation();
             $this->currentStep++;
         }
     }
@@ -84,6 +83,7 @@ class Create extends Component
     public function previousStep(): void
     {
         if ($this->currentStep > 1) {
+            $this->resetValidation();
             $this->currentStep--;
         }
     }
