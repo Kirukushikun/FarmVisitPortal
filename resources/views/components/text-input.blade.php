@@ -8,6 +8,9 @@
     'type' => 'text',
     'min' => null,
     'max' => null,
+    'step' => null,
+    'readonly' => false,
+    'disabled' => false,
     'class' => '',
     'icon' => '',
     'wireModel' => null,
@@ -57,6 +60,9 @@
             @if($required) required @endif
             @if($min !== null) min="{{ $min }}" @endif
             @if($max !== null) max="{{ $max }}" @endif
+            @if($step !== null) step="{{ $step }}" @endif
+            @if($readonly) readonly @endif
+            @if($disabled) disabled @endif
             class="mt-1 block w-full rounded-lg border shadow-sm {{ $icon ? 'pl-10' : 'px-4' }} py-2
             {{ $errors->has($errorKey)
                 ? 'border-red-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-red-500 focus:ring-red-200'

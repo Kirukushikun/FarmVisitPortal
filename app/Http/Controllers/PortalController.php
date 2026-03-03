@@ -35,7 +35,6 @@ class PortalController extends Controller
 
         $permit->load([
             'farmLocation',
-            'destinationLocation',
             'previousFarmLocation',
         ]);
 
@@ -190,7 +189,6 @@ class PortalController extends Controller
 
         $permit->load([
             'farmLocation',
-            'destinationLocation',
             'previousFarmLocation',
         ]);
 

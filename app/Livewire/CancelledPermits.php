@@ -55,16 +55,11 @@ class CancelledPermits extends Component
     {
         $user = Auth::user();
         
-        $query = Permit::with(['farmLocation', 'destinationLocation', 'receivedBy'])
+        $query = Permit::with(['farmLocation', 'receivedBy'])
             ->where('status', 3) // Cancelled
             ->whereNull('received_by') // Not received by anyone
             ->whereDate('date_of_visit', '<', Carbon::today())
             ->orderBy('date_of_visit', 'desc');
-
-        // Only filter by location if user has location_id
-        if ($user && isset($user->location_id)) {
-            $query->where('destination_location_id', $user->location_id);
-        }
 
         if ($this->search) {
             $query->where('permit_id', 'like', '%' . $this->search . '%');

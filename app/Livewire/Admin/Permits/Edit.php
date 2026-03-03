@@ -6,6 +6,7 @@ use App\Models\Location;
 use App\Models\Permit;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class Edit extends Component
@@ -13,7 +14,7 @@ class Edit extends Component
     public int $currentStep = 1;
 
     /** @var int[] */
-    public array $visibleStepIds = [1, 2, 3];
+    public array $visibleStepIds = [1, 2];
 
     public string $area = '';
 
@@ -21,17 +22,10 @@ class Edit extends Component
 
     public string $names = '';
 
-    public string $areaToVisit = '';
-
-    public string $destinationLocationId = '';
 
     public string $dateOfVisit = '';
 
-    public ?int $expectedDurationHours = null;
-
-    public ?int $expectedDurationMinutes = null;
-
-    public ?int $expectedDurationSeconds = null;
+    public string $expectedDurationHours = '';
 
     public string $previousFarmLocationId = '';
 
@@ -49,6 +43,7 @@ class Edit extends Component
         'string' => 'Please enter valid text.',
         'date' => 'Please select a valid date.',
         'before_or_equal' => 'Please select a valid date.',
+        'after_or_equal' => 'Please select a valid date.',
         'max' => 'Please enter a valid value.',
         'min' => 'Please enter a valid value.',
         'exists' => 'Please select a valid option.',
@@ -56,25 +51,16 @@ class Edit extends Component
 
         'farmLocationId.required' => 'Please select a farm.',
         'farmLocationId.exists' => 'Please select a valid farm.',
-        'destinationLocationId.required' => 'Please select a destination.',
-        'destinationLocationId.exists' => 'Please select a valid destination.',
-        'destinationLocationId.not_in' => 'Destination must be different from the farm.',
         'dateOfVisit.required' => 'Please select the date of visit.',
 
-        'expectedDurationMinutes.max' => 'Minutes must be between 0 and 59.',
-        'expectedDurationSeconds.max' => 'Seconds must be between 0 and 59.',
     ];
 
     protected array $validationAttributes = [
         'area' => 'area',
         'farmLocationId' => 'farm',
         'names' => 'names',
-        'areaToVisit' => 'area to visit',
-        'destinationLocationId' => 'destination',
         'dateOfVisit' => 'date of visit',
         'expectedDurationHours' => 'expected duration (hours)',
-        'expectedDurationMinutes' => 'expected duration (minutes)',
-        'expectedDurationSeconds' => 'expected duration (seconds)',
         'previousFarmLocationId' => 'previous farm visited',
         'dateOfVisitPreviousFarm' => 'previous farm visit date',
         'purpose' => 'purpose',
@@ -108,15 +94,9 @@ class Edit extends Component
         $this->area = $this->permit->area ?? '';
         $this->farmLocationId = (string) ($this->permit->farm_location_id ?? '');
         $this->names = $this->permit->names ?? '';
-        $this->areaToVisit = $this->permit->area_to_visit ?? '';
-        $this->destinationLocationId = (string) ($this->permit->destination_location_id ?? '');
         $this->dateOfVisit = $this->permit->date_of_visit?->format('Y-m-d') ?? '';
         
-        // Parse duration
-        $totalSeconds = $this->permit->expected_duration_seconds ?? 0;
-        $this->expectedDurationHours = intdiv($totalSeconds, 3600);
-        $this->expectedDurationMinutes = intdiv($totalSeconds % 3600, 60);
-        $this->expectedDurationSeconds = $totalSeconds % 60;
+        $this->expectedDurationHours = (string) ($this->permit->expected_duration_hours ?? '');
         
         $this->previousFarmLocationId = (string) ($this->permit->previous_farm_location_id ?? '');
         $this->dateOfVisitPreviousFarm = $this->permit->date_of_visit_previous_farm?->format('Y-m-d') ?? '';
@@ -125,7 +105,8 @@ class Edit extends Component
 
     public function nextStep(): void
     {
-        if ($this->currentStep < (int) end($this->visibleStepIds)) {
+        if ($this->currentStep < 2) {
+            $this->resetValidation();
             $this->currentStep++;
         }
     }
@@ -133,58 +114,89 @@ class Edit extends Component
     public function previousStep(): void
     {
         if ($this->currentStep > 1) {
+            $this->resetValidation();
             $this->currentStep--;
         }
     }
 
     public function updatedFarmLocationId(): void
     {
-        if ($this->destinationLocationId !== '' && $this->destinationLocationId === $this->farmLocationId) {
-            $this->destinationLocationId = '';
-        }
+        return;
     }
 
     public function submitForm(): mixed
     {
-        $this->validate($this->rulesForSubmit());
+        try {
+            $this->validate($this->rulesForSubmit());
 
-        $originalDateOfVisit = $this->permit->date_of_visit?->format('Y-m-d');
-        $durationSeconds = $this->calculateExpectedDurationSeconds();
+            $originalDateOfVisit = $this->permit->date_of_visit?->format('Y-m-d');
+            $durationHours = $this->calculateExpectedDurationHoursForSubmit();
 
-        $newDateOfVisit = $this->dateOfVisit !== '' ? Carbon::parse($this->dateOfVisit) : null;
-        $newDateOfVisitString = $newDateOfVisit?->format('Y-m-d');
-        $isRescheduled = $originalDateOfVisit !== $newDateOfVisitString;
+            $newDateOfVisit = $this->dateOfVisit !== '' ? Carbon::parse($this->dateOfVisit) : null;
+            $newDateOfVisitString = $newDateOfVisit?->format('Y-m-d');
+            $isRescheduled = $originalDateOfVisit !== $newDateOfVisitString;
 
-        // Update permit
-        $this->permit->update([
-            'area' => $this->area,
-            'farm_location_id' => (int) $this->farmLocationId,
-            'names' => $this->names,
-            'area_to_visit' => $this->areaToVisit,
-            'destination_location_id' => (int) $this->destinationLocationId,
-            'date_of_visit' => $newDateOfVisit,
-            'expected_duration_seconds' => $durationSeconds,
-            'previous_farm_location_id' => $this->previousFarmLocationId !== '' ? (int) $this->previousFarmLocationId : null,
-            'date_of_visit_previous_farm' => $this->dateOfVisitPreviousFarm !== '' ? Carbon::parse($this->dateOfVisitPreviousFarm) : null,
-            'purpose' => $this->purpose !== '' ? $this->purpose : null,
-            'completed_at' => $isRescheduled ? null : $this->permit->completed_at,
-        ]);
+            // Update permit
+            $this->permit->update([
+                'area' => $this->area,
+                'farm_location_id' => (int) $this->farmLocationId,
+                'names' => $this->names,
+                'date_of_visit' => $newDateOfVisit,
+                'expected_duration_hours' => $durationHours,
+                'previous_farm_location_id' => $this->previousFarmLocationId !== '' ? (int) $this->previousFarmLocationId : null,
+                'date_of_visit_previous_farm' => $this->dateOfVisitPreviousFarm !== '' ? Carbon::parse($this->dateOfVisitPreviousFarm) : null,
+                'purpose' => $this->purpose !== '' ? $this->purpose : null,
+                'completed_at' => $isRescheduled ? null : $this->permit->completed_at,
+            ]);
 
-        // Auto-update status based on date
-        $this->updatePermitStatus();
+            // Auto-update status based on date
+            $this->updatePermitStatus();
 
-        $permitId = (string) ($this->permit->permit_id ?? '');
-        $suffix = $permitId !== '' ? " (" . $permitId . ")" : '';
-        session()->flash('toast', [
-            'message' => 'Permit has been updated successfully!' . $suffix,
-            'type' => 'success',
-        ]);
+            $permitId = (string) ($this->permit->permit_id ?? '');
+            $suffix = $permitId !== '' ? " (" . $permitId . ")" : '';
+            session()->flash('toast', [
+                'message' => 'Permit has been updated successfully!' . $suffix,
+                'type' => 'success',
+            ]);
 
-        if ($this->returnUrl) {
-            return redirect()->to($this->returnUrl);
+            if ($this->returnUrl) {
+                return redirect()->to($this->returnUrl);
+            }
+
+            return redirect()->route('admin.permits.index');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // On validation failure, determine which step has the error and go to that step
+            $failedFields = array_keys($e->validator->failed());
+            
+            // Step 1 fields: area, farmLocationId, names, dateOfVisit, expectedDurationHours
+            $step1Fields = ['area', 'farmLocationId', 'names', 'dateOfVisit', 'expectedDurationHours'];
+            
+            // Check if any step 1 fields failed
+            foreach ($step1Fields as $field) {
+                if (in_array($field, $failedFields)) {
+                    $this->currentStep = 1;
+                    throw $e; // Re-throw to show validation errors
+                }
+            }
+            
+            // Otherwise go to step 2
+            $this->currentStep = 2;
+            throw $e; // Re-throw to show validation errors
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            Log::error('Permit edit failed: ' . $e->getMessage(), [
+                'permit_id' => $this->permit->id,
+                'error' => $e->getTraceAsString()
+            ]);
+            
+            // Flash error message to user
+            session()->flash('toast', [
+                'message' => 'Failed to update permit. Please try again.',
+                'type' => 'error',
+            ]);
+            
+            return null;
         }
-
-        return redirect()->route('admin.permits.index');
     }
 
     private function updatePermitStatus(): void
@@ -240,20 +252,6 @@ class Edit extends Component
             ->get();
     }
 
-    public function getDestinationLocationsProperty()
-    {
-        $query = Location::query()
-            ->where('is_disabled', false)
-            ->orderBy('name');
-
-        $farmId = (int) $this->farmLocationId;
-        if ($farmId > 0) {
-            $query->where('id', '!=', $farmId);
-        }
-
-        return $query->get();
-    }
-
     public function getPreviousFarmLocationsProperty()
     {
         return Location::query()
@@ -264,29 +262,39 @@ class Edit extends Component
 
     protected function rulesForSubmit(): array
     {
-        return [
+        $rules = [
             'area' => ['required', 'string', 'max:255'],
             'farmLocationId' => ['required', 'integer', 'exists:locations,id'],
             'names' => ['required', 'string'],
-            'areaToVisit' => ['required', 'string'],
-            'destinationLocationId' => ['required', 'integer', 'exists:locations,id'],
-            'dateOfVisit' => ['required', 'date'],
-            'expectedDurationHours' => ['nullable', 'integer', 'min:0'],
-            'expectedDurationMinutes' => ['nullable', 'integer', 'min:0', 'max:59'],
-            'expectedDurationSeconds' => ['nullable', 'integer', 'min:0', 'max:59'],
+            'expectedDurationHours' => ['required', 'numeric', 'gt:0'],
             'previousFarmLocationId' => ['nullable', 'integer', 'exists:locations,id'],
             'dateOfVisitPreviousFarm' => ['nullable', 'date', 'before_or_equal:today'],
             'purpose' => ['nullable', 'string'],
         ];
+
+        // For dateOfVisit, allow past dates if the permit already has a past date
+        // but don't allow setting future dates to past dates
+        if ($this->permit->date_of_visit && $this->permit->date_of_visit->isPast()) {
+            // Permit has past date - allow any date (including past)
+            $rules['dateOfVisit'] = ['required', 'date'];
+        } else {
+            // Permit has current/future date - don't allow setting to past
+            $rules['dateOfVisit'] = ['required', 'date', 'after_or_equal:today'];
+        }
+
+        return $rules;
     }
 
-    private function calculateExpectedDurationSeconds(): int
+    private function calculateExpectedDurationHours(): ?float
     {
-        $hours = $this->expectedDurationHours ?? 0;
-        $minutes = $this->expectedDurationMinutes ?? 0;
-        $seconds = $this->expectedDurationSeconds ?? 0;
+        $hours = (float) ($this->expectedDurationHours ?? 0);
+        return $hours > 0 ? $hours : null;
+    }
 
-        return ($hours * 3600) + ($minutes * 60) + $seconds;
+    private function calculateExpectedDurationHoursForSubmit(): ?float
+    {
+        $hours = (float) ($this->expectedDurationHours ?? 0);
+        return $hours > 0 ? $hours : null;
     }
 
     public function render()

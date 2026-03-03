@@ -49,7 +49,7 @@
                                         </div>
                                         <div>
                                             <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $permit->permit_id }}</h3>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">Duration: {{ gmdate('H:i', $permit->expected_duration_seconds) }}</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">Duration: {{ rtrim(rtrim(number_format((float) ($permit->expected_duration_hours ?? 0), 2, '.', ''), '0'), '.') }}h</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium cursor-pointer">
@@ -64,7 +64,11 @@
                                 <div class="space-y-3">
                                     <div>
                                         <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Visitor Name</p>
-                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $permit->names }}</p>
+                                        @if (is_string($permit->names) && trim($permit->names) !== '')
+                                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100 whitespace-pre-line">{{ trim($permit->names) }}</p>
+                                        @else
+                                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $permit->names }}</p>
+                                        @endif
                                     </div>
                                 </div>
                             </div>

@@ -6,17 +6,14 @@
         <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
             <div class="p-4">
                 @php
-                    function permitPrintDuration(?int $seconds): string {
-                        if ($seconds === null) {
+                    function permitPrintDuration(?int $hours): string {
+                        if ($hours === null) {
                             return '';
                         }
 
-                        $seconds = max(0, (int) $seconds);
-                        $hours = intdiv($seconds, 3600);
-                        $minutes = intdiv($seconds % 3600, 60);
-                        $remainingSeconds = $seconds % 60;
+                        $hours = max(0, (int) $hours);
 
-                        return sprintf('%02d:%02d:%02d', $hours, $minutes, $remainingSeconds);
+                        return sprintf('%02d:00:00', $hours);
                     }
 
                     function permitDisplayValue(mixed $value): string {
@@ -35,9 +32,8 @@
 
                     $dateFilled = $permit->created_at ? $permit->created_at->format('F j, Y') : '';
                     $farm = $permit->farmLocation?->name ?: '';
-                    $destination = $permit->destinationLocation?->name ?: '';
                     $dateOfVisit = $permit->date_of_visit ? $permit->date_of_visit->format('F j, Y') : '';
-                    $expectedDuration = permitPrintDuration($permit->expected_duration_seconds);
+                    $expectedDuration = permitPrintDuration($permit->expected_duration_hours);
                     $previousFarm = $permit->previousFarmLocation?->name ?: '';
                     $previousFarmDate = $permit->date_of_visit_previous_farm ? $permit->date_of_visit_previous_farm->format('F j, Y') : '';
                 @endphp
@@ -93,15 +89,19 @@
                                     </div>
                                     <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Name</div>
-                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($permit->names ?? null) }}</div>
+                                        @if (is_string($permit->names) && trim($permit->names) !== '')
+                                            <div class="text-gray-900 dark:text-white whitespace-pre-line">{{ trim($permit->names) }}</div>
+                                        @else
+                                            <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($permit->names ?? null) }}</div>
+                                        @endif
                                     </div>
                                     <div>
-                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Area / Section / Department to Visit</div>
-                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($permit->area_to_visit ?? null) }}</div>
+                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Area/Department to Visit</div>
+                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($permit->area ?? null) }}</div>
                                     </div>
                                     <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Destination</div>
-                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($destination) }}</div>
+                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($farm) }}</div>
                                     </div>
                                     <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Date of Visit</div>
@@ -161,12 +161,22 @@
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 w-1/4 align-top text-gray-900 dark:text-gray-100" colspan="2"><span class="font-bold text-gray-900 dark:text-gray-100">Date Filled:</span> {{ permitDisplayValue($dateFilled) }}</td>
                                     </tr>
                                     <tr>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2"><span class="font-bold text-gray-900 dark:text-gray-100">NAME:</span> {{ permitDisplayValue($permit->names ?? null) }}</td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2"><span class="font-bold text-gray-900 dark:text-gray-100">Area / Section / Department to Visit:</span> {{ permitDisplayValue($permit->area_to_visit ?? null) }}</td>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2">
+                                            <div class="font-bold text-gray-900 dark:text-gray-100">NAME:</div>
+                                            @if (is_string($permit->names) && trim($permit->names) !== '')
+                                                <div style="white-space: pre-line;">{{ trim($permit->names) }}</div>
+                                            @else
+                                                <div>{{ permitDisplayValue($permit->names ?? null) }}</div>
+                                            @endif
+                                        </td>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2">
+                                            <div class="font-bold text-gray-900 dark:text-gray-100">Area / Section / Department to Visit:</div>
+                                            <div>{{ permitDisplayValue($permit->area ?? null) }}</div>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">DESTINATION</span></td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">{{ permitDisplayValue($destination) }}</td>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">{{ permitDisplayValue($farm) }}</td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 whitespace-nowrap text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">DATE of VISIT</span></td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 whitespace-nowrap text-gray-900 dark:text-gray-100">{{ permitDisplayValue($dateOfVisit) }}</td>
                                     </tr>
