@@ -251,7 +251,7 @@ class Dashboard extends Component
 
     protected function baseQuery(): Builder
     {
-        $permits = Permit::query()->with(['destinationLocation', 'receivedBy']);
+        $permits = Permit::query()->with(['receivedBy']);
 
         $search = trim($this->search);
         if ($search !== '') {
@@ -259,10 +259,7 @@ class Dashboard extends Component
                 $query
                     ->where('permit_id', 'like', '%' . $search . '%')
                     ->orWhere('area', 'like', '%' . $search . '%')
-                    ->orWhere('names', 'like', '%' . $search . '%')
-                    ->orWhereHas('destinationLocation', function (Builder $q) use ($search) {
-                        $q->where('name', 'like', '%' . $search . '%');
-                    });
+                    ->orWhere('names', 'like', '%' . $search . '%');
             });
         }
 

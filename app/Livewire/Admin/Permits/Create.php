@@ -14,7 +14,7 @@ class Create extends Component
     public int $currentStep = 1;
 
     /** @var int[] */
-    public array $visibleStepIds = [1, 2, 3];
+    public array $visibleStepIds = [1, 2];
 
     public string $area = '';
 
@@ -22,17 +22,10 @@ class Create extends Component
 
     public string $names = '';
 
-    public string $areaToVisit = '';
-
-    public string $destinationLocationId = '';
 
     public string $dateOfVisit = '';
 
-    public ?int $expectedDurationHours = null;
-
-    public ?int $expectedDurationMinutes = null;
-
-    public ?int $expectedDurationSeconds = null;
+    public ?float $expectedDurationHours = null;
 
     public string $previousFarmLocationId = '';
 
@@ -48,6 +41,7 @@ class Create extends Component
         'string' => 'Please enter valid text.',
         'date' => 'Please select a valid date.',
         'before_or_equal' => 'Please select a valid date.',
+        'after_or_equal' => 'Please select a valid date.',
         'max' => 'Please enter a valid value.',
         'min' => 'Please enter a valid value.',
         'exists' => 'Please select a valid option.',
@@ -55,25 +49,16 @@ class Create extends Component
 
         'farmLocationId.required' => 'Please select a farm.',
         'farmLocationId.exists' => 'Please select a valid farm.',
-        'destinationLocationId.required' => 'Please select a destination.',
-        'destinationLocationId.exists' => 'Please select a valid destination.',
-        'destinationLocationId.not_in' => 'Destination must be different from the farm.',
         'dateOfVisit.required' => 'Please select the date of visit.',
 
-        'expectedDurationMinutes.max' => 'Minutes must be between 0 and 59.',
-        'expectedDurationSeconds.max' => 'Seconds must be between 0 and 59.',
     ];
 
     protected array $validationAttributes = [
         'area' => 'area',
         'farmLocationId' => 'farm',
         'names' => 'names',
-        'areaToVisit' => 'area to visit',
-        'destinationLocationId' => 'destination',
         'dateOfVisit' => 'date of visit',
         'expectedDurationHours' => 'expected duration (hours)',
-        'expectedDurationMinutes' => 'expected duration (minutes)',
-        'expectedDurationSeconds' => 'expected duration (seconds)',
         'previousFarmLocationId' => 'previous farm visited',
         'dateOfVisitPreviousFarm' => 'previous farm visit date',
         'purpose' => 'purpose',
@@ -91,7 +76,7 @@ class Create extends Component
     {
         $this->validate($this->rulesForStep($this->currentStep));
 
-        if ($this->currentStep < 3) {
+        if ($this->currentStep < 2) {
             $this->currentStep++;
         }
     }
@@ -105,16 +90,14 @@ class Create extends Component
 
     public function updatedFarmLocationId(): void
     {
-        if ($this->destinationLocationId !== '' && $this->destinationLocationId === $this->farmLocationId) {
-            $this->destinationLocationId = '';
-        }
+        return;
     }
 
     public function submitForm(): mixed
     {
         $this->validate($this->rulesForSubmit());
 
-        $durationSeconds = $this->calculateExpectedDurationSeconds();
+        $durationHours = $this->calculateExpectedDurationHours();
 
         $visitDate = Carbon::parse($this->dateOfVisit)->startOfDay();
         $today = now()->startOfDay();
@@ -137,10 +120,8 @@ class Create extends Component
             'area' => $this->area,
             'farm_location_id' => (int) $this->farmLocationId,
             'names' => $this->names,
-            'area_to_visit' => $this->areaToVisit,
-            'destination_location_id' => (int) $this->destinationLocationId,
             'date_of_visit' => Carbon::parse($this->dateOfVisit),
-            'expected_duration_seconds' => $durationSeconds,
+            'expected_duration_hours' => $durationHours,
             'previous_farm_location_id' => $this->previousFarmLocationId !== '' ? (int) $this->previousFarmLocationId : null,
             'date_of_visit_previous_farm' => $this->dateOfVisitPreviousFarm !== '' ? Carbon::parse($this->dateOfVisitPreviousFarm) : null,
             'purpose' => $this->purpose !== '' ? $this->purpose : null,
@@ -187,20 +168,6 @@ class Create extends Component
             ->get();
     }
 
-    public function getDestinationLocationsProperty()
-    {
-        $query = Location::query()
-            ->where('is_disabled', false)
-            ->orderBy('name');
-
-        $farmId = (int) $this->farmLocationId;
-        if ($farmId > 0) {
-            $query->where('id', '!=', $farmId);
-        }
-
-        return $query->get();
-    }
-
     public function getPreviousFarmLocationsProperty()
     {
         return Location::query()
@@ -216,31 +183,20 @@ class Create extends Component
                 'area' => ['required', 'string', 'min:2', 'max:255'],
                 'farmLocationId' => ['required', 'integer', Rule::exists('locations', 'id')],
                 'names' => ['required', 'string', 'min:2'],
-                'areaToVisit' => ['required', 'string', 'min:2'],
+                'dateOfVisit' => ['required', 'date', 'after_or_equal:today'],
+                'expectedDurationHours' => ['required', 'numeric', 'gt:0'],
             ];
         }
 
         if ($step === 2) {
-            $farmId = (int) $this->farmLocationId;
             return [
-                'destinationLocationId' => [
-                    'required',
-                    'integer',
-                    Rule::exists('locations', 'id'),
-                    Rule::notIn([$farmId]),
-                ],
-                'dateOfVisit' => ['required', 'date'],
-                'expectedDurationHours' => ['nullable', 'integer', 'min:0'],
-                'expectedDurationMinutes' => ['nullable', 'integer', 'min:0', 'max:59'],
-                'expectedDurationSeconds' => ['nullable', 'integer', 'min:0', 'max:59'],
+                'previousFarmLocationId' => ['nullable', 'integer', Rule::exists('locations', 'id')],
+                'dateOfVisitPreviousFarm' => ['nullable', 'date', 'before_or_equal:today'],
+                'purpose' => ['nullable', 'string', 'min:2'],
             ];
         }
 
-        return [
-            'previousFarmLocationId' => ['nullable', 'integer', Rule::exists('locations', 'id')],
-            'dateOfVisitPreviousFarm' => ['nullable', 'date', 'before_or_equal:today'],
-            'purpose' => ['nullable', 'string', 'min:2'],
-        ];
+        return [];
     }
 
     protected function rulesForSubmit(): array
@@ -248,19 +204,13 @@ class Create extends Component
         return array_merge(
             $this->rulesForStep(1),
             $this->rulesForStep(2),
-            $this->rulesForStep(3),
         );
     }
 
-    protected function calculateExpectedDurationSeconds(): ?int
+    protected function calculateExpectedDurationHours(): ?float
     {
-        $hours = (int) ($this->expectedDurationHours ?? 0);
-        $minutes = (int) ($this->expectedDurationMinutes ?? 0);
-        $seconds = (int) ($this->expectedDurationSeconds ?? 0);
-
-        $total = ($hours * 3600) + ($minutes * 60) + $seconds;
-
-        return $total > 0 ? $total : null;
+        $hours = (float) ($this->expectedDurationHours ?? 0);
+        return $hours > 0 ? $hours : null;
     }
 
     public function render()

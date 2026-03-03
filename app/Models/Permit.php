@@ -15,10 +15,8 @@ class Permit extends Model
         'area',
         'farm_location_id',
         'names',
-        'area_to_visit',
-        'destination_location_id',
         'date_of_visit',
-        'expected_duration_seconds',
+        'expected_duration_hours',
         'previous_farm_location_id',
         'date_of_visit_previous_farm',
         'purpose',
@@ -32,12 +30,11 @@ class Permit extends Model
     {
         return [
             'farm_location_id' => 'integer',
-            'destination_location_id' => 'integer',
             'previous_farm_location_id' => 'integer',
             'created_by' => 'integer',
             'received_by' => 'integer',
             'status' => 'integer',
-            'expected_duration_seconds' => 'integer',
+            'expected_duration_hours' => 'decimal:2',
             'date_of_visit' => 'datetime',
             'date_of_visit_previous_farm' => 'datetime',
             'completed_at' => 'datetime',
@@ -75,11 +72,6 @@ class Permit extends Model
     public function farmLocation(): BelongsTo
     {
         return $this->belongsTo(Location::class, 'farm_location_id');
-    }
-
-    public function destinationLocation(): BelongsTo
-    {
-        return $this->belongsTo(Location::class, 'destination_location_id');
     }
 
     public function previousFarmLocation(): BelongsTo

@@ -114,7 +114,7 @@ class HomeDashboard extends Component
 
         $this->cards = [
             'totals' => [
-                'users' => User::query()->count(),
+                'users' => $this->baseUsersQuery()->count(),
                 'locations' => Location::query()->count(),
                 'permits' => $totalPermits,
             ],
@@ -137,7 +137,7 @@ class HomeDashboard extends Component
     protected function newEntitiesPieChart(?Carbon $start, ?Carbon $end): array
     {
         $permits = Permit::query();
-        $users = User::query();
+        $users = $this->baseUsersQuery();
         $locations = Location::query();
 
         if ($start !== null && $end !== null) {
@@ -172,7 +172,7 @@ class HomeDashboard extends Component
         $labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
         $permits = $this->countsByDayForModel(Permit::query(), $start, $end);
-        $users = $this->countsByDayForModel(User::query(), $start, $end);
+        $users = $this->countsByDayForModel($this->baseUsersQuery(), $start, $end);
         $locations = $this->countsByDayForModel(Location::query(), $start, $end);
 
         $permitsData = [];
@@ -236,7 +236,7 @@ class HomeDashboard extends Component
         }
 
         $permits = $this->countsByDayForModel(Permit::query(), $start, $end);
-        $users = $this->countsByDayForModel(User::query(), $start, $end);
+        $users = $this->countsByDayForModel($this->baseUsersQuery(), $start, $end);
         $locations = $this->countsByDayForModel(Location::query(), $start, $end);
 
         $permitsData = [];
@@ -295,7 +295,7 @@ class HomeDashboard extends Component
     protected function yearNewEntitiesChart(Carbon $start, Carbon $end): array
     {
         $permits = $this->countsByMonthForModel(Permit::query(), $start, $end);
-        $users = $this->countsByMonthForModel(User::query(), $start, $end);
+        $users = $this->countsByMonthForModel($this->baseUsersQuery(), $start, $end);
         $locations = $this->countsByMonthForModel(Location::query(), $start, $end);
 
         $labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -366,6 +366,11 @@ class HomeDashboard extends Component
         }
 
         return $out;
+    }
+
+    protected function baseUsersQuery()
+    {
+        return User::query()->where('user_type', 0);
     }
 
     protected function countsByMonthForModel($query, Carbon $start, Carbon $end): array

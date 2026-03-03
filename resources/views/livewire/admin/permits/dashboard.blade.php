@@ -15,17 +15,22 @@
         }
     }
 
-    function permitDuration(?int $seconds): string {
-        if ($seconds === null) {
+    function permitDuration($hours): string {
+        if ($hours === null) {
             return 'N/A';
         }
 
-        $seconds = max(0, (int) $seconds);
-        $hours = intdiv($seconds, 3600);
-        $minutes = intdiv($seconds % 3600, 60);
-        $remainingSeconds = $seconds % 60;
+        $hoursFloat = max(0, (float) $hours);
+        $totalMinutes = (int) round($hoursFloat * 60);
 
-        return sprintf('%02d:%02d:%02d', $hours, $minutes, $remainingSeconds);
+        $displayHours = intdiv($totalMinutes, 60);
+        $displayMinutes = $totalMinutes % 60;
+
+        if ($displayMinutes === 0) {
+            return $displayHours . 'h';
+        }
+
+        return $displayHours . 'h ' . $displayMinutes . 'm';
     }
 @endphp
 
@@ -153,9 +158,6 @@
                                 @endif
                             </p>
                         </th>
-                        <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 text-left">
-                            <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200">Destination</p>
-                        </th>
                         <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-600" wire:click="sortBy('date_of_visit')">
                             <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200 flex items-center gap-1">
                                 Date of Arrival
@@ -200,15 +202,12 @@
                                     <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200 font-medium">{{ $permit->permit_id }}</p>
                                     <p class="block text-[11px] md:text-xs text-slate-500 dark:text-slate-400">{{ $permit->created_at ? $permit->created_at->format('d M, Y g:i A') : 'N/A' }}</p>
                                 </div>
-                            </td>
-                            <td class="p-3 md:p-4 py-4 md:py-5 text-left">
-                                <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ $permit->destinationLocation?->name ?: 'N/A' }}</p>
-                            </td>
+                            </td>hur
                             <td class="p-3 md:p-4 py-4 md:py-5 text-left">
                                 <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ $permit->date_of_visit ? $permit->date_of_visit->format('d M, Y') : 'N/A' }}</p>
                             </td>
                             <td class="p-3 md:p-4 py-4 md:py-5 text-left">
-                                <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ permitDuration($permit->expected_duration_seconds) }}</p>
+                                <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ permitDuration($permit->expected_duration_hours) }}</p>
                             </td>
                             <td class="p-3 md:p-4 py-4 md:py-5 text-center">
                                 {!! permitStatusPill((int) $permit->status) !!}
@@ -275,13 +274,12 @@
         <div class="md:hidden">
             @forelse($permits as $permit)
                 <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm dark:shadow-lg p-4 space-y-3 mb-4">
-                    <div class="flex justify-between items-start">
+                    <div class="flex justify-between items-start">hur
                         <div class="space-y-1">
                             <p class="text-xs text-gray-500 dark:text-gray-400">{{ $permit->created_at ? $permit->created_at->format('d M, Y g:i A') : 'N/A' }}</p>
                             <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $permit->permit_id }}</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Arrival: {{ $permit->date_of_visit ? $permit->date_of_visit->format('d M, Y') : 'N/A' }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Destination: {{ $permit->destinationLocation?->name ?: 'N/A' }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Duration: {{ permitDuration($permit->expected_duration_seconds) }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Duration: {{ permitDuration($permit->expected_duration_hours) }}</p>
                         </div>
                         <div class="text-center">
                             {!! permitStatusPill((int) $permit->status) !!}

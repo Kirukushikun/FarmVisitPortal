@@ -26,8 +26,7 @@ class PermitFactory extends Factory
 
         $dateOfVisit = $this->faker->dateTimeBetween(now()->subMonths(3)->startOfDay(), now()->endOfDay());
 
-        $destinationId = $this->randomLocationId();
-        $farmId = $this->randomLocationId(exceptId: $destinationId);
+        $farmId = $this->randomLocationId();
         $previousFarmId = $this->faker->boolean(40) ? $this->randomLocationId(exceptId: $farmId) : null;
 
         $createdBy = $this->randomUserId(1);
@@ -43,10 +42,8 @@ class PermitFactory extends Factory
             'area' => ucfirst($this->faker->words(2, true)),
             'farm_location_id' => $farmId,
             'names' => $this->faker->name() . "\n" . $this->faker->name(),
-            'area_to_visit' => ucfirst($this->faker->words(4, true)),
-            'destination_location_id' => $destinationId,
             'date_of_visit' => $dateOfVisit,
-            'expected_duration_seconds' => $this->faker->numberBetween(15 * 60, 6 * 3600),
+            'expected_duration_hours' => $this->faker->numberBetween(1, 6),
             'previous_farm_location_id' => $previousFarmId,
             'date_of_visit_previous_farm' => $previousFarmDate,
             'purpose' => $this->faker->boolean(70) ? $this->faker->sentence(8) : null,

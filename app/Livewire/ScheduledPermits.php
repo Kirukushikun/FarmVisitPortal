@@ -55,15 +55,10 @@ class ScheduledPermits extends Component
     {
         $user = Auth::user();
         
-        $query = Permit::with(['farmLocation', 'destinationLocation', 'receivedBy'])
+        $query = Permit::with(['farmLocation', 'receivedBy'])
             ->whereDate('date_of_visit', '>', Carbon::today())
             ->where('status', 0) // Scheduled
             ->orderBy('date_of_visit', 'asc');
-
-        // Only filter by location if user has location_id
-        if ($user && isset($user->location_id)) {
-            $query->where('destination_location_id', $user->location_id);
-        }
 
         if ($this->search) {
             $query->where('permit_id', 'like', '%' . $this->search . '%');
