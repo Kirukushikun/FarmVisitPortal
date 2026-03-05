@@ -2,11 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Area;
-use App\Models\Location;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -19,29 +18,32 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(11)->create();
 
-        User::query()->updateOrCreate(
-            ['username' => 'JMontiano'],
-            ['first_name' => 'Jeff', 'last_name' => 'Montiano', 'user_type' => '1']
-        );
+        $adminDefaults = [
+            'password' => Hash::make('brookside25'),
+            'user_type' => '1',
+        ];
 
-        User::query()->updateOrCreate(
-            ['username' => 'ATrinidad'],
-            ['first_name' => 'Adam', 'last_name' => 'Trinidad', 'user_type' => '1']
-        );
+        $admins = [
+            ['username' => 'JMontiano', 'first_name' => 'Jeff', 'last_name' => 'Montiano'],
+            ['username' => 'ATrinidad', 'first_name' => 'Adam', 'last_name' => 'Trinidad'],
+            ['username' => 'IGuno', 'first_name' => 'Iverson', 'last_name' => 'Guno'],
+            ['username' => 'RRoque', 'first_name' => 'Raniel', 'last_name' => 'Roque'],
+            ['username' => 'JSantos', 'first_name' => 'Jenny', 'last_name' => 'Santos'],
+        ];
 
-        User::query()->updateOrCreate(
-            ['username' => 'IGuno'],
-            ['first_name' => 'Iverson', 'last_name' => 'Guno', 'user_type' => '1']
-        );
+        foreach ($admins as $admin) {
+            $user = User::query()->where('username', $admin['username'])->first();
 
-        User::query()->updateOrCreate(
-            ['username' => 'RRoque'],
-            ['first_name' => 'Raniel', 'last_name' => 'Roque', 'user_type' => '1']
-        );
+            if (! $user) {
+                User::query()->create($admin + $adminDefaults);
+                continue;
+            }
 
-        User::query()->updateOrCreate(
-            ['username' => 'JSantos'],
-            ['first_name' => 'Jenny', 'last_name' => 'Santos', 'user_type' => '1']
-        );
+            $user->update([
+                'first_name' => $admin['first_name'],
+                'last_name' => $admin['last_name'],
+                'user_type' => '1',
+            ]);
+        }
     }
 }

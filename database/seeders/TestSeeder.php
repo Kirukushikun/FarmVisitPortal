@@ -7,7 +7,6 @@ use App\Models\Location;
 use App\Models\Permit;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class TestSeeder extends Seeder
 {
@@ -16,30 +15,39 @@ class TestSeeder extends Seeder
      */
     public function run(): void
     {
-        // Clear existing test data to avoid conflicts
-        DB::table('permits')->delete();
-        DB::table('areas')->delete();
-        DB::table('locations')->delete();
-        
-        // Reset auto-increment for clean start
-        DB::statement('ALTER TABLE locations AUTO_INCREMENT = 1');
-        DB::statement('ALTER TABLE areas AUTO_INCREMENT = 1');
-        DB::statement('ALTER TABLE permits AUTO_INCREMENT = 1');
-        
-        // Only create regular users (user_type = 0), avoid admin users from DatabaseSeeder
-        User::factory()->count(50)->create([
-            'user_type' => '0',
-        ]);
+        $this->call(DatabaseSeeder::class);
 
-        Location::factory()->count(50)->create();
+        $targetRegularUsers = 50;
+        $targetLocations = 50;
+        $targetPermits = 500;
 
-        // Create areas for each location
-        Location::all()->each(function ($location) {
-            Area::factory()->count(rand(3, 8))->create([
-                'location_id' => $location->id,
+        // Only create regular users (user_type = 0)
+        $existingRegularUsers = User::query()->where('user_type', '0')->count();
+        if ($existingRegularUsers < $targetRegularUsers) {
+            User::factory()->count($targetRegularUsers - $existingRegularUsers)->create([
+                'user_type' => '0',
             ]);
-        });
+        }
 
-        Permit::factory()->count(500)->create();
+        // Use deterministic names + updateOrCreate so seeder can be run repeatedly.
+        for ($i = 1; $i <= $targetLocations; $i++) {
+            $location = Location::query()->updateOrCreate(
+                ['name' => 'Test Farm ' . $i],
+                ['is_disabled' => false]
+            );
+
+            // Seed a fixed set of areas per location (avoid random counts so runs are stable)
+            for ($j = 1; $j <= 5; $j++) {
+                Area::query()->updateOrCreate(
+                    ['location_id' => $location->id, 'name' => 'Area ' . $j],
+                    ['is_disabled' => false]
+                );
+            }
+        }
+
+        $existingPermits = Permit::query()->count();
+        if ($existingPermits < $targetPermits) {
+            Permit::factory()->count($targetPermits - $existingPermits)->create();
+        }
     }
 }
