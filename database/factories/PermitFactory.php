@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Area;
 use App\Models\Location;
 use App\Models\Permit;
 use App\Models\User;
@@ -24,9 +25,10 @@ class PermitFactory extends Factory
             3,
         ]);
 
-        $dateOfVisit = $this->faker->dateTimeBetween(now()->subMonths(3)->startOfDay(), now()->endOfDay());
+        $dateOfVisit = $this->faker->dateTimeBetween(now()->subMonths(1)->startOfDay(), now()->addMonths(3)->endOfDay());
 
         $farmId = $this->randomLocationId();
+        $areaId = $this->randomAreaId($farmId);
         $previousFarmId = $this->faker->boolean(40) ? $this->randomLocationId(exceptId: $farmId) : null;
 
         $createdBy = $this->randomUserId(1);
@@ -39,7 +41,7 @@ class PermitFactory extends Factory
 
         return [
             'permit_id' => null,
-            'area' => ucfirst($this->faker->words(2, true)),
+            'area_id' => $areaId,
             'farm_location_id' => $farmId,
             'names' => $this->faker->name() . "\n" . $this->faker->name(),
             'date_of_visit' => $dateOfVisit,
@@ -52,6 +54,27 @@ class PermitFactory extends Factory
             'received_by' => $receivedBy,
             'completed_at' => null,
         ];
+    }
+
+    private function randomAreaId(int $locationId): int
+    {
+        $id = Area::query()
+            ->where('location_id', $locationId)
+            ->where('is_disabled', false)
+            ->inRandomOrder()
+            ->value('id');
+        
+        if (!$id) {
+            // Create a random area for this location if none exist
+            $area = Area::create([
+                'location_id' => $locationId,
+                'name' => ucfirst($this->faker->words(2, true)),
+                'is_disabled' => false,
+            ]);
+            return $area->id;
+        }
+
+        return (int) $id;
     }
 
     private function randomLocationId(?int $exceptId = null): int

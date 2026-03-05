@@ -37,11 +37,30 @@ class ViewAreas extends Component
 
     public bool $processing = false;
 
+    public int $page = 1;
+
+    public int $perPage = 10;
+
     public string $newAreaName = '';
 
     public int $editingAreaId = 0;
 
     public string $editingAreaName = '';
+
+    protected array $queryString = [
+        'page' => ['except' => 1],
+        'perPage' => ['except' => 10],
+    ];
+
+    public function updatedSearch(): void
+    {
+        $this->page = 1;
+    }
+
+    public function updatedStatusFilter(): void
+    {
+        $this->page = 1;
+    }
 
     protected $listeners = ['openViewAreasLocationModal' => 'openModal'];
 
@@ -57,7 +76,7 @@ class ViewAreas extends Component
         $this->locationId = $locationId;
         $this->locationName = (string) $location->name;
 
-        $this->reset(['search', 'statusFilter', 'showStatusFilterDropdown', 'showAddAreaModal', 'showDisableConfirmModal', 'showDeleteConfirmModal', 'confirmAreaName', 'confirmAreaId', 'confirmAreaIsDisabled', 'processing', 'newAreaName', 'editingAreaId', 'editingAreaName']);
+        $this->reset(['search', 'statusFilter', 'showStatusFilterDropdown', 'showAddAreaModal', 'showDisableConfirmModal', 'showDeleteConfirmModal', 'confirmAreaName', 'confirmAreaId', 'confirmAreaIsDisabled', 'processing', 'page', 'perPage', 'newAreaName', 'editingAreaId', 'editingAreaName']);
         $this->resetValidation();
 
         $this->showModal = true;
@@ -66,7 +85,7 @@ class ViewAreas extends Component
     public function closeModal(): void
     {
         $this->showModal = false;
-        $this->reset(['locationId', 'locationName', 'search', 'statusFilter', 'showStatusFilterDropdown', 'showAddAreaModal', 'showDisableConfirmModal', 'showDeleteConfirmModal', 'confirmAreaName', 'confirmAreaId', 'confirmAreaIsDisabled', 'processing', 'newAreaName', 'editingAreaId', 'editingAreaName']);
+        $this->reset(['locationId', 'locationName', 'search', 'statusFilter', 'showStatusFilterDropdown', 'showAddAreaModal', 'showDisableConfirmModal', 'showDeleteConfirmModal', 'confirmAreaName', 'confirmAreaId', 'confirmAreaIsDisabled', 'processing', 'page', 'perPage', 'newAreaName', 'editingAreaId', 'editingAreaName']);
         $this->resetValidation();
     }
 
@@ -298,6 +317,21 @@ class ViewAreas extends Component
         $this->openDeleteConfirmModal($areaId);
     }
 
+    public function nextPage(): void
+    {
+        $this->page++;
+    }
+
+    public function previousPage(): void
+    {
+        $this->page--;
+    }
+
+    public function gotoPage($page): void
+    {
+        $this->page = (int) $page;
+    }
+
     public function render()
     {
         $areas = Area::query()
@@ -312,7 +346,7 @@ class ViewAreas extends Component
                 $query->where('name', 'like', '%' . $this->search . '%');
             })
             ->orderBy('name')
-            ->get();
+            ->paginate($this->perPage, ['*'], 'page', $this->page);
 
         return view('livewire.admin.location-management.view-areas-location-management', [
             'areas' => $areas,

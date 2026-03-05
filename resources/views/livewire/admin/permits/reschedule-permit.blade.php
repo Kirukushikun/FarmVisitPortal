@@ -50,7 +50,7 @@
                         wire:target="confirmReschedulePermit"
                     >
                         <span wire:loading.remove wire:target="confirmReschedulePermit">Save</span>
-                        <span wire:loading wire:target="confirmReschedulePermit">Saving...</span>
+                        <span wire:loading.inline wire:target="confirmReschedulePermit">Saving...</span>
                     </x-button>
                 </div>
             </div>

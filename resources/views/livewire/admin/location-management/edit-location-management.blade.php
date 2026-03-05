@@ -42,7 +42,7 @@
                             wire:target="updateLocation"
                         >
                             <span wire:loading.remove wire:target="updateLocation">Update Location</span>
-                            <span wire:loading wire:target="updateLocation">Updating...</span>
+                            <span wire:loading.inline wire:target="updateLocation">Updating...</span>
                         </x-button>
                     </div>
                 </form>

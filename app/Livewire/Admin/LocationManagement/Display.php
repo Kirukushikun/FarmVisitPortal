@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\LocationManagement;
 
 use App\Models\Location;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -36,9 +37,9 @@ class Display extends Component
 
     public function mount(): void
     {
-        $this->search = (string) request()->get('search', '');
-        $this->page = (int) request()->get('page', 1);
-        $this->statusFilter = (string) request()->get('statusFilter', 'all');
+        $this->search = request('search', '');
+        $this->page = request('page', 1);
+        $this->statusFilter = request('statusFilter', 'all');
     }
 
     public function updatingSearch(): void
@@ -97,24 +98,24 @@ class Display extends Component
 
     protected function baseQuery(): Builder
     {
-        $locations = Location::query()
-            ->addSelect('locations.*')
-            ->where('name', 'like', '%' . $this->search . '%');
+        $query = Location::query()
+            ->where('locations.name', 'like', '%' . $this->search . '%');
 
-        $locations->selectSub(
-            DB::table('areas')
-                ->selectRaw('count(*)')
-                ->whereColumn('location_id', 'locations.id'),
-            'areas_count'
-        );
+        // Use a join instead of subquery to maintain Eloquent Builder
+        $query->leftJoin('areas', function ($join) {
+            $join->on('areas.location_id', '=', 'locations.id')
+                 ->where('areas.is_disabled', false);
+        })
+        ->selectRaw('locations.*, COUNT(areas.id) as areas_count')
+        ->groupBy('locations.id');
 
         if ($this->statusFilter === 'disabled') {
-            $locations->where('is_disabled', true);
+            $query->where('locations.is_disabled', true);
         } elseif ($this->statusFilter === 'enabled') {
-            $locations->where('is_disabled', false);
+            $query->where('locations.is_disabled', false);
         }
 
-        return $locations;
+        return $query;
     }
 
     public function getPaginationData(): array

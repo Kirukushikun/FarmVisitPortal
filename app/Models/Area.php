@@ -28,4 +28,9 @@ class Area extends Model
     {
         return $this->belongsTo(Location::class);
     }
+
+    public function __toString(): string
+    {
+        return (string) $this->name;
+    }
 }

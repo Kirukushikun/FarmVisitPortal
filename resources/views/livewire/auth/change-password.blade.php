@@ -124,7 +124,7 @@
                 class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-orange-600 hover:bg-orange-700 text-white border-orange-600 focus:ring-orange-500"
             >
                 <span wire:loading.remove wire:target="changePassword">Change Password</span>
-                <span wire:loading wire:target="changePassword">Changing...</span>
+                <span wire:loading.inline wire:target="changePassword">Changing...</span>
             </button>
         </div>
     </form>

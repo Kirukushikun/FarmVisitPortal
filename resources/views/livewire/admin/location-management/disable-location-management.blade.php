@@ -60,7 +60,7 @@
                         <span wire:loading.remove wire:target="toggleDisable">
                             {{ $isCurrentlyDisabled ? 'Enable Location' : 'Disable Location' }}
                         </span>
-                        <span wire:loading wire:target="toggleDisable">
+                        <span wire:loading.inline wire:target="toggleDisable">
                             {{ $isCurrentlyDisabled ? 'Enabling...' : 'Disabling...' }}
                         </span>
                     </x-button>

@@ -42,7 +42,7 @@
                             wire:target="createLocation"
                         >
                             <span wire:loading.remove wire:target="createLocation">Create Location</span>
-                            <span wire:loading wire:target="createLocation">Creating...</span>
+                            <span wire:loading.inline wire:target="createLocation">Creating...</span>
                         </x-button>
                     </div>
                 </form>

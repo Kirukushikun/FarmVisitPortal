@@ -52,7 +52,7 @@
                             wire:target="createUser"
                         >
                             <span wire:loading.remove wire:target="createUser">Create User</span>
-                            <span wire:loading wire:target="createUser">Creating...</span>
+                            <span wire:loading.inline wire:target="createUser">Creating...</span>
                         </x-button>
                     </div>
                 </form>

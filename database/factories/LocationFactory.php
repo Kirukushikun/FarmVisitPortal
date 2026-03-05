@@ -14,8 +14,11 @@ class LocationFactory extends Factory
 
     public function definition(): array
     {
+        static $counter = 0;
+        $counter++;
+        
         return [
-            'name' => ucfirst($this->faker->unique()->words(2, true)),
+            'name' => "Location {$counter}",
             'is_disabled' => false,
         ];
     }

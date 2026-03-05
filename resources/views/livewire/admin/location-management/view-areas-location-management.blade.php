@@ -43,7 +43,7 @@
                     </div>
 
                     <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                        <div class="max-h-72 overflow-y-auto">
+                        <div class="overflow-y-auto">
                             <table class="w-full text-left table-auto">
                                 <thead class="bg-slate-50 dark:bg-gray-700">
                                     <tr>
@@ -119,6 +119,41 @@
                                 </tbody>
                             </table>
                         </div>
+                        
+                        @if ($areas->hasPages())
+                            <div class="border-t border-gray-200 dark:border-gray-700 px-4 py-3 bg-white dark:bg-gray-800">
+                                <div class="flex items-center justify-between">
+                                    <div class="text-sm text-gray-700 dark:text-gray-300">
+                                        Showing {{ $areas->firstItem() }} to {{ $areas->lastItem() }} of {{ $areas->total() }} results
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        @if ($areas->onFirstPage())
+                                            <button type="button" disabled class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed">
+                                                Previous
+                                            </button>
+                                        @else
+                                            <button type="button" wire:click="previousPage" class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                                Previous
+                                            </button>
+                                        @endif
+                                        
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">
+                                            Page {{ $areas->currentPage() }} of {{ $areas->lastPage() }}
+                                        </span>
+                                        
+                                        @if ($areas->hasMorePages())
+                                            <button type="button" wire:click="nextPage" class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                                Next
+                                            </button>
+                                        @else
+                                            <button type="button" disabled class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed">
+                                                Next
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -206,7 +241,7 @@
                             <span wire:loading.remove wire:target="confirmDisable">
                                 {{ $confirmAreaIsDisabled ? 'Enable Area' : 'Disable Area' }}
                             </span>
-                            <span wire:loading wire:target="confirmDisable">
+                            <span wire:loading.inline wire:target="confirmDisable">
                                 {{ $confirmAreaIsDisabled ? 'Enabling...' : 'Disabling...' }}
                             </span>
                         </x-button>
@@ -259,7 +294,7 @@
                             wire:target="confirmDelete"
                         >
                             <span wire:loading.remove wire:target="confirmDelete">Delete Area</span>
-                            <span wire:loading wire:target="confirmDelete">Deleting...</span>
+                            <span wire:loading.inline wire:target="confirmDelete">Deleting...</span>
                         </x-button>
                     </div>
                 </div>
@@ -311,7 +346,7 @@
                                 wire:target="createArea"
                             >
                                 <span wire:loading.remove wire:target="createArea">Create</span>
-                                <span wire:loading wire:target="createArea">Creating...</span>
+                                <span wire:loading.inline wire:target="createArea">Creating...</span>
                             </x-button>
                         </div>
                     </form>

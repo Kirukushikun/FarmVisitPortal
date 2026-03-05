@@ -81,7 +81,7 @@
                                 <div class="mt-4 space-y-3 text-sm">
                                     <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Area</div>
-                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($permit->area ?? null) }}</div>
+                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($permit->area->name ?? null) }}</div>
                                     </div>
                                     <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Farm</div>
@@ -97,7 +97,7 @@
                                     </div>
                                     <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Area/Department to Visit</div>
-                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($permit->area ?? null) }}</div>
+                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($permit->area->name ?? null) }}</div>
                                     </div>
                                     <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Destination</div>
@@ -156,7 +156,7 @@
                                         <col style="width: 15%;">
                                     </colgroup>
                                     <tr>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 w-1/4 align-top text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">AREA:</span> {{ permitDisplayValue($permit->area ?? null) }}</td>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 w-1/4 align-top text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">AREA:</span> {{ permitDisplayValue($permit->area->name ?? null) }}</td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 w-1/2 align-top text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">FARM:</span> {{ permitDisplayValue($farm) }}</td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 w-1/4 align-top text-gray-900 dark:text-gray-100" colspan="2"><span class="font-bold text-gray-900 dark:text-gray-100">Date Filled:</span> {{ permitDisplayValue($dateFilled) }}</td>
                                     </tr>
@@ -171,7 +171,7 @@
                                         </td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2">
                                             <div class="font-bold text-gray-900 dark:text-gray-100">Area / Section / Department to Visit:</div>
-                                            <div>{{ permitDisplayValue($permit->area ?? null) }}</div>
+                                            <div>{{ permitDisplayValue($permit->area->name ?? null) }}</div>
                                         </td>
                                     </tr>
                                     <tr>

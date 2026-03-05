@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Permits;
 
+use App\Models\Area;
 use App\Models\Location;
 use App\Models\Permit;
 use Carbon\Carbon;
@@ -16,7 +17,7 @@ class Create extends Component
     /** @var int[] */
     public array $visibleStepIds = [1, 2];
 
-    public string $area = '';
+    public int $areaId = 0;
 
     public string $farmLocationId = '';
 
@@ -54,7 +55,7 @@ class Create extends Component
     ];
 
     protected array $validationAttributes = [
-        'area' => 'area',
+        'areaId' => 'area',
         'farmLocationId' => 'farm',
         'names' => 'names',
         'dateOfVisit' => 'date of visit',
@@ -90,7 +91,18 @@ class Create extends Component
 
     public function updatedFarmLocationId(): void
     {
-        return;
+        // Reset area when farm changes
+        $this->areaId = 0;
+    }
+
+    public function clearDateOfVisit(): void
+    {
+        $this->dateOfVisit = '';
+    }
+
+    public function clearPreviousFarmDate(): void
+    {
+        $this->dateOfVisitPreviousFarm = '';
     }
 
     public function submitForm(): mixed
@@ -117,7 +129,7 @@ class Create extends Component
         }
 
         $permit = Permit::create([
-            'area' => $this->area,
+            'area_id' => $this->areaId,
             'farm_location_id' => (int) $this->farmLocationId,
             'names' => $this->names,
             'date_of_visit' => Carbon::parse($this->dateOfVisit),
@@ -160,6 +172,19 @@ class Create extends Component
         return count($this->visibleStepIds) > 1;
     }
 
+    public function getAreasProperty()
+    {
+        if (empty($this->farmLocationId)) {
+            return collect();
+        }
+
+        return Area::query()
+            ->where('location_id', (int) $this->farmLocationId)
+            ->where('is_disabled', false)
+            ->orderBy('name')
+            ->get();
+    }
+
     public function getFarmLocationsProperty()
     {
         return Location::query()
@@ -180,7 +205,10 @@ class Create extends Component
     {
         if ($step === 1) {
             return [
-                'area' => ['required', 'string', 'min:2', 'max:255'],
+                'areaId' => ['required', 'integer', Rule::exists('areas', 'id')->where(function ($query) {
+                    $query->where('location_id', (int) $this->farmLocationId)
+                          ->where('is_disabled', false);
+                })],
                 'farmLocationId' => ['required', 'integer', Rule::exists('locations', 'id')],
                 'names' => ['required', 'string', 'min:2'],
                 'dateOfVisit' => ['required', 'date', 'after_or_equal:today'],

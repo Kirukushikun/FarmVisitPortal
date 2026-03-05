@@ -25,14 +25,22 @@
                     @endforeach
                 </x-dropdown>
 
-                <x-text-input
+                <x-dropdown
                     label="Area"
-                    name="area"
-                    type="text"
-                    :wireModel="'area'"
-                    placeholder="Enter area"
+                    name="areaId"
+                    error-key="areaId"
+                    wire:model.live="areaId"
                     required
-                />
+                >
+                    @if(empty($farmLocationId))
+                        <option value="" disabled>{{ empty($farmLocationId) ? 'Select a farm first' : 'Select an area' }}</option>
+                    @else
+                        <option value="" hidden selected>Select an area</option>
+                        @foreach($this->areas as $area)
+                            <option value="{{ $area->id }}">{{ $area->name }}</option>
+                        @endforeach
+                    @endif
+                </x-dropdown>
 
                 <x-text-area
                     label="Names"
@@ -48,9 +56,15 @@
                     name="dateOfVisit"
                     type="date"
                     :wireModel="'dateOfVisit'"
-                    :min="now()->toDateString()"
+                    :max="now()->toDateString()"
                     required
-                />
+                >
+                    <x-button type="button" wire:click="clearDateOfVisit" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" title="Clear">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </x-button>
+                </x-text-input>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expected Duration <span class="text-red-500">*</span></label>
@@ -80,6 +94,7 @@
                     placeholder="Select previous farm (optional)"
                     wire:model.live="previousFarmLocationId"
                 >
+                    <option value="">Select previous farm (optional)</option>
                     @foreach($this->previousFarmLocations as $location)
                         <option value="{{ $location->id }}">{{ $location->name }}</option>
                     @endforeach
@@ -91,7 +106,13 @@
                     type="date"
                     :wireModel="'dateOfVisitPreviousFarm'"
                     :max="now()->toDateString()"
-                />
+                >
+                    <x-button type="button" wire:click="clearPreviousFarmDate" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" title="Clear">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </x-button>
+                </x-text-input>
 
                 <x-text-area
                     label="Purpose"

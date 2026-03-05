@@ -43,7 +43,7 @@
                         wire:target="deleteLocation"
                     >
                         <span wire:loading.remove wire:target="deleteLocation">Delete Location</span>
-                        <span wire:loading wire:target="deleteLocation">Deleting...</span>
+                        <span wire:loading.inline wire:target="deleteLocation">Deleting...</span>
                     </x-button>
                 </div>
             </div>

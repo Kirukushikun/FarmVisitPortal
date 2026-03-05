@@ -13,7 +13,7 @@ return new class extends Migration
 
             $table->string('permit_id')->unique();
 
-            $table->string('area');
+            $table->foreignId('area_id')->constrained('areas');
             $table->foreignId('farm_location_id')->constrained('locations');
             $table->text('names');
             $table->timestamp('date_of_visit');

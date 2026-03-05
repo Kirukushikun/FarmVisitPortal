@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Area;
+use App\Models\Location;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
