@@ -239,6 +239,12 @@
                 }
             });
 
+            window.addEventListener('adminHomeDashboardCalendarUpdated', (event) => {
+                if (!event.detail || !event.detail.calendar) return;
+                // Only calendar data is updated, charts and pie remain unchanged
+                @this.set('calendar', event.detail.calendar);
+            });
+
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);
             } else {
