@@ -76,7 +76,7 @@
                                 type="number"
                                 :wireModel="'expectedDurationHours'"
                                 step="0.25"
-                                min="0"
+                                min="0.25"
                                 placeholder="Hours"
                                 required
                             />
