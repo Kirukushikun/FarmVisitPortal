@@ -8,8 +8,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Schedule permit status update to run every day at midnight
+// Schedule permit status update to run every day at midnight (00:00)
 Schedule::command('permits:update-statuses')
-    ->daily()
+    ->dailyAt('00:00')
     ->description('Update permit statuses based on visit dates')
     ->withoutOverlapping();
