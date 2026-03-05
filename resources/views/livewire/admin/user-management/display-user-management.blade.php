@@ -139,6 +139,9 @@
                                 @endif
                             </p>
                         </th>
+                        <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 text-center">
+                            <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200 text-center">Status</p>
+                        </th>
                         <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-600" wire:click="sortBy('created_at')">
                             <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200 flex items-center gap-1">
                                 Created Date
@@ -152,9 +155,6 @@
                                     </svg>
                                 @endif
                             </p>
-                        </th>
-                        <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 text-center">
-                            <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200">Status</p>
                         </th>
                         <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 text-center">
                             <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200">Actions</p>
@@ -173,15 +173,15 @@
                             <td class="p-3 md:p-4 py-4 md:py-5">
                                 <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ $user->username }}</p>
                             </td>
-                            <td class="p-3 md:p-4 py-4 md:py-5">
-                                <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ $user->created_at ? $user->created_at->format('d M, Y') : 'N/A' }}</p>
-                            </td>
                             <td class="p-3 md:p-4 py-4 md:py-5 text-center">
                                 @if($user->is_disabled)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">Disabled</span>
                                 @else
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">Enabled</span>
                                 @endif
+                            </td>
+                            <td class="p-3 md:p-4 py-4 md:py-5">
+                                <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ $user->created_at ? $user->created_at->format('d M, Y') : 'N/A' }}</p>
                             </td>
                             <td class="p-3 md:p-4 py-4 md:py-5">
                                 <div class="flex gap-1 md:gap-2 justify-center">

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Permits;
 
+use App\Models\Area;
 use App\Models\Location;
 use App\Models\Permit;
 use Carbon\Carbon;
@@ -16,7 +17,7 @@ class Edit extends Component
     /** @var int[] */
     public array $visibleStepIds = [1, 2];
 
-    public string $area = '';
+    public int $areaId = 0;
 
     public string $farmLocationId = '';
 
@@ -56,7 +57,7 @@ class Edit extends Component
     ];
 
     protected array $validationAttributes = [
-        'area' => 'area',
+        'areaId' => 'area',
         'farmLocationId' => 'farm',
         'names' => 'names',
         'dateOfVisit' => 'date of visit',
@@ -91,7 +92,7 @@ class Edit extends Component
 
     private function populateForm(): void
     {
-        $this->area = $this->permit->area ?? '';
+        $this->areaId = (int) ($this->permit->area_id ?? 0);
         $this->farmLocationId = (string) ($this->permit->farm_location_id ?? '');
         $this->names = $this->permit->names ?? '';
         $this->dateOfVisit = $this->permit->date_of_visit?->format('Y-m-d') ?? '';
@@ -119,11 +120,6 @@ class Edit extends Component
         }
     }
 
-    public function updatedFarmLocationId(): void
-    {
-        return;
-    }
-
     public function submitForm(): mixed
     {
         try {
@@ -138,7 +134,7 @@ class Edit extends Component
 
             // Update permit
             $this->permit->update([
-                'area' => $this->area,
+                'area_id' => $this->areaId,
                 'farm_location_id' => (int) $this->farmLocationId,
                 'names' => $this->names,
                 'date_of_visit' => $newDateOfVisit,
@@ -168,8 +164,8 @@ class Edit extends Component
             // On validation failure, determine which step has the error and go to that step
             $failedFields = array_keys($e->validator->failed());
             
-            // Step 1 fields: area, farmLocationId, names, dateOfVisit, expectedDurationHours
-            $step1Fields = ['area', 'farmLocationId', 'names', 'dateOfVisit', 'expectedDurationHours'];
+            // Step 1 fields: areaId, farmLocationId, names, dateOfVisit, expectedDurationHours
+            $step1Fields = ['areaId', 'farmLocationId', 'names', 'dateOfVisit', 'expectedDurationHours'];
             
             // Check if any step 1 fields failed
             foreach ($step1Fields as $field) {
@@ -244,6 +240,35 @@ class Edit extends Component
         return count($this->visibleStepIds) > 1;
     }
 
+    public function updatedFarmLocationId(): void
+    {
+        // Reset area when farm changes
+        $this->areaId = 0;
+    }
+
+    public function clearDateOfVisit(): void
+    {
+        $this->dateOfVisit = '';
+    }
+
+    public function clearPreviousFarmDate(): void
+    {
+        $this->dateOfVisitPreviousFarm = '';
+    }
+
+    public function getAreasProperty()
+    {
+        if (empty($this->farmLocationId)) {
+            return collect();
+        }
+
+        return Area::query()
+            ->where('location_id', (int) $this->farmLocationId)
+            ->where('is_disabled', false)
+            ->orderBy('name')
+            ->get();
+    }
+
     public function getFarmLocationsProperty()
     {
         return Location::query()
@@ -263,7 +288,7 @@ class Edit extends Component
     protected function rulesForSubmit(): array
     {
         $rules = [
-            'area' => ['required', 'string', 'max:255'],
+            'areaId' => ['required', 'integer', 'exists:areas,id'],
             'farmLocationId' => ['required', 'integer', 'exists:locations,id'],
             'names' => ['required', 'string'],
             'expectedDurationHours' => ['required', 'numeric', 'gt:0'],

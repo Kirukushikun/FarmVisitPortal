@@ -12,7 +12,7 @@ class Permit extends Model
 
     protected $fillable = [
         'permit_id',
-        'area',
+        'area_id',
         'farm_location_id',
         'names',
         'date_of_visit',
@@ -29,6 +29,7 @@ class Permit extends Model
     protected function casts(): array
     {
         return [
+            'area_id' => 'integer',
             'farm_location_id' => 'integer',
             'previous_farm_location_id' => 'integer',
             'created_by' => 'integer',
@@ -67,6 +68,11 @@ class Permit extends Model
         }
 
         return $year . '-' . str_pad((string) $newNumber, 6, '0', STR_PAD_LEFT);
+    }
+
+    public function area(): BelongsTo
+    {
+        return $this->belongsTo(Area::class);
     }
 
     public function farmLocation(): BelongsTo

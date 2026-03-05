@@ -43,7 +43,7 @@
                         wire:target="resetPassword"
                     >
                         <span wire:loading.remove wire:target="resetPassword">Reset Password</span>
-                        <span wire:loading wire:target="resetPassword">Resetting...</span>
+                        <span wire:loading.inline wire:target="resetPassword">Resetting...</span>
                     </x-button>
                 </div>
             </div>

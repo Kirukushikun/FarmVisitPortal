@@ -52,7 +52,7 @@
                             wire:target="updateUser"
                         >
                             <span wire:loading.remove wire:target="updateUser">Update User</span>
-                            <span wire:loading wire:target="updateUser">Updating...</span>
+                            <span wire:loading.inline wire:target="updateUser">Updating...</span>
                         </x-button>
                     </div>
                 </form>

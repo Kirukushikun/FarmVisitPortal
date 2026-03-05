@@ -43,7 +43,7 @@
                         wire:target="confirmDeletePermit"
                     >
                         <span wire:loading.remove wire:target="confirmDeletePermit">Delete Permit</span>
-                        <span wire:loading wire:target="confirmDeletePermit">Deleting...</span>
+                        <span wire:loading.inline wire:target="confirmDeletePermit">Deleting...</span>
                     </x-button>
                 </div>
             </div>
