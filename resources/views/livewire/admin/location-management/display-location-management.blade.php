@@ -42,37 +42,6 @@
                                             </label>
                                         </div>
                                     </div>
-
-                                    <div>
-                                        <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Date Range</h3>
-                                        <div class="space-y-2">
-                                            <div>
-                                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
-                                                <input
-                                                    type="date"
-                                                    wire:model="dateFrom"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                                                    placeholder="YYYY-MM-DD"
-                                                    max="{{ $dateTo ?: now()->format('Y-m-d') }}"
-                                                    wire:target="dateFrom"
-                                                    wire:loading.attr="disabled"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
-                                                <input
-                                                    type="date"
-                                                    wire:model="dateTo"
-                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                                                    placeholder="YYYY-MM-DD"
-                                                    max="{{ now()->format('Y-m-d') }}"
-                                                    min="{{ $dateFrom ?: '' }}"
-                                                    wire:target="dateTo"
-                                                    wire:loading.attr="disabled"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <div class="flex justify-between mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
@@ -111,22 +80,11 @@
                                 @endif
                             </p>
                         </th>
-                        <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-600" wire:click="sortBy('created_at')">
-                            <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200 flex items-center gap-1">
-                                Created Date
-                                @if ($sortField === 'created_at')
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        @if ($sortDirection === 'asc')
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                                        @else
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                        @endif
-                                    </svg>
-                                @endif
-                            </p>
+                        <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 text-center">
+                            <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200 text-center">Status</p>
                         </th>
                         <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 text-center">
-                            <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200">Status</p>
+                            <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200 text-center">Area</p>
                         </th>
                         <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 text-center">
                             <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200">Actions</p>
@@ -139,15 +97,19 @@
                             <td class="p-3 md:p-4 py-4 md:py-5">
                                 <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ $location->name }}</p>
                             </td>
-                            <td class="p-3 md:p-4 py-4 md:py-5">
-                                <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ $location->created_at ? $location->created_at->format('d M, Y') : 'N/A' }}</p>
-                            </td>
                             <td class="p-3 md:p-4 py-4 md:py-5 text-center">
                                 @if($location->is_disabled)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">Disabled</span>
                                 @else
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">Enabled</span>
                                 @endif
+                            </td>
+                            <td class="p-3 md:p-4 py-4 md:py-5 text-center">
+                                <div class="flex justify-center">
+                                    <button wire:click="$dispatch('openViewAreasLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors cursor-pointer">
+                                        View Areas [{{ (int) ($location->areas_count ?? 0) }}]
+                                    </button>
+                                </div>
                             </td>
                             <td class="p-3 md:p-4 py-4 md:py-5">
                                 <div class="flex gap-1 md:gap-2 justify-center">
@@ -172,7 +134,6 @@
                     <div class="flex justify-between items-start">
                         <div class="space-y-1">
                             <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $location->name }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $location->created_at ? $location->created_at->format('d M, Y') : 'N/A' }}</p>
                         </div>
                         <div class="text-center">
                             @if($location->is_disabled)
@@ -184,6 +145,7 @@
                     </div>
 
                     <div class="flex justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                        <button wire:click="$dispatch('openViewAreasLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">View Areas [{{ (int) ($location->areas_count ?? 0) }}]</button>
                         <button wire:click="$dispatch('openEditLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors">Edit</button>
                         <button wire:click="$dispatch('openDisableLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium {{ $location->is_disabled ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-red-600 bg-red-50 hover:bg-red-100' }} rounded-md transition-colors">{{ $location->is_disabled ? 'Enable' : 'Disable' }}</button>
                         <button wire:click="$dispatch('openDeleteLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors">Delete</button>
@@ -213,4 +175,5 @@
     <livewire:admin.location-management.edit />
     <livewire:admin.location-management.delete />
     <livewire:admin.location-management.disable />
+    <livewire:admin.location-management.view-areas />
 </div>

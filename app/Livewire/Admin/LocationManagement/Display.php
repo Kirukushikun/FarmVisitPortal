@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\LocationManagement;
 
 use App\Models\Location;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class Display extends Component
@@ -20,18 +21,12 @@ class Display extends Component
 
     public string $statusFilter = 'all'; // all, enabled, disabled
 
-    public string $dateFrom = '';
-
-    public string $dateTo = '';
-
     public bool $showFilterDropdown = false;
 
     protected array $queryString = [
         'search' => ['except' => ''],
         'page' => ['except' => 1],
         'statusFilter' => ['except' => 'all'],
-        'dateFrom' => ['except' => ''],
-        'dateTo' => ['except' => ''],
         'perPage' => ['except' => 10],
         'sortField' => ['except' => 'name'],
         'sortDirection' => ['except' => 'asc'],
@@ -44,8 +39,6 @@ class Display extends Component
         $this->search = (string) request()->get('search', '');
         $this->page = (int) request()->get('page', 1);
         $this->statusFilter = (string) request()->get('statusFilter', 'all');
-        $this->dateFrom = (string) request()->get('dateFrom', '');
-        $this->dateTo = (string) request()->get('dateTo', '');
     }
 
     public function updatingSearch(): void
@@ -63,22 +56,6 @@ class Display extends Component
         $this->page = 1;
     }
 
-    public function updatedDateFrom(): void
-    {
-        if ($this->dateFrom && $this->dateTo && $this->dateFrom > $this->dateTo) {
-            $this->dateTo = '';
-        }
-        $this->page = 1;
-    }
-
-    public function updatedDateTo(): void
-    {
-        if ($this->dateTo && $this->dateFrom && $this->dateTo < $this->dateFrom) {
-            $this->dateTo = '';
-        }
-        $this->page = 1;
-    }
-
     public function toggleFilterDropdown(): void
     {
         $this->showFilterDropdown = ! $this->showFilterDropdown;
@@ -87,8 +64,6 @@ class Display extends Component
     public function resetFilters(): void
     {
         $this->statusFilter = 'all';
-        $this->dateFrom = '';
-        $this->dateTo = '';
         $this->page = 1;
         $this->showFilterDropdown = false;
     }
@@ -123,22 +98,20 @@ class Display extends Component
     protected function baseQuery(): Builder
     {
         $locations = Location::query()
+            ->addSelect('locations.*')
             ->where('name', 'like', '%' . $this->search . '%');
+
+        $locations->selectSub(
+            DB::table('areas')
+                ->selectRaw('count(*)')
+                ->whereColumn('location_id', 'locations.id'),
+            'areas_count'
+        );
 
         if ($this->statusFilter === 'disabled') {
             $locations->where('is_disabled', true);
         } elseif ($this->statusFilter === 'enabled') {
             $locations->where('is_disabled', false);
-        }
-
-        if ($this->dateFrom || $this->dateTo) {
-            if ($this->dateFrom && $this->dateTo) {
-                $locations->whereBetween('created_at', [$this->dateFrom . ' 00:00:00', $this->dateTo . ' 23:59:59']);
-            } elseif ($this->dateFrom) {
-                $locations->whereDate('created_at', '>=', $this->dateFrom);
-            } elseif ($this->dateTo) {
-                $locations->whereDate('created_at', '<=', $this->dateTo);
-            }
         }
 
         return $locations;

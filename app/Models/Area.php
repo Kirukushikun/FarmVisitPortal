@@ -4,13 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Location extends Model
+class Area extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'location_id',
         'name',
         'is_disabled',
     ];
@@ -18,12 +19,13 @@ class Location extends Model
     protected function casts(): array
     {
         return [
+            'location_id' => 'integer',
             'is_disabled' => 'boolean',
         ];
     }
 
-    public function areas(): HasMany
+    public function location(): BelongsTo
     {
-        return $this->hasMany(Area::class);
+        return $this->belongsTo(Location::class);
     }
 }
