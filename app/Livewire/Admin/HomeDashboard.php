@@ -69,7 +69,7 @@ class HomeDashboard extends Component
         $this->calendarMonth = $ym;
         $this->selectedDay = $ym === now()->format('Y-m') ? now()->toDateString() : null;
         $this->loadCalendar();
-        $this->dispatch('adminHomeDashboardUpdated', charts: $this->charts, pie: $this->pie, pieRange: $this->pieRange, cards: $this->cards, calendar: $this->calendar, range: $this->range);
+        $this->dispatch('adminHomeDashboardCalendarUpdated', calendar: $this->calendar);
     }
 
     public function selectDay(string $day): void
@@ -80,7 +80,15 @@ class HomeDashboard extends Component
         }
 
         $this->selectedDay = $day;
-        $this->calendar = $this->buildCalendar($this->calendarMonth, $this->selectedDay);
+        
+        // Check if the selected day is in a different month
+        $selectedMonth = Carbon::parse($day)->format('Y-m');
+        if ($selectedMonth !== $this->calendarMonth) {
+            $this->calendarMonth = $selectedMonth;
+        }
+        
+        $this->loadCalendar();
+        $this->dispatch('adminHomeDashboardCalendarUpdated', calendar: $this->calendar);
     }
 
     public function refreshDashboard(): void
@@ -131,6 +139,11 @@ class HomeDashboard extends Component
             'overall' => $this->newEntitiesPieChart(null, null),
         ];
 
+        $this->calendar = $this->buildCalendar($this->calendarMonth, $this->selectedDay);
+    }
+
+    protected function loadCalendar(): void
+    {
         $this->calendar = $this->buildCalendar($this->calendarMonth, $this->selectedDay);
     }
 
