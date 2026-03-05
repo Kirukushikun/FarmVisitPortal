@@ -32,8 +32,12 @@ A web-based system for tracking, monitoring, and managing farm visit permits to 
 4. Set up database configuration in `.env`
 5. Run migrations:
    ```bash
-   php artisan migrate
+   php artisan migrate --seed
    ```
+5. Run Storage Link:
+    ```bash
+    php artisan storage:link
+    ```
 6. Build production assets:
    ```bash
    npm run build
