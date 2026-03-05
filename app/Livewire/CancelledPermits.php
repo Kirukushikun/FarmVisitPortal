@@ -6,20 +6,50 @@ use Livewire\Component;
 use App\Models\Permit;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Livewire\WithPagination;
 
 class CancelledPermits extends Component
 {
-    use WithPagination;
-    
-    public $search = '';
+    public string $search = '';
+
+    public int $perPage = 9;
+
+    public int $page = 1;
 
     protected $listeners = ['refreshPermits' => '$refresh'];
-    protected $paginationTheme = 'bootstrap';
 
-    public function updatedSearch()
+    protected array $queryString = [
+        'search' => ['except' => ''],
+        'page' => ['except' => 1],
+    ];
+
+    public function mount(): void
     {
-        $this->resetPage();
+        $this->search = (string) request()->query('search', '');
+        $this->page = (int) request()->query('page', 1);
+
+        if ($this->page < 1) {
+            $this->page = 1;
+        }
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->page = 1;
+    }
+
+    public function gotoPage(int $page): void
+    {
+        $page = (int) $page;
+        if ($page < 1) {
+            $page = 1;
+        }
+
+        $totalPages = $this->baseQuery()->paginate($this->perPage)->lastPage();
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+
+        $this->page = $page;
     }
 
     public function viewPermit($permitId)
@@ -51,24 +81,65 @@ class CancelledPermits extends Component
         return $colors[$status] ?? 'gray';
     }
 
-    public function render()
+    protected function baseQuery()
     {
         $user = Auth::user();
         
         $query = Permit::with(['farmLocation', 'receivedBy'])
-            ->where('status', 3) // Cancelled
-            ->whereNull('received_by') // Not received by anyone
+            ->where('status', 3)
+            ->whereNull('received_by')
             ->whereDate('date_of_visit', '<', Carbon::today())
             ->orderBy('date_of_visit', 'desc');
 
-        if ($this->search) {
+        if ($user && isset($user->farm_location_id)) {
+            $query->where('farm_location_id', $user->farm_location_id);
+        }
+
+        if ($this->search !== '') {
             $query->where('permit_id', 'like', '%' . $this->search . '%');
         }
 
-        $permits = $query->paginate(9);
+        return $query;
+    }
 
-        return view('livewire.cancelled-permits', [
+    public function getPaginationData(): array
+    {
+        $permits = $this->baseQuery()
+            ->paginate($this->perPage, ['*'], 'page', $this->page);
+
+        $currentPage = $permits->currentPage();
+        $lastPage = $permits->lastPage();
+        $this->page = $currentPage;
+
+        if ($lastPage <= 3) {
+            $startPage = 1;
+            $endPage = $lastPage;
+        } elseif ($currentPage === 1) {
+            $startPage = 1;
+            $endPage = min(3, $lastPage);
+        } elseif ($currentPage === $lastPage) {
+            $startPage = max(1, $lastPage - 2);
+            $endPage = $lastPage;
+        } else {
+            $startPage = max(1, $currentPage - 1);
+            $endPage = min($lastPage, $currentPage + 1);
+        }
+
+        $pages = [];
+        for ($i = $startPage; $i <= $endPage; $i++) {
+            $pages[] = $i;
+        }
+
+        return [
             'permits' => $permits,
-        ]);
+            'pages' => $pages,
+            'currentPage' => $currentPage,
+            'lastPage' => $lastPage,
+        ];
+    }
+
+    public function render()
+    {
+        return view('livewire.cancelled-permits', $this->getPaginationData());
     }
 }

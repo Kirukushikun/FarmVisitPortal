@@ -77,9 +77,19 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="mt-6">
-                    {{ $permits->links() }}
-                </div>
+                @if ($permits->hasPages())
+                    <div class="mt-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                        <div class="text-xs md:text-sm text-slate-500 dark:text-slate-400 text-center sm:text-left">
+                            Showing <b>{{ $permits->firstItem() }}-{{ $permits->lastItem() }}</b> of {{ $permits->total() }} results
+                        </div>
+                        <x-custom-pagination
+                            :current-page="$currentPage"
+                            :last-page="$lastPage"
+                            :pages="$pages"
+                            on-page-change="gotoPage"
+                        />
+                    </div>
+                @endif
             @else
                 <!-- Empty State -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
