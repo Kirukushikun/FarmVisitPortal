@@ -212,6 +212,12 @@
                         </div>
                     </div>
                 </div>
+
+                @if ((int) ($permit->status ?? 0) === 1 || (($permit->photos ?? collect())->count() > 0))
+                    <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 pt-6 pb-2">
+                        <livewire:permit-photo-upload :permit="$permit" :can-upload="(int) ($permit->status ?? 0) === 1" />
+                    </div>
+                @endif
             </div>
         </div>
     </x-navbar>

@@ -36,6 +36,7 @@ class PortalController extends Controller
         $permit->load([
             'farmLocation',
             'previousFarmLocation',
+            'photos',
         ]);
 
         return view('user.permits.show', [
@@ -190,6 +191,7 @@ class PortalController extends Controller
         $permit->load([
             'farmLocation',
             'previousFarmLocation',
+            'photos',
         ]);
 
         return view('admin.permits.show', [

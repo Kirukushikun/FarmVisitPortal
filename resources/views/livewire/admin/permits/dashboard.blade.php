@@ -65,23 +65,24 @@
                                         <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Status</h3>
                                         <div class="space-y-2">
                                             <label class="flex items-center">
-                                                <input type="radio" wire:model="statusFilter" value="all" class="mr-2">
-                                                <span class="text-sm text-gray-700 dark:text-gray-300">All</span>
+                                                <button type="button" wire:click="resetFilters" class="text-sm text-gray-700 dark:text-gray-300 underline">
+                                                    Clear
+                                                </button>
                                             </label>
                                             <label class="flex items-center">
-                                                <input type="radio" wire:model="statusFilter" value="0" class="mr-2">
+                                                <input type="checkbox" wire:model.live="statusFilter" value="0" class="mr-2">
                                                 <span class="text-sm text-gray-700 dark:text-gray-300">Scheduled</span>
                                             </label>
                                             <label class="flex items-center">
-                                                <input type="radio" wire:model="statusFilter" value="1" class="mr-2">
+                                                <input type="checkbox" wire:model.live="statusFilter" value="1" class="mr-2">
                                                 <span class="text-sm text-gray-700 dark:text-gray-300">In Progress</span>
                                             </label>
                                             <label class="flex items-center">
-                                                <input type="radio" wire:model="statusFilter" value="2" class="mr-2">
+                                                <input type="checkbox" wire:model.live="statusFilter" value="2" class="mr-2">
                                                 <span class="text-sm text-gray-700 dark:text-gray-300">Completed</span>
                                             </label>
                                             <label class="flex items-center">
-                                                <input type="radio" wire:model="statusFilter" value="3" class="mr-2">
+                                                <input type="checkbox" wire:model.live="statusFilter" value="3" class="mr-2">
                                                 <span class="text-sm text-gray-700 dark:text-gray-300">Cancelled</span>
                                             </label>
                                         </div>
@@ -160,7 +161,7 @@
                         </th>
                         <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-600" wire:click="sortBy('date_of_visit')">
                             <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200 flex items-center gap-1">
-                                Date of Arrival
+                                Visit Date / Farm
                                 @if ($sortField === 'date_of_visit')
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         @if ($sortDirection === 'asc')
@@ -204,7 +205,10 @@
                                 </div>
                             </td>
                             <td class="p-3 md:p-4 py-4 md:py-5 text-left">
-                                <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ $permit->date_of_visit ? $permit->date_of_visit->format('d M, Y') : 'N/A' }}</p>
+                                <div class="space-y-1">
+                                    <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ $permit->date_of_visit ? $permit->date_of_visit->format('d M, Y') : 'N/A' }}</p>
+                                    <p class="block text-[11px] md:text-xs text-slate-500 dark:text-slate-400">{{ $permit->farmLocation?->name ?? 'N/A' }}</p>
+                                </div>
                             </td>
                             <td class="p-3 md:p-4 py-4 md:py-5 text-left">
                                 <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ permitDuration($permit->expected_duration_hours) }}</p>
@@ -279,6 +283,7 @@
                             <p class="text-xs text-gray-500 dark:text-gray-400">{{ $permit->created_at ? $permit->created_at->format('d M, Y g:i A') : 'N/A' }}</p>
                             <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $permit->permit_id }}</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Arrival: {{ $permit->date_of_visit ? $permit->date_of_visit->format('d M, Y') : 'N/A' }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Farm: {{ $permit->farmLocation?->name ?? 'N/A' }}</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Duration: {{ permitDuration($permit->expected_duration_hours) }}</p>
                         </div>
                         <div class="text-center">

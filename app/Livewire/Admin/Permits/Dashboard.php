@@ -20,7 +20,9 @@ class Dashboard extends Component
 
     public int $page = 1;
 
-    public string $statusFilter = 'all';
+    public array $statusFilter = [];
+
+    public string $status = '';
 
     public string $dateFrom = '';
 
@@ -43,7 +45,7 @@ class Dashboard extends Component
     protected array $queryString = [
         'search' => ['except' => ''],
         'page' => ['except' => 1],
-        'statusFilter' => ['except' => 'all'],
+        'status' => ['except' => ''],
         'dateFrom' => ['except' => ''],
         'dateTo' => ['except' => ''],
         'perPage' => ['except' => 10],
@@ -57,7 +59,14 @@ class Dashboard extends Component
 
         $this->search = (string) request()->query('search', '');
         $this->page = (int) request()->query('page', 1);
-        $this->statusFilter = (string) request()->query('statusFilter', 'all');
+        $this->status = (string) request()->query('status', '');
+
+        $allowed = ['0', '1', '2', '3'];
+        $statusParts = array_filter(array_map('trim', explode(',', $this->status)), fn ($v) => $v !== '');
+        $statusParts = array_values(array_unique($statusParts));
+        $statusParts = array_values(array_filter($statusParts, fn ($v) => in_array((string) $v, $allowed, true)));
+        $this->statusFilter = array_map(fn ($v) => (string) $v, $statusParts);
+        $this->status = implode(',', $this->statusFilter);
         $this->dateFrom = (string) request()->query('dateFrom', '');
         $this->dateTo = (string) request()->query('dateTo', '');
 
@@ -75,6 +84,12 @@ class Dashboard extends Component
 
     public function updatingStatusFilter(): void
     {
+        $this->page = 1;
+    }
+
+    public function updatedStatusFilter(): void
+    {
+        $this->status = implode(',', $this->statusFilter);
         $this->page = 1;
     }
 
@@ -106,7 +121,8 @@ class Dashboard extends Component
 
     public function resetFilters(): void
     {
-        $this->statusFilter = 'all';
+        $this->statusFilter = [];
+        $this->status = '';
         $this->dateFrom = '';
         $this->dateTo = '';
         $this->page = 1;
@@ -251,7 +267,7 @@ class Dashboard extends Component
 
     protected function baseQuery(): Builder
     {
-        $permits = Permit::query()->with(['receivedBy']);
+        $permits = Permit::query()->with(['receivedBy', 'farmLocation']);
 
         $search = trim($this->search);
         if ($search !== '') {
@@ -259,12 +275,16 @@ class Dashboard extends Component
                 $query
                     ->where('permit_id', 'like', '%' . $search . '%')
                     ->orWhere('area', 'like', '%' . $search . '%')
-                    ->orWhere('names', 'like', '%' . $search . '%');
+                    ->orWhere('names', 'like', '%' . $search . '%')
+                    ->orWhereHas('farmLocation', function (Builder $farmQuery) use ($search) {
+                        $farmQuery->where('name', 'like', '%' . $search . '%');
+                    });
             });
         }
 
-        if ($this->statusFilter !== 'all') {
-            $permits->where('status', (int) $this->statusFilter);
+        if (!empty($this->statusFilter)) {
+            $statuses = array_map(fn ($v) => (int) $v, $this->statusFilter);
+            $permits->whereIn('status', $statuses);
         }
 
         if ($this->dateFrom || $this->dateTo) {
