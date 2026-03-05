@@ -23,7 +23,7 @@ class PortalController extends Controller
         $user = $request->user();
 
         if ((int) ($user->user_type ?? 0) === 1) {
-            abort(403);
+            return redirect()->route('admin.change-password');
         }
 
         return view('auth.change-password-page');
