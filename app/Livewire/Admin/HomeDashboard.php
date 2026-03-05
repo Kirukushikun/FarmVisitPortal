@@ -68,7 +68,7 @@ class HomeDashboard extends Component
 
         $this->calendarMonth = $ym;
         $this->selectedDay = $ym === now()->format('Y-m') ? now()->toDateString() : null;
-        $this->loadData();
+        $this->loadCalendar();
         $this->dispatch('adminHomeDashboardUpdated', charts: $this->charts, pie: $this->pie, pieRange: $this->pieRange, cards: $this->cards, calendar: $this->calendar, range: $this->range);
     }
 
