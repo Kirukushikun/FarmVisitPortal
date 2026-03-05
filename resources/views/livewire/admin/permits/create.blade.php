@@ -56,7 +56,7 @@
                     name="dateOfVisit"
                     type="date"
                     :wireModel="'dateOfVisit'"
-                    :max="now()->toDateString()"
+                    :min="now()->toDateString()"
                     required
                 >
                     <x-button type="button" wire:click="clearDateOfVisit" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" title="Clear">

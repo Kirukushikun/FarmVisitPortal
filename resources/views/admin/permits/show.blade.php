@@ -6,14 +6,19 @@
         <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
             <div class="p-4">
                 @php
-                    function permitPrintDuration(?int $hours): string {
+                    function permitPrintDuration(null|int|float|string $hours): string {
                         if ($hours === null) {
                             return '';
                         }
 
-                        $hours = max(0, (int) $hours);
+                        $hoursFloat = max(0, (float) $hours);
+                        $totalSeconds = (int) round($hoursFloat * 3600);
 
-                        return sprintf('%02d:00:00', $hours);
+                        $displayHours = intdiv($totalSeconds, 3600);
+                        $displayMinutes = intdiv($totalSeconds % 3600, 60);
+                        $displaySeconds = $totalSeconds % 60;
+
+                        return sprintf('%02d:%02d:%02d', $displayHours, $displayMinutes, $displaySeconds);
                     }
 
                     function permitDisplayValue(mixed $value): string {

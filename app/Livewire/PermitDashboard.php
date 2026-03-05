@@ -53,11 +53,17 @@ class PermitDashboard extends Component
 
     public function render()
     {
+        $user = Auth::user();
+        
         // Today's permits (in progress for today)
         $todayQuery = Permit::with(['farmLocation', 'receivedBy'])
             ->whereDate('date_of_visit', Carbon::today())
             ->where('status', 1) // In Progress
             ->orderBy('date_of_visit', 'asc');
+
+        if ($user && isset($user->farm_location_id)) {
+            $todayQuery->where('farm_location_id', $user->farm_location_id);
+        }
 
         if ($this->search) {
             $todayQuery->where('permit_id', 'like', '%' . $this->search . '%');

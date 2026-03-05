@@ -59,7 +59,7 @@ class LocationLanding extends Component
             DB::table('permits')
                 ->selectRaw('count(*)')
                 ->whereColumn('farm_location_id', 'locations.id')
-                ->where('status', 1)
+                ->where('status', 1) // Only In Progress, exclude Completed
                 ->whereDate('date_of_visit', now()->toDateString()),
             'destination_permits_count'
         );
