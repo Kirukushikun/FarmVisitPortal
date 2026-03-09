@@ -86,6 +86,11 @@ class Permit extends Model
         return $this->belongsTo(Location::class, 'previous_farm_location_id');
     }
 
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function receivedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'received_by');
