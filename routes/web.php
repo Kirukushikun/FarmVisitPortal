@@ -35,6 +35,8 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
 
     Route::get('/user/permits/{permit}', [PortalController::class, 'userShowPermit'])->name('user.permits.show');
 
+    Route::post('/user/permits/{permit}/accept', [PortalController::class, 'acceptPermit'])->name('user.permits.accept');
+
     Route::post('/user/permits/{permit}/complete', [PortalController::class, 'completePermit'])->name('user.permits.complete');
 
     Route::post('/user/permits/{permit}/cancel', [PortalController::class, 'cancelPermit'])->name('user.permits.cancel');

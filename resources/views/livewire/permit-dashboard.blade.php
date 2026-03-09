@@ -43,6 +43,12 @@
                                     <!-- Header with Permit ID and Status -->
                                     <div class="flex items-start justify-between mb-4">
                                         <div class="flex items-center gap-3">
+                                            <div class="text-right">
+                                                <p class="text-[11px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Created By</p>
+                                                <p class="text-xs font-medium text-gray-900 dark:text-gray-100">
+                                                    {{ trim(($permit->createdBy->first_name ?? '') . ' ' . ($permit->createdBy->last_name ?? '')) ?: ($permit->createdBy->username ?? 'N/A') }}
+                                                </p>
+                                            </div>
                                             <div class="p-2 bg-{{ $this->getStatusColor($permit->status) }}-100 dark:bg-{{ $this->getStatusColor($permit->status) }}-900/30 rounded-lg">
                                                 <svg class="h-4 w-4 text-{{ $this->getStatusColor($permit->status) }}-600 dark:text-{{ $this->getStatusColor($permit->status) }}-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
