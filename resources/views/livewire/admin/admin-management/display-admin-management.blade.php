@@ -1,8 +1,8 @@
 <div>
     <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between md:gap-6">
         <div class="text-center md:text-left">
-            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Users Management</h1>
-            <p class="text-gray-600 dark:text-gray-400">Manage your users here</p>
+            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Admins Management</h1>
+            <p class="text-gray-600 dark:text-gray-400">Manage your admins here</p>
         </div>
         <div class="flex flex-col gap-3 md:flex-row md:gap-3 md:items-center">
             <div class="flex flex-row gap-3 items-center w-full md:w-auto">
@@ -12,7 +12,7 @@
                     </svg>
                     <input
                         wire:model.live="search"
-                        placeholder="Search users..."
+                        placeholder="Search admins..."
                         class="w-full pl-11 pr-12 py-3 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 shadow-sm dark:shadow-md"
                     />
                     <button type="button" wire:click="toggleFilterDropdown" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer">
@@ -30,7 +30,7 @@
                                         <div class="space-y-2">
                                             <label class="flex items-center">
                                                 <input type="radio" wire:model="statusFilter" value="all" class="mr-2">
-                                                <span class="text-sm text-gray-700 dark:text-gray-300">All Users</span>
+                                                <span class="text-sm text-gray-700 dark:text-gray-300">All Admins</span>
                                             </label>
                                             <label class="flex items-center">
                                                 <input type="radio" wire:model="statusFilter" value="disabled" class="mr-2">
@@ -85,7 +85,7 @@
                 </div>
 
                 <button type="button" wire:click="$dispatch('openCreateModal')" class="inline-flex items-center justify-center px-4 py-3 text-sm font-medium text-white bg-orange-600 border border-orange-600 rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-150 whitespace-nowrap shrink-0 md:px-4 cursor-pointer">
-                    <span class="hidden md:inline">Add User</span>
+                    <span class="hidden md:inline">Add Admin</span>
                     <span class="md:hidden">Add</span>
                 </button>
             </div>
@@ -196,7 +196,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">No users found</td>
+                            <td colspan="6" class="px-6 py-12 text-center">No admins found</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -231,7 +231,7 @@
                     </div>
                 </div>
             @empty
-                <div class="flex flex-col items-center py-12">No users found</div>
+                <div class="flex flex-col items-center py-12">No admins found</div>
             @endforelse
         </div>
 
@@ -250,9 +250,9 @@
         @endif
     </div>
 
-    <livewire:admin.user-management.create />
-    <livewire:admin.user-management.edit />
-    <livewire:admin.user-management.delete />
-    <livewire:admin.user-management.disable />
-    <livewire:admin.user-management.reset-password />
+    <livewire:admin.admin-management.create />
+    <livewire:admin.admin-management.edit />
+    <livewire:admin.admin-management.delete />
+    <livewire:admin.admin-management.disable />
+    <livewire:admin.admin-management.reset-password />
 </div>

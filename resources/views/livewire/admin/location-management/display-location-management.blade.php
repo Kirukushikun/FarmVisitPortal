@@ -115,7 +115,9 @@
                                 <div class="flex gap-1 md:gap-2 justify-center">
                                     <button wire:click="$dispatch('openEditLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors cursor-pointer">Edit</button>
                                     <button wire:click="$dispatch('openDisableLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium {{ $location->is_disabled ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-red-600 bg-red-50 hover:bg-red-100' }} rounded-md transition-colors cursor-pointer">{{ $location->is_disabled ? 'Enable' : 'Disable' }}</button>
-                                    <button wire:click="$dispatch('openDeleteLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors cursor-pointer">Delete</button>
+                                    @if (auth()->check() && (int) auth()->user()->user_type === 2)
+                                        <button wire:click="$dispatch('openDeleteLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors cursor-pointer">Delete</button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -148,7 +150,9 @@
                         <button wire:click="$dispatch('openViewAreasLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors">View Areas [{{ (int) ($location->areas_count ?? 0) }}]</button>
                         <button wire:click="$dispatch('openEditLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors">Edit</button>
                         <button wire:click="$dispatch('openDisableLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium {{ $location->is_disabled ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-red-600 bg-red-50 hover:bg-red-100' }} rounded-md transition-colors">{{ $location->is_disabled ? 'Enable' : 'Disable' }}</button>
-                        <button wire:click="$dispatch('openDeleteLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors">Delete</button>
+                        @if (auth()->check() && (int) auth()->user()->user_type === 2)
+                            <button wire:click="$dispatch('openDeleteLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors">Delete</button>
+                        @endif
                     </div>
                 </div>
             @empty
