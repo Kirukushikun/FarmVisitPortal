@@ -56,7 +56,7 @@ class PermitDashboard extends Component
         $user = Auth::user();
         
         // Today's permits (in progress for today)
-        $todayQuery = Permit::with(['farmLocation', 'receivedBy', 'createdBy'])
+        $todayQuery = Permit::with(['farmLocation', 'receivedBy'])
             ->whereDate('date_of_visit', Carbon::today())
             ->where('status', 1) // In Progress
             ->orderBy('date_of_visit', 'asc');

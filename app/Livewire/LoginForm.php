@@ -68,7 +68,8 @@ class LoginForm extends Component
             return;
         }
 
-        $isAdmin = (int) ($user->user_type ?? 0) === 1;
+        $userType = (int) ($user->user_type ?? 0);
+        $isAdmin = in_array($userType, [1, 2], true);
         $expectedAdmin = $this->role === 'admin';
 
         if ($expectedAdmin && ! $isAdmin) {

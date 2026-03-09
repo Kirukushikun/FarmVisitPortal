@@ -174,6 +174,9 @@
                             </p>
                         </th>
                         <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 text-left">
+                            <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200">Created By</p>
+                        </th>
+                        <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 text-left">
                             <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200">Duration</p>
                         </th>
                         <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-600" wire:click="sortBy('status')">
@@ -209,6 +212,11 @@
                                     <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ $permit->date_of_visit ? $permit->date_of_visit->format('d M, Y') : 'N/A' }}</p>
                                     <p class="block text-[11px] md:text-xs text-slate-500 dark:text-slate-400">{{ $permit->farmLocation?->name ?? 'N/A' }}</p>
                                 </div>
+                            </td>
+                            <td class="p-3 md:p-4 py-4 md:py-5 text-left">
+                                <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">
+                                    {{ trim(($permit->createdBy->first_name ?? '') . ' ' . ($permit->createdBy->last_name ?? '')) ?: ($permit->createdBy->username ?? 'N/A') }}
+                                </p>
                             </td>
                             <td class="p-3 md:p-4 py-4 md:py-5 text-left">
                                 <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ permitDuration($permit->expected_duration_hours) }}</p>
@@ -248,20 +256,22 @@
                                     >
                                         Edit
                                     </a>
-                                    <button
-                                        type="button"
-                                        wire:click="deletePermit({{ $permit->id }})"
-                                        class="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
-                                        title="Delete Permit"
-                                    >
-                                        Delete
-                                    </button>
+                                    @if (auth()->check() && (int) auth()->user()->user_type === 2)
+                                        <button
+                                            type="button"
+                                            wire:click="deletePermit({{ $permit->id }})"
+                                            class="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
+                                            title="Delete Permit"
+                                        >
+                                            Delete
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">
+                            <td colspan="7" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center">
                                     <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -282,6 +292,7 @@
                         <div class="space-y-1">
                             <p class="text-xs text-gray-500 dark:text-gray-400">{{ $permit->created_at ? $permit->created_at->format('d M, Y g:i A') : 'N/A' }}</p>
                             <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $permit->permit_id }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Created By: {{ trim(($permit->createdBy->first_name ?? '') . ' ' . ($permit->createdBy->last_name ?? '')) ?: ($permit->createdBy->username ?? 'N/A') }}</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Arrival: {{ $permit->date_of_visit ? $permit->date_of_visit->format('d M, Y') : 'N/A' }}</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Farm: {{ $permit->farmLocation?->name ?? 'N/A' }}</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Duration: {{ permitDuration($permit->expected_duration_hours) }}</p>
@@ -313,13 +324,15 @@
                             title="Edit Permit">
                             Edit
                         </a>
-                        <button
-                            type="button"
-                            wire:click="deletePermit({{ $permit->id }})"
-                            class="px-3 py-1 text-xs font-medium text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-900/40 rounded-md hover:bg-red-100 dark:hover:bg-red-900/60 transition-colors"
-                            title="Delete Permit">
-                            Delete
-                        </button>
+                        @if (auth()->check() && (int) auth()->user()->user_type === 2)
+                            <button
+                                type="button"
+                                wire:click="deletePermit({{ $permit->id }})"
+                                class="px-3 py-1 text-xs font-medium text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-900/40 rounded-md hover:bg-red-100 dark:hover:bg-red-900/60 transition-colors"
+                                title="Delete Permit">
+                                Delete
+                            </button>
+                        @endif
                     </div>
                 </div>
             @empty

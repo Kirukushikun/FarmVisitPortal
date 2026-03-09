@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
 
         $adminDefaults = [
             'password' => Hash::make('brookside25'),
-            'user_type' => '1',
+            'user_type' => '2',
         ];
 
         $admins = [

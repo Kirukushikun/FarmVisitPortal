@@ -267,7 +267,7 @@ class Dashboard extends Component
 
     protected function baseQuery(): Builder
     {
-        $permits = Permit::query()->with(['receivedBy', 'farmLocation']);
+        $permits = Permit::query()->with(['receivedBy', 'farmLocation', 'createdBy']);
 
         $search = trim($this->search);
         if ($search !== '') {

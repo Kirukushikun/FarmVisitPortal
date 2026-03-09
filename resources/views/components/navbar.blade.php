@@ -1,7 +1,8 @@
 @props(['hideDate' => false, 'includeSidebar' => false, 'user' => null, 'title' => null, 'breadcrumbs' => null])
 
 @php
-    $isAdmin = ($user && ((int) $user->user_type) === 1 && (string) session()->get('ui_mode') !== 'user');
+    $userType = (int) ($user->user_type ?? 0);
+    $isAdmin = ($user && in_array($userType, [1, 2], true) && (string) session()->get('ui_mode') !== 'user');
     $displayName = $user
         ? trim((string) ($user->first_name ?? '') . ' ' . (string) ($user->last_name ?? ''))
         : '';

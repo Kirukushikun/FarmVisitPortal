@@ -34,7 +34,8 @@ class LoginController extends Controller
 
             return back()->withErrors(['username' => 'This account is disabled.'])->onlyInput('username');
         }
-        $isAdmin = (int) ($user->user_type ?? 0) === 1;
+        $userType = (int) ($user->user_type ?? 0);
+        $isAdmin = in_array($userType, [1, 2], true);
         $expectedAdmin = $validated['role'] === 'admin';
 
         if ($expectedAdmin !== $isAdmin) {
@@ -45,6 +46,13 @@ class LoginController extends Controller
             return back()->withErrors([
                 'role' => $expectedAdmin ? 'This account is not an admin.' : 'This account is not a user.',
             ])->onlyInput('username');
+        }
+
+        if ($expectedAdmin) {
+            $request->session()->forget('selected_location_id');
+            $request->session()->put('ui_mode', 'admin');
+        } else {
+            $request->session()->put('ui_mode', 'user');
         }
 
         return redirect()->route($expectedAdmin ? 'admin.home' : 'user.home');

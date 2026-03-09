@@ -45,6 +45,8 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
 
     Route::get('/admin/users', [PortalController::class, 'adminUsers'])->name('admin.users');
 
+    Route::get('/admin/admins', [PortalController::class, 'adminAdmins'])->name('admin.admins');
+
     Route::get('/admin/locations', [PortalController::class, 'adminLocations'])->name('admin.locations');
 
     Route::get('/admin/permits', [PortalController::class, 'adminPermits'])->name('admin.permits.index');
