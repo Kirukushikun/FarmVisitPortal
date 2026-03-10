@@ -7,22 +7,64 @@ use App\Models\Permit;
 
 class PortalController extends Controller
 {
+    private function isAdminType($user): bool
+    {
+        return in_array((int) ($user->user_type ?? 0), [1, 2], true);
+    }
+
+    private function isSuperAdminType($user): bool
+    {
+        return (int) ($user->user_type ?? 0) === 2;
+    }
+
     public function userHome(Request $request): mixed
     {
         $user = $request->user();
 
-        if ((int) ($user->user_type ?? 0) === 1 && (string) $request->session()->get('ui_mode') !== 'user') {
+        if ($this->isAdminType($user) && (string) $request->session()->get('ui_mode') !== 'user') {
             return redirect()->route('admin.home');
         }
-
         return view('user.home');
+    }
+
+    public function acceptPermit(Request $request, Permit $permit): mixed
+    {
+        $user = $request->user();
+
+        $isAdmin = $this->isAdminType($user);
+        $userFarmLocationId = (int) ($user->farm_location_id ?? 0);
+        $permitFarmLocationId = (int) ($permit->farm_location_id ?? 0);
+
+        if (! $isAdmin) {
+            if ($userFarmLocationId <= 0 || $permitFarmLocationId <= 0 || $userFarmLocationId !== $permitFarmLocationId) {
+                abort(403);
+            }
+        }
+
+        if ((int) ($permit->status ?? 0) !== 1) {
+            return redirect()->back()->with('error', 'Permit cannot be accepted.');
+        }
+
+        if ((int) ($permit->received_by ?? 0) !== 0) {
+            if ((int) ($permit->received_by ?? 0) === (int) ($user->id ?? 0)) {
+                return redirect()->back()->with('success', 'Permit already accepted.');
+            }
+
+            return redirect()->back()->with('error', 'Permit has already been accepted by another user.');
+        }
+
+        $permit->update([
+            'received_by' => (int) ($user->id ?? 0),
+        ]);
+
+        return redirect()->back()->with('success', 'Permit accepted successfully!');
     }
 
     public function userChangePassword(Request $request): mixed
     {
         $user = $request->user();
 
-        if ((int) ($user->user_type ?? 0) === 1) {
+        if ($this->isAdminType($user)) {
             return redirect()->route('admin.change-password');
         }
 
@@ -32,6 +74,19 @@ class PortalController extends Controller
     public function userShowPermit(Request $request, Permit $permit): mixed
     {
         $user = $request->user();
+
+        $isAdmin = $this->isAdminType($user);
+        $userFarmLocationId = (int) ($user->farm_location_id ?? 0);
+        $permitFarmLocationId = (int) ($permit->farm_location_id ?? 0);
+
+        $canView = $isAdmin
+            || ((int) ($permit->created_by ?? 0) === (int) ($user->id ?? 0))
+            || ((int) ($permit->received_by ?? 0) === (int) ($user->id ?? 0))
+            || ($userFarmLocationId > 0 && $permitFarmLocationId > 0 && $userFarmLocationId === $permitFarmLocationId);
+
+        if (! $canView) {
+            abort(403);
+        }
 
         $permit->load([
             'farmLocation',
@@ -75,12 +130,14 @@ class PortalController extends Controller
     {
         $user = $request->user();
 
-        $isAdmin = (int) ($user->user_type ?? 0) === 1;
-        if (! $isAdmin && (int) ($permit->created_by ?? 0) !== (int) ($user->id ?? 0)) {
+        $isAdmin = $this->isAdminType($user);
+        if (! $isAdmin
+            && (int) ($permit->created_by ?? 0) !== (int) ($user->id ?? 0)
+            && (int) ($permit->received_by ?? 0) !== (int) ($user->id ?? 0)) {
             abort(403);
         }
 
-        if ($permit->status >= 2) {
+        if ((int) ($permit->status ?? 0) !== 1) {
             return redirect()->back()->with('error', 'Permit cannot be completed.');
         }
 
@@ -97,12 +154,14 @@ class PortalController extends Controller
     {
         $user = $request->user();
 
-        $isAdmin = (int) ($user->user_type ?? 0) === 1;
-        if (! $isAdmin && (int) ($permit->created_by ?? 0) !== (int) ($user->id ?? 0)) {
+        $isAdmin = $this->isAdminType($user);
+        if (! $isAdmin
+            && (int) ($permit->created_by ?? 0) !== (int) ($user->id ?? 0)
+            && (int) ($permit->received_by ?? 0) !== (int) ($user->id ?? 0)) {
             abort(403);
         }
 
-        if ($permit->status >= 3) {
+        if ((int) ($permit->status ?? 0) !== 1) {
             return redirect()->back()->with('error', 'Permit cannot be cancelled.');
         }
 
@@ -118,7 +177,7 @@ class PortalController extends Controller
     {
         $user = $request->user();
 
-        if ((int) ($user->user_type ?? 0) !== 1) {
+        if (! $this->isAdminType($user)) {
             abort(403);
         }
 
@@ -129,18 +188,29 @@ class PortalController extends Controller
     {
         $user = $request->user();
 
-        if ((int) ($user->user_type ?? 0) !== 1) {
+        if (! $this->isAdminType($user)) {
             abort(403);
         }
 
         return view('admin.users');
     }
 
+    public function adminAdmins(Request $request): mixed
+    {
+        $user = $request->user();
+
+        if (! $this->isSuperAdminType($user)) {
+            abort(403);
+        }
+
+        return view('admin.admins');
+    }
+
     public function adminLocations(Request $request): mixed
     {
         $user = $request->user();
 
-        if ((int) ($user->user_type ?? 0) !== 1) {
+        if (! $this->isAdminType($user)) {
             abort(403);
         }
 
@@ -151,7 +221,7 @@ class PortalController extends Controller
     {
         $user = $request->user();
 
-        if ((int) ($user->user_type ?? 0) !== 1) {
+        if (! $this->isAdminType($user)) {
             abort(403);
         }
 
@@ -162,7 +232,7 @@ class PortalController extends Controller
     {
         $user = $request->user();
 
-        if ((int) ($user->user_type ?? 0) !== 1) {
+        if (! $this->isAdminType($user)) {
             abort(403);
         }
 
@@ -173,7 +243,7 @@ class PortalController extends Controller
     {
         $user = $request->user();
 
-        if ((int) ($user->user_type ?? 0) !== 1) {
+        if (! $this->isAdminType($user)) {
             abort(403);
         }
 
@@ -184,7 +254,7 @@ class PortalController extends Controller
     {
         $user = $request->user();
 
-        if ((int) ($user->user_type ?? 0) !== 1) {
+        if (! $this->isAdminType($user)) {
             abort(403);
         }
 
@@ -203,7 +273,7 @@ class PortalController extends Controller
     {
         $user = $request->user();
 
-        if ((int) ($user->user_type ?? 0) !== 1) {
+        if (! $this->isAdminType($user)) {
             abort(403);
         }
 

@@ -228,10 +228,28 @@
 
                 <!-- Action Buttons -->
                 @if ((int) ($permit->status ?? 0) === 1)
+                    @php
+                        $viewer = Auth::user();
+                        $isAdmin = (int) ($viewer->user_type ?? 0) === 1;
+                        $isAcceptedByCurrentUser = (int) ($permit->received_by ?? 0) === (int) ($viewer->id ?? 0);
+                        $isUnaccepted = (int) ($permit->received_by ?? 0) === 0;
+                    @endphp
+
+                    @if ($isUnaccepted)
+                        <div class="no-print mt-6 flex flex-col sm:flex-row gap-4 justify-center">
+                            <form method="POST" action="{{ route('user.permits.accept', $permit) }}" class="flex-1 max-w-xs">
+                                @csrf
+                                <button type="submit" class="w-full inline-flex justify-center items-center px-6 py-3 bg-blue-600 dark:bg-blue-700 text-white font-medium rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors">
+                                    Accept Permit
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+
                     <div class="no-print mt-6 flex flex-col sm:flex-row gap-4 justify-center md:hidden">
                         <form method="POST" action="{{ route('user.permits.complete', $permit) }}" class="flex-1">
                             @csrf
-                            <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors">
+                            <button type="submit" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser) class="w-full inline-flex justify-center items-center px-4 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
@@ -241,7 +259,7 @@
 
                         <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1">
                             @csrf
-                            <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-3 bg-red-600 dark:bg-red-700 text-white font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 transition-colors">
+                            <button type="submit" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser) class="w-full inline-flex justify-center items-center px-4 py-3 bg-red-600 dark:bg-red-700 text-white font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>
@@ -253,7 +271,7 @@
                     <div class="no-print mt-6 hidden md:flex flex-col sm:flex-row gap-4 justify-center">
                         <form method="POST" action="{{ route('user.permits.complete', $permit) }}" class="flex-1 max-w-xs">
                             @csrf
-                            <button type="submit" class="w-full inline-flex justify-center items-center px-6 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors">
+                            <button type="submit" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser) class="w-full inline-flex justify-center items-center px-6 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
@@ -263,7 +281,7 @@
 
                         <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1 max-w-xs">
                             @csrf
-                            <button type="submit" class="w-full inline-flex justify-center items-center px-6 py-3 bg-red-600 dark:bg-red-700 text-white font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 transition-colors">
+                            <button type="submit" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser) class="w-full inline-flex justify-center items-center px-6 py-3 bg-red-600 dark:bg-red-700 text-white font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>
