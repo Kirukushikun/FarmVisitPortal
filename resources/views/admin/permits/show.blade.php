@@ -85,10 +85,6 @@
 
                                 <div class="mt-4 space-y-3 text-sm">
                                     <div>
-                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Area</div>
-                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($permit->area->name ?? null) }}</div>
-                                    </div>
-                                    <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Farm</div>
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($farm) }}</div>
                                     </div>
@@ -103,10 +99,6 @@
                                     <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Area/Department to Visit</div>
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($permit->area->name ?? null) }}</div>
-                                    </div>
-                                    <div>
-                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Destination</div>
-                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($farm) }}</div>
                                     </div>
                                     <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Date of Visit</div>
@@ -141,7 +133,7 @@
                                 <div class="text-sm text-gray-900 dark:text-white">{{ permitDisplayValue($dateFilled) }}</div>
                                 <button type="button" onclick="window.print()" class="no-print inline-flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white cursor-pointer">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
                                     </svg>
                                 </button>
                             </div>
@@ -161,12 +153,11 @@
                                         <col style="width: 15%;">
                                     </colgroup>
                                     <tr>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 w-1/4 align-top text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">AREA:</span> {{ permitDisplayValue($permit->area->name ?? null) }}</td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 w-1/2 align-top text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">FARM:</span> {{ permitDisplayValue($farm) }}</td>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 w-1/2 align-top text-gray-900 dark:text-gray-100" colspan="2"><span class="font-bold text-gray-900 dark:text-gray-100">FARM:</span> {{ permitDisplayValue($farm) }}</td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 w-1/4 align-top text-gray-900 dark:text-gray-100" colspan="2"><span class="font-bold text-gray-900 dark:text-gray-100">Date Filled:</span> {{ permitDisplayValue($dateFilled) }}</td>
                                     </tr>
                                     <tr>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2">
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2" rowspan="2">
                                             <div class="font-bold text-gray-900 dark:text-gray-100">NAME:</div>
                                             @if (is_string($permit->names) && trim($permit->names) !== '')
                                                 <div style="white-space: pre-line;">{{ trim($permit->names) }}</div>
@@ -180,10 +171,8 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">DESTINATION</span></td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">{{ permitDisplayValue($farm) }}</td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 whitespace-nowrap text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">DATE of VISIT</span></td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 whitespace-nowrap text-gray-900 dark:text-gray-100">{{ permitDisplayValue($dateOfVisit) }}</td>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top whitespace-nowrap text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">DATE of VISIT</span></td>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top whitespace-nowrap text-gray-900 dark:text-gray-100">{{ permitDisplayValue($dateOfVisit) }}</td>
                                     </tr>
                                     <tr>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 text-center text-gray-900 dark:text-gray-100" colspan="4">

@@ -102,7 +102,7 @@
                 </x-dropdown>
 
                 <x-text-input
-                    label="Date of Visit"
+                    label="Date Visited"
                     name="dateOfVisitPreviousFarm"
                     type="date"
                     :wireModel="'dateOfVisitPreviousFarm'"
