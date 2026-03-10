@@ -33,7 +33,7 @@
                     required
                 >
                     @if(empty($farmLocationId))
-                        <option value="" disabled>{{ empty($farmLocationId) ? 'Select a farm first' : 'Select an area' }}</option>
+                        <option value="" hidden selected>Select a farm first</option>
                     @else
                         <option value="" hidden selected>Select an area</option>
                         @foreach($this->areas as $area)
@@ -43,7 +43,7 @@
                 </x-dropdown>
 
                 <x-text-area
-                    label="Names"
+                    label="Visitor Names"
                     name="names"
                     error-key="names"
                     placeholder="Enter names"
@@ -66,40 +66,38 @@
                     </x-button>
                 </x-text-input>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expected Duration <span class="text-red-500">*</span></label>
-                    <div class="grid grid-cols-1 sm:grid-cols-1 gap-4">
-                        <div>
-                            <x-text-input
-                                label=""
-                                name="expectedDurationHours"
-                                type="number"
-                                :wireModel="'expectedDurationHours'"
-                                step="0.25"
-                                min="0.25"
-                                placeholder="Hours"
-                                required
-                            />
-                        </div>
-                    </div>
-                </div>
+
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expected Duration <span class="text-red-500">*</span></label>
+                <x-text-input
+                    label=""
+                    name="expectedDurationHours"
+                    type="number"
+                    :wireModel="'expectedDurationHours'"
+                    step="0.25"
+                    min="0.25"
+                    placeholder="Hours"
+                    required
+                />
+
+                <x-text-area
+                    label="Purpose"
+                    name="purpose"
+                    error-key="purpose"
+                    placeholder="Enter purpose"
+                    wire:model.live="purpose"
+                />
             </div>
 
             <div data-step="2" class="space-y-4" @style(["display:none" => $currentStep !== 2])>
                 <x-title>OPTIONAL DETAILS</x-title>
 
-                <x-dropdown
+                <x-text-input
                     label="Previous Farm Visited"
-                    name="previousFarmLocationId"
-                    error-key="previousFarmLocationId"
-                    placeholder="Select previous farm (optional)"
-                    wire:model.live="previousFarmLocationId"
-                >
-                    <option value="">Select previous farm (optional)</option>
-                    @foreach($this->previousFarmLocations as $location)
-                        <option value="{{ $location->id }}">{{ $location->name }}</option>
-                    @endforeach
-                </x-dropdown>
+                    name="previousFarmLocation"
+                    type="text"
+                    :wireModel="'previousFarmLocation'"
+                    placeholder="Enter previous farm (optional)"
+                />
 
                 <x-text-input
                     label="Date of Visit"
@@ -114,14 +112,6 @@
                         </svg>
                     </x-button>
                 </x-text-input>
-
-                <x-text-area
-                    label="Purpose"
-                    name="purpose"
-                    error-key="purpose"
-                    placeholder="Enter purpose"
-                    wire:model.live="purpose"
-                />
             </div>
         </x-progress-navigation>
     </form>

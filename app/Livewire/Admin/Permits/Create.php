@@ -28,7 +28,7 @@ class Create extends Component
 
     public ?float $expectedDurationHours = null;
 
-    public string $previousFarmLocationId = '';
+    public string $previousFarmLocation = '';
 
     public string $dateOfVisitPreviousFarm = '';
 
@@ -60,7 +60,7 @@ class Create extends Component
         'names' => 'names',
         'dateOfVisit' => 'date of visit',
         'expectedDurationHours' => 'expected duration (hours)',
-        'previousFarmLocationId' => 'previous farm visited',
+        'previousFarmLocation' => 'previous farm visited',
         'dateOfVisitPreviousFarm' => 'previous farm visit date',
         'purpose' => 'purpose',
     ];
@@ -135,7 +135,7 @@ class Create extends Component
                 'names' => $this->names,
                 'date_of_visit' => Carbon::parse($this->dateOfVisit),
                 'expected_duration_hours' => $durationHours,
-                'previous_farm_location_id' => $this->previousFarmLocationId !== '' ? (int) $this->previousFarmLocationId : null,
+                'previous_farm_location' => trim($this->previousFarmLocation) !== '' ? trim($this->previousFarmLocation) : null,
                 'date_of_visit_previous_farm' => $this->dateOfVisitPreviousFarm !== '' ? Carbon::parse($this->dateOfVisitPreviousFarm) : null,
                 'purpose' => $this->purpose !== '' ? $this->purpose : null,
                 'status' => $status,
@@ -218,14 +218,6 @@ class Create extends Component
             ->get();
     }
 
-    public function getPreviousFarmLocationsProperty()
-    {
-        return Location::query()
-            ->where('is_disabled', false)
-            ->orderBy('name')
-            ->get();
-    }
-
     protected function rulesForStep(int $step): array
     {
         if ($step === 1) {
@@ -243,7 +235,7 @@ class Create extends Component
 
         if ($step === 2) {
             return [
-                'previousFarmLocationId' => ['nullable', 'integer', Rule::exists('locations', 'id')],
+                'previousFarmLocation' => ['nullable', 'string', 'min:2'],
                 'dateOfVisitPreviousFarm' => ['nullable', 'date', 'before_or_equal:today'],
                 'purpose' => ['nullable', 'string', 'min:2'],
             ];
