@@ -5,7 +5,7 @@
 
             <div class="relative w-full max-w-md p-6 bg-white dark:bg-gray-800 shadow-xl dark:shadow-2xl rounded-lg">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Add New Location</h3>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Add New Farm</h3>
                     <button type="button" wire:click="closeModal" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -16,11 +16,11 @@
                 <form wire:submit.prevent="createLocation">
                     <div class="mb-6">
                         <x-text-input
-                            label="Location Name"
+                            label="Farm Name"
                             name="name"
                             type="text"
                             :wireModel="'name'"
-                            placeholder="Enter location name"
+                            placeholder="Enter farm name"
                         />
                     </div>
 
