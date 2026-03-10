@@ -157,13 +157,8 @@
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 w-1/4 align-top text-gray-900 dark:text-gray-100" colspan="2"><span class="font-bold text-gray-900 dark:text-gray-100">Date Filled:</span> {{ permitDisplayValue($dateFilled) }}</td>
                                     </tr>
                                     <tr>
-<<<<<<< HEAD
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2" rowspan="2">
-                                            <div class="font-bold text-gray-900 dark:text-gray-100">NAME:</div>
-=======
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2">
                                             <div class="font-bold text-gray-900 dark:text-gray-100">VISITOR NAMES:</div>
->>>>>>> ec5c200247f2114ba2eea404924c6a3cb33a9ae8
                                             @if (is_string($permit->names) && trim($permit->names) !== '')
                                                 <div style="white-space: pre-line;">{{ trim($permit->names) }}</div>
                                             @else
