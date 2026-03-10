@@ -49,7 +49,7 @@
                     <input
                         wire:model.live="search"
                         placeholder="Search permits..."
-                        class="w-full pl-11 pr-12 py-3 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 shadow-sm dark:shadow-md"
+                        class="w-full pl-11 pr-12 py-3 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 shadow-sm dark:shadow-md"
                     />
                     <button type="button" wire:click="toggleFilterDropdown" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer">
                         <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#9CA3AF" class="w-5 h-5">
@@ -64,25 +64,20 @@
                                     <div>
                                         <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Status</h3>
                                         <div class="space-y-2">
-                                            <label class="flex items-center">
-                                                <button type="button" wire:click="resetFilters" class="text-sm text-gray-700 dark:text-gray-300 underline">
-                                                    Clear
-                                                </button>
-                                            </label>
-                                            <label class="flex items-center">
-                                                <input type="checkbox" wire:model.live="statusFilter" value="0" class="mr-2">
+                                            <label class="flex items-center cursor-pointer">
+                                                <input type="checkbox" wire:model.defer="pendingStatusFilter" value="0" class="mr-2 cursor-pointer">
                                                 <span class="text-sm text-gray-700 dark:text-gray-300">Scheduled</span>
                                             </label>
-                                            <label class="flex items-center">
-                                                <input type="checkbox" wire:model.live="statusFilter" value="1" class="mr-2">
+                                            <label class="flex items-center cursor-pointer">
+                                                <input type="checkbox" wire:model.defer="pendingStatusFilter" value="1" class="mr-2 cursor-pointer">
                                                 <span class="text-sm text-gray-700 dark:text-gray-300">In Progress</span>
                                             </label>
-                                            <label class="flex items-center">
-                                                <input type="checkbox" wire:model.live="statusFilter" value="2" class="mr-2">
+                                            <label class="flex items-center cursor-pointer">
+                                                <input type="checkbox" wire:model.defer="pendingStatusFilter" value="2" class="mr-2 cursor-pointer">
                                                 <span class="text-sm text-gray-700 dark:text-gray-300">Completed</span>
                                             </label>
-                                            <label class="flex items-center">
-                                                <input type="checkbox" wire:model.live="statusFilter" value="3" class="mr-2">
+                                            <label class="flex items-center cursor-pointer">
+                                                <input type="checkbox" wire:model.defer="pendingStatusFilter" value="3" class="mr-2 cursor-pointer">
                                                 <span class="text-sm text-gray-700 dark:text-gray-300">Cancelled</span>
                                             </label>
                                         </div>
@@ -95,11 +90,11 @@
                                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
                                                 <input
                                                     type="date"
-                                                    wire:model="dateFrom"
+                                                    wire:model.defer="pendingDateFrom"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                                                     placeholder="YYYY-MM-DD"
-                                                    max="{{ $dateTo ?: now()->format('Y-m-d') }}"
-                                                    wire:target="dateFrom"
+                                                    max="{{ $pendingDateTo ?: now()->format('Y-m-d') }}"
+                                                    wire:target="pendingDateFrom"
                                                     wire:loading.attr="disabled"
                                                 />
                                             </div>
@@ -107,12 +102,12 @@
                                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
                                                 <input
                                                     type="date"
-                                                    wire:model="dateTo"
+                                                    wire:model.defer="pendingDateTo"
                                                     class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                                                     placeholder="YYYY-MM-DD"
                                                     max="{{ now()->format('Y-m-d') }}"
-                                                    min="{{ $dateFrom ?: '' }}"
-                                                    wire:target="dateTo"
+                                                    min="{{ $pendingDateFrom ?: '' }}"
+                                                    wire:target="pendingDateTo"
                                                     wire:loading.attr="disabled"
                                                 />
                                             </div>
@@ -122,7 +117,7 @@
 
                                 <div class="flex justify-between mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
                                     <button type="button" wire:click="resetFilters" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer">Reset</button>
-                                    <button type="button" wire:click="toggleFilterDropdown" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer">Done</button>
+                                    <button type="button" wire:click="applyFilters" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer">Done</button>
                                 </div>
                             </div>
                         </div>
@@ -243,7 +238,7 @@
                                         <button
                                             type="button"
                                             wire:click="reschedulePermit({{ $permit->id }})"
-                                            class="px-3 py-1 text-xs font-medium text-purple-600 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors"
+                                            class="px-3 py-1 text-xs font-medium text-purple-600 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors cursor-pointer"
                                             title="Reschedule Permit"
                                         >
                                             Reschedule
@@ -260,7 +255,7 @@
                                         <button
                                             type="button"
                                             wire:click="deletePermit({{ $permit->id }})"
-                                            class="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
+                                            class="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors cursor-pointer"
                                             title="Delete Permit"
                                         >
                                             Delete
@@ -313,8 +308,8 @@
                             <button
                                 type="button"
                                 wire:click="reschedulePermit({{ $permit->id }})"
-                                class="px-3 py-1 text-xs font-medium text-purple-600 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/50 rounded-md hover:bg-purple-100 dark:hover:bg-purple-900/70 transition-colors"
-                                title="Reschedule Permit">
+                                class="px-3 py-1 text-xs font-medium text-purple-600 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/50 rounded-md hover:bg-purple-100 dark:hover:bg-purple-900/70 transition-colors cursor-pointer"
+                            >
                                 Reschedule
                             </button>
                         @endif
@@ -328,8 +323,8 @@
                             <button
                                 type="button"
                                 wire:click="deletePermit({{ $permit->id }})"
-                                class="px-3 py-1 text-xs font-medium text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-900/40 rounded-md hover:bg-red-100 dark:hover:bg-red-900/60 transition-colors"
-                                title="Delete Permit">
+                                class="px-3 py-1 text-xs font-medium text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-900/40 rounded-md hover:bg-red-100 dark:hover:bg-red-900/60 transition-colors cursor-pointer"
+                            >
                                 Delete
                             </button>
                         @endif

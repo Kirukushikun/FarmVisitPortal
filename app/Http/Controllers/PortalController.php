@@ -7,6 +7,16 @@ use App\Models\Permit;
 
 class PortalController extends Controller
 {
+    private function userLocationId(Request $request, $user): int
+    {
+        $sessionLocationId = (int) $request->session()->get('selected_location_id', 0);
+        if ($sessionLocationId > 0) {
+            return $sessionLocationId;
+        }
+
+        return (int) ($user->farm_location_id ?? 0);
+    }
+
     private function isAdminType($user): bool
     {
         return in_array((int) ($user->user_type ?? 0), [1, 2], true);
@@ -32,7 +42,7 @@ class PortalController extends Controller
         $user = $request->user();
 
         $isAdmin = $this->isAdminType($user);
-        $userFarmLocationId = (int) ($user->farm_location_id ?? 0);
+        $userFarmLocationId = $this->userLocationId($request, $user);
         $permitFarmLocationId = (int) ($permit->farm_location_id ?? 0);
 
         if (! $isAdmin) {
@@ -76,7 +86,7 @@ class PortalController extends Controller
         $user = $request->user();
 
         $isAdmin = $this->isAdminType($user);
-        $userFarmLocationId = (int) ($user->farm_location_id ?? 0);
+        $userFarmLocationId = $this->userLocationId($request, $user);
         $permitFarmLocationId = (int) ($permit->farm_location_id ?? 0);
 
         $canView = $isAdmin
@@ -131,10 +141,17 @@ class PortalController extends Controller
         $user = $request->user();
 
         $isAdmin = $this->isAdminType($user);
-        if (! $isAdmin
-            && (int) ($permit->created_by ?? 0) !== (int) ($user->id ?? 0)
-            && (int) ($permit->received_by ?? 0) !== (int) ($user->id ?? 0)) {
-            abort(403);
+        if (! $isAdmin) {
+            $permitReceivedBy = (int) ($permit->received_by ?? 0);
+            if ($permitReceivedBy !== 0 && $permitReceivedBy !== (int) ($user->id ?? 0)) {
+                abort(403);
+            }
+
+            $userFarmLocationId = $this->userLocationId($request, $user);
+            $permitFarmLocationId = (int) ($permit->farm_location_id ?? 0);
+            if ($userFarmLocationId <= 0 || $permitFarmLocationId <= 0 || $userFarmLocationId !== $permitFarmLocationId) {
+                abort(403);
+            }
         }
 
         if ((int) ($permit->status ?? 0) !== 1) {
@@ -155,10 +172,17 @@ class PortalController extends Controller
         $user = $request->user();
 
         $isAdmin = $this->isAdminType($user);
-        if (! $isAdmin
-            && (int) ($permit->created_by ?? 0) !== (int) ($user->id ?? 0)
-            && (int) ($permit->received_by ?? 0) !== (int) ($user->id ?? 0)) {
-            abort(403);
+        if (! $isAdmin) {
+            $permitReceivedBy = (int) ($permit->received_by ?? 0);
+            if ($permitReceivedBy !== 0 && $permitReceivedBy !== (int) ($user->id ?? 0)) {
+                abort(403);
+            }
+
+            $userFarmLocationId = $this->userLocationId($request, $user);
+            $permitFarmLocationId = (int) ($permit->farm_location_id ?? 0);
+            if ($userFarmLocationId <= 0 || $permitFarmLocationId <= 0 || $userFarmLocationId !== $permitFarmLocationId) {
+                abort(403);
+            }
         }
 
         if ((int) ($permit->status ?? 0) !== 1) {

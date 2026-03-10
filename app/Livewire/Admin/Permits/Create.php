@@ -107,54 +107,79 @@ class Create extends Component
 
     public function submitForm(): mixed
     {
-        $this->validate($this->rulesForSubmit());
+        try {
+            $this->validate($this->rulesForSubmit());
 
-        $durationHours = $this->calculateExpectedDurationHours();
+            $durationHours = $this->calculateExpectedDurationHours();
 
-        $visitDate = Carbon::parse($this->dateOfVisit)->startOfDay();
-        $today = now()->startOfDay();
+            $visitDate = Carbon::parse($this->dateOfVisit)->startOfDay();
+            $today = now()->startOfDay();
 
-        $status = 0; // Scheduled
-        $completedAt = null;
-        $receivedBy = null;
-
-        if ($visitDate->isSameDay($today)) {
-            $status = 1; // In Progress
-        } elseif ($visitDate->isAfter($today)) {
             $status = 0; // Scheduled
-        } else {
-            $status = 2; // Completed
-            $completedAt = now();
-            $receivedBy = (int) Auth::id();
+            $completedAt = null;
+            $receivedBy = null;
+
+            if ($visitDate->isSameDay($today)) {
+                $status = 1; // In Progress
+            } elseif ($visitDate->isAfter($today)) {
+                $status = 0; // Scheduled
+            } else {
+                $status = 2; // Completed
+                $completedAt = now();
+                $receivedBy = (int) Auth::id();
+            }
+
+            $permit = Permit::create([
+                'area_id' => $this->areaId,
+                'farm_location_id' => (int) $this->farmLocationId,
+                'names' => $this->names,
+                'date_of_visit' => Carbon::parse($this->dateOfVisit),
+                'expected_duration_hours' => $durationHours,
+                'previous_farm_location_id' => $this->previousFarmLocationId !== '' ? (int) $this->previousFarmLocationId : null,
+                'date_of_visit_previous_farm' => $this->dateOfVisitPreviousFarm !== '' ? Carbon::parse($this->dateOfVisitPreviousFarm) : null,
+                'purpose' => $this->purpose !== '' ? $this->purpose : null,
+                'status' => $status,
+                'created_by' => (int) Auth::id(),
+                'received_by' => $receivedBy,
+                'completed_at' => $completedAt,
+            ]);
+
+            $permitId = (string) ($permit->permit_id ?? '');
+            $suffix = $permitId !== '' ? ' (' . $permitId . ')' : '';
+            session()->flash('toast', [
+                'message' => 'Permit has been created successfully!' . $suffix,
+                'type' => 'success',
+            ]);
+
+            if ($this->returnUrl) {
+                return redirect()->to($this->returnUrl);
+            }
+
+            return redirect()->route('admin.permits.index');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $failedFields = array_keys($e->validator->failed());
+            $this->currentStep = $this->stepForFailedFields($failedFields);
+            throw $e;
+        }
+    }
+
+    protected function stepForFailedFields(array $failedFields): int
+    {
+        $step1Fields = array_keys($this->rulesForStep(1));
+        foreach ($step1Fields as $field) {
+            if (in_array($field, $failedFields, true)) {
+                return 1;
+            }
         }
 
-        $permit = Permit::create([
-            'area_id' => $this->areaId,
-            'farm_location_id' => (int) $this->farmLocationId,
-            'names' => $this->names,
-            'date_of_visit' => Carbon::parse($this->dateOfVisit),
-            'expected_duration_hours' => $durationHours,
-            'previous_farm_location_id' => $this->previousFarmLocationId !== '' ? (int) $this->previousFarmLocationId : null,
-            'date_of_visit_previous_farm' => $this->dateOfVisitPreviousFarm !== '' ? Carbon::parse($this->dateOfVisitPreviousFarm) : null,
-            'purpose' => $this->purpose !== '' ? $this->purpose : null,
-            'status' => $status,
-            'created_by' => (int) Auth::id(),
-            'received_by' => $receivedBy,
-            'completed_at' => $completedAt,
-        ]);
-
-        $permitId = (string) ($permit->permit_id ?? '');
-        $suffix = $permitId !== '' ? ' (' . $permitId . ')' : '';
-        session()->flash('toast', [
-            'message' => 'Permit has been created successfully!' . $suffix,
-            'type' => 'success',
-        ]);
-
-        if ($this->returnUrl) {
-            return redirect()->to($this->returnUrl);
+        $step2Fields = array_keys($this->rulesForStep(2));
+        foreach ($step2Fields as $field) {
+            if (in_array($field, $failedFields, true)) {
+                return 2;
+            }
         }
 
-        return redirect()->route('admin.permits.index');
+        return 1;
     }
 
     public function canProceed(): bool

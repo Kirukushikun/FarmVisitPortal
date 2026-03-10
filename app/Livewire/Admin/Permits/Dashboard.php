@@ -22,11 +22,17 @@ class Dashboard extends Component
 
     public array $statusFilter = [];
 
+    public array $pendingStatusFilter = [];
+
     public string $status = '';
 
     public string $dateFrom = '';
 
     public string $dateTo = '';
+
+    public string $pendingDateFrom = '';
+
+    public string $pendingDateTo = '';
 
     public bool $showFilterDropdown = false;
 
@@ -67,8 +73,13 @@ class Dashboard extends Component
         $statusParts = array_values(array_filter($statusParts, fn ($v) => in_array((string) $v, $allowed, true)));
         $this->statusFilter = array_map(fn ($v) => (string) $v, $statusParts);
         $this->status = implode(',', $this->statusFilter);
+
+        $this->pendingStatusFilter = $this->statusFilter;
         $this->dateFrom = (string) request()->query('dateFrom', '');
         $this->dateTo = (string) request()->query('dateTo', '');
+
+        $this->pendingDateFrom = $this->dateFrom;
+        $this->pendingDateTo = $this->dateTo;
 
         $toast = session()->get('toast');
         if (is_array($toast) && isset($toast['message'])) {
@@ -119,12 +130,33 @@ class Dashboard extends Component
         $this->showFilterDropdown = !$this->showFilterDropdown;
     }
 
+    public function applyFilters(): void
+    {
+        $this->statusFilter = array_map(fn ($v) => (string) $v, $this->pendingStatusFilter);
+        $this->status = implode(',', $this->statusFilter);
+
+        $this->dateFrom = $this->pendingDateFrom;
+        $this->dateTo = $this->pendingDateTo;
+
+        if ($this->dateFrom && $this->dateTo && $this->dateFrom > $this->dateTo) {
+            $this->dateTo = '';
+            $this->pendingDateTo = '';
+        }
+
+        $this->page = 1;
+        $this->showFilterDropdown = false;
+    }
+
     public function resetFilters(): void
     {
         $this->statusFilter = [];
+        $this->pendingStatusFilter = [];
         $this->status = '';
         $this->dateFrom = '';
         $this->dateTo = '';
+
+        $this->pendingDateFrom = '';
+        $this->pendingDateTo = '';
         $this->page = 1;
         $this->showFilterDropdown = false;
     }

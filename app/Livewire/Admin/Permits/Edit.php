@@ -161,23 +161,9 @@ class Edit extends Component
 
             return redirect()->route('admin.permits.index');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            // On validation failure, determine which step has the error and go to that step
             $failedFields = array_keys($e->validator->failed());
-            
-            // Step 1 fields: areaId, farmLocationId, names, dateOfVisit, expectedDurationHours
-            $step1Fields = ['areaId', 'farmLocationId', 'names', 'dateOfVisit', 'expectedDurationHours'];
-            
-            // Check if any step 1 fields failed
-            foreach ($step1Fields as $field) {
-                if (in_array($field, $failedFields)) {
-                    $this->currentStep = 1;
-                    throw $e; // Re-throw to show validation errors
-                }
-            }
-            
-            // Otherwise go to step 2
-            $this->currentStep = 2;
-            throw $e; // Re-throw to show validation errors
+            $this->currentStep = $this->stepForFailedFields($failedFields);
+            throw $e;
         } catch (\Exception $e) {
             // Log the error for debugging
             Log::error('Permit edit failed: ' . $e->getMessage(), [
@@ -193,6 +179,25 @@ class Edit extends Component
             
             return null;
         }
+    }
+
+    protected function stepForFailedFields(array $failedFields): int
+    {
+        $step1Fields = ['areaId', 'farmLocationId', 'names', 'dateOfVisit', 'expectedDurationHours'];
+        foreach ($step1Fields as $field) {
+            if (in_array($field, $failedFields, true)) {
+                return 1;
+            }
+        }
+
+        $step2Fields = ['previousFarmLocationId', 'dateOfVisitPreviousFarm', 'purpose'];
+        foreach ($step2Fields as $field) {
+            if (in_array($field, $failedFields, true)) {
+                return 2;
+            }
+        }
+
+        return 1;
     }
 
     private function updatePermitStatus(): void
