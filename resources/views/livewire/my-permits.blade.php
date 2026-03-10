@@ -49,7 +49,19 @@
                                         </div>
                                         <div>
                                             <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $permit->permit_id }}</h3>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">Duration: {{ rtrim(rtrim(number_format((float) ($permit->expected_duration_hours ?? 0), 2, '.', ''), '0'), '.') }}h</p>
+                                            @php
+                                                $durationMinutes = (int) round(max(0, (float) ($permit->expected_duration_hours ?? 0)) * 60);
+                                                $durationHoursPart = intdiv($durationMinutes, 60);
+                                                $durationMinutesPart = $durationMinutes % 60;
+                                                if ($durationMinutes < 60) {
+                                                    $durationDisplay = $durationMinutes . 'm';
+                                                } elseif ($durationMinutesPart === 0) {
+                                                    $durationDisplay = $durationHoursPart . 'h';
+                                                } else {
+                                                    $durationDisplay = $durationHoursPart . 'h ' . $durationMinutesPart . 'm';
+                                                }
+                                            @endphp
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">Duration: {{ $durationDisplay }}</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium cursor-pointer">
