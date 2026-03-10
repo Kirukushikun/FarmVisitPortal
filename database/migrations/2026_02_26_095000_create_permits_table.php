@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamp('date_of_visit');
             $table->decimal('expected_duration_hours', 5, 2)->unsigned()->nullable();
 
-            $table->foreignId('previous_farm_location_id')->nullable()->constrained('locations');
+            $table->string('previous_farm_location')->nullable();
             $table->timestamp('date_of_visit_previous_farm')->nullable();
             $table->text('purpose')->nullable();
 

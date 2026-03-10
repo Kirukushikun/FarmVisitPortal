@@ -28,7 +28,7 @@ class Edit extends Component
 
     public string $expectedDurationHours = '';
 
-    public string $previousFarmLocationId = '';
+    public string $previousFarmLocation = '';
 
     public string $dateOfVisitPreviousFarm = '';
 
@@ -62,7 +62,7 @@ class Edit extends Component
         'names' => 'names',
         'dateOfVisit' => 'date of visit',
         'expectedDurationHours' => 'expected duration (hours)',
-        'previousFarmLocationId' => 'previous farm visited',
+        'previousFarmLocation' => 'previous farm visited',
         'dateOfVisitPreviousFarm' => 'previous farm visit date',
         'purpose' => 'purpose',
     ];
@@ -99,7 +99,7 @@ class Edit extends Component
         
         $this->expectedDurationHours = (string) ($this->permit->expected_duration_hours ?? '');
         
-        $this->previousFarmLocationId = (string) ($this->permit->previous_farm_location_id ?? '');
+        $this->previousFarmLocation = (string) ($this->permit->previous_farm_location ?? '');
         $this->dateOfVisitPreviousFarm = $this->permit->date_of_visit_previous_farm?->format('Y-m-d') ?? '';
         $this->purpose = $this->permit->purpose ?? '';
     }
@@ -139,7 +139,7 @@ class Edit extends Component
                 'names' => $this->names,
                 'date_of_visit' => $newDateOfVisit,
                 'expected_duration_hours' => $durationHours,
-                'previous_farm_location_id' => $this->previousFarmLocationId !== '' ? (int) $this->previousFarmLocationId : null,
+                'previous_farm_location' => trim($this->previousFarmLocation) !== '' ? trim($this->previousFarmLocation) : null,
                 'date_of_visit_previous_farm' => $this->dateOfVisitPreviousFarm !== '' ? Carbon::parse($this->dateOfVisitPreviousFarm) : null,
                 'purpose' => $this->purpose !== '' ? $this->purpose : null,
                 'completed_at' => $isRescheduled ? null : $this->permit->completed_at,
@@ -161,23 +161,9 @@ class Edit extends Component
 
             return redirect()->route('admin.permits.index');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            // On validation failure, determine which step has the error and go to that step
             $failedFields = array_keys($e->validator->failed());
-            
-            // Step 1 fields: areaId, farmLocationId, names, dateOfVisit, expectedDurationHours
-            $step1Fields = ['areaId', 'farmLocationId', 'names', 'dateOfVisit', 'expectedDurationHours'];
-            
-            // Check if any step 1 fields failed
-            foreach ($step1Fields as $field) {
-                if (in_array($field, $failedFields)) {
-                    $this->currentStep = 1;
-                    throw $e; // Re-throw to show validation errors
-                }
-            }
-            
-            // Otherwise go to step 2
-            $this->currentStep = 2;
-            throw $e; // Re-throw to show validation errors
+            $this->currentStep = $this->stepForFailedFields($failedFields);
+            throw $e;
         } catch (\Exception $e) {
             // Log the error for debugging
             Log::error('Permit edit failed: ' . $e->getMessage(), [
@@ -193,6 +179,25 @@ class Edit extends Component
             
             return null;
         }
+    }
+
+    protected function stepForFailedFields(array $failedFields): int
+    {
+        $step1Fields = ['areaId', 'farmLocationId', 'names', 'dateOfVisit', 'expectedDurationHours'];
+        foreach ($step1Fields as $field) {
+            if (in_array($field, $failedFields, true)) {
+                return 1;
+            }
+        }
+
+        $step2Fields = ['previousFarmLocation', 'dateOfVisitPreviousFarm', 'purpose'];
+        foreach ($step2Fields as $field) {
+            if (in_array($field, $failedFields, true)) {
+                return 2;
+            }
+        }
+
+        return 1;
     }
 
     private function updatePermitStatus(): void
@@ -277,14 +282,6 @@ class Edit extends Component
             ->get();
     }
 
-    public function getPreviousFarmLocationsProperty()
-    {
-        return Location::query()
-            ->where('is_disabled', false)
-            ->orderBy('name')
-            ->get();
-    }
-
     protected function rulesForSubmit(): array
     {
         $rules = [
@@ -292,7 +289,7 @@ class Edit extends Component
             'farmLocationId' => ['required', 'integer', 'exists:locations,id'],
             'names' => ['required', 'string'],
             'expectedDurationHours' => ['required', 'numeric', 'gt:0'],
-            'previousFarmLocationId' => ['nullable', 'integer', 'exists:locations,id'],
+            'previousFarmLocation' => ['nullable', 'string', 'min:2'],
             'dateOfVisitPreviousFarm' => ['nullable', 'date', 'before_or_equal:today'],
             'purpose' => ['nullable', 'string'],
         ];

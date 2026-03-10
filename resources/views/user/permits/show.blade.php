@@ -39,7 +39,7 @@
                     $farm = $permit->farmLocation?->name ?: '';
                     $dateOfVisit = $permit->date_of_visit ? $permit->date_of_visit->format('F j, Y') : '';
                     $expectedDuration = permitPrintDuration($permit->expected_duration_hours);
-                    $previousFarm = $permit->previousFarmLocation?->name ?: '';
+                    $previousFarm = $permit->previous_farm_location ?? '';
                     $previousFarmDate = $permit->date_of_visit_previous_farm ? $permit->date_of_visit_previous_farm->format('F j, Y') : '';
                 @endphp
 
@@ -94,7 +94,7 @@
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($farm) }}</div>
                                     </div>
                                     <div>
-                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Name</div>
+                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Visitor Names</div>
                                         @if (is_string($permit->names) && trim($permit->names) !== '')
                                             <div class="text-gray-900 dark:text-white whitespace-pre-line">{{ trim($permit->names) }}</div>
                                         @else
@@ -169,7 +169,7 @@
                                     </tr>
                                     <tr>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2">
-                                            <div class="font-bold text-gray-900 dark:text-gray-100">NAME:</div>
+                                            <div class="font-bold text-gray-900 dark:text-gray-100">VISITOR NAMES:</div>
                                             @if (is_string($permit->names) && trim($permit->names) !== '')
                                                 <div style="white-space: pre-line;">{{ trim($permit->names) }}</div>
                                             @else
@@ -232,61 +232,173 @@
                         $viewer = Auth::user();
                         $isAdmin = (int) ($viewer->user_type ?? 0) === 1;
                         $isAcceptedByCurrentUser = (int) ($permit->received_by ?? 0) === (int) ($viewer->id ?? 0);
-                        $isUnaccepted = (int) ($permit->received_by ?? 0) === 0;
                     @endphp
 
-                    @if ($isUnaccepted)
-                        <div class="no-print mt-6 flex flex-col sm:flex-row gap-4 justify-center">
-                            <form method="POST" action="{{ route('user.permits.accept', $permit) }}" class="flex-1 max-w-xs">
-                                @csrf
-                                <button type="submit" class="w-full inline-flex justify-center items-center px-6 py-3 bg-blue-600 dark:bg-blue-700 text-white font-medium rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors">
-                                    Accept Permit
-                                </button>
-                            </form>
-                        </div>
-                    @endif
-
-                    <div class="no-print mt-6 flex flex-col sm:flex-row gap-4 justify-center md:hidden">
+                    <div class="no-print mt-6 flex flex-col sm:flex-row gap-4 justify-center md:hidden" x-data="{ showCompleteConfirm: false, showCancelConfirm: false }">
                         <form method="POST" action="{{ route('user.permits.complete', $permit) }}" class="flex-1">
                             @csrf
-                            <button type="submit" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser) class="w-full inline-flex justify-center items-center px-4 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button type="button" @click="showCompleteConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="w-full inline-flex justify-center items-center px-4 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
                                 Complete
                             </button>
+
+                            <!-- Complete Confirmation Modal -->
+                            <div x-show="showCompleteConfirm"
+                                x-cloak
+                                class="fixed inset-0 z-50 overflow-y-auto"
+                                style="display: none;">
+                                <div class="fixed inset-0 bg-black/50" @click="showCompleteConfirm = false"></div>
+                                <div class="relative min-h-screen flex items-center justify-center p-4">
+                                    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+                                        <div class="text-center">
+                                            <div class="mx-auto mb-4 text-green-500 w-16 h-16">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                            </div>
+                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Complete Permit?</h3>
+                                            <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as completed?</p>
+                                            <div class="flex gap-3 justify-center">
+                                                <button @click="showCompleteConfirm = false" type="button"
+                                                        class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
+                                                    Cancel
+                                                </button>
+                                                <button type="submit"
+                                                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer">
+                                                    Yes, Complete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </form>
 
-                        <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1">
+                        <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1" x-data="{ showCancelConfirm: false }">
                             @csrf
-                            <button type="submit" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser) class="w-full inline-flex justify-center items-center px-4 py-3 bg-red-600 dark:bg-red-700 text-white font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button type="button" @click="showCancelConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="w-full inline-flex justify-center items-center px-4 py-3 bg-red-600 dark:bg-red-700 text-white font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>
                                 Did Not Arrive
                             </button>
+
+                            <!-- Cancel Confirmation Modal -->
+                            <div x-show="showCancelConfirm"
+                                x-cloak
+                                class="fixed inset-0 z-50 overflow-y-auto"
+                                style="display: none;">
+                                <div class="fixed inset-0 bg-black/50" @click="showCancelConfirm = false"></div>
+                                <div class="relative min-h-screen flex items-center justify-center p-4">
+                                    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+                                        <div class="text-center">
+                                            <div class="mx-auto mb-4 text-red-500 w-16 h-16">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                </svg>
+                                            </div>
+                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Did Not Arrive?</h3>
+                                            <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as did not arrive?</p>
+                                            <div class="flex gap-3 justify-center">
+                                                <button @click="showCancelConfirm = false" type="button"
+                                                        class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
+                                                    Cancel
+                                                </button>
+                                                <button type="submit"
+                                                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer">
+                                                    Yes, Did Not Arrive
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </form>
                     </div>
 
-                    <div class="no-print mt-6 hidden md:flex flex-col sm:flex-row gap-4 justify-center">
+                    <div class="no-print mt-6 hidden md:flex flex-col sm:flex-row gap-4 justify-center" x-data="{ showCompleteConfirm: false, showCancelConfirm: false }">
                         <form method="POST" action="{{ route('user.permits.complete', $permit) }}" class="flex-1 max-w-xs">
                             @csrf
-                            <button type="submit" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser) class="w-full inline-flex justify-center items-center px-6 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button type="button" @click="showCompleteConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="w-full inline-flex justify-center items-center px-6 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
                                 Complete
                             </button>
+
+                            <!-- Complete Confirmation Modal -->
+                            <div x-show="showCompleteConfirm"
+                                x-cloak
+                                class="fixed inset-0 z-50 overflow-y-auto"
+                                style="display: none;">
+                                <div class="fixed inset-0 bg-black/50" @click="showCompleteConfirm = false"></div>
+                                <div class="relative min-h-screen flex items-center justify-center p-4">
+                                    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+                                        <div class="text-center">
+                                            <div class="mx-auto mb-4 text-green-500 w-16 h-16">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                            </div>
+                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Complete Permit?</h3>
+                                            <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as completed?</p>
+                                            <div class="flex gap-3 justify-center">
+                                                <button @click="showCompleteConfirm = false" type="button"
+                                                        class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
+                                                    Cancel
+                                                </button>
+                                                <button type="submit"
+                                                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer">
+                                                    Yes, Complete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </form>
 
-                        <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1 max-w-xs">
+                        <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1 max-w-xs" x-data="{ showCancelConfirm: false }">
                             @csrf
-                            <button type="submit" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser) class="w-full inline-flex justify-center items-center px-6 py-3 bg-red-600 dark:bg-red-700 text-white font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button type="button" @click="showCancelConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="w-full inline-flex justify-center items-center px-6 py-3 bg-red-600 dark:bg-red-700 text-white font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>
                                 Did Not Arrive
                             </button>
+
+                            <!-- Cancel Confirmation Modal -->
+                            <div x-show="showCancelConfirm"
+                                x-cloak
+                                class="fixed inset-0 z-50 overflow-y-auto"
+                                style="display: none;">
+                                <div class="fixed inset-0 bg-black/50" @click="showCancelConfirm = false"></div>
+                                <div class="relative min-h-screen flex items-center justify-center p-4">
+                                    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+                                        <div class="text-center">
+                                            <div class="mx-auto mb-4 text-red-500 w-16 h-16">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                </svg>
+                                            </div>
+                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Did Not Arrive?</h3>
+                                            <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as did not arrive?</p>
+                                            <div class="flex gap-3 justify-center">
+                                                <button @click="showCancelConfirm = false" type="button"
+                                                        class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
+                                                    Cancel
+                                                </button>
+                                                <button type="submit"
+                                                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer">
+                                                    Yes, Did Not Arrive
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 @endif

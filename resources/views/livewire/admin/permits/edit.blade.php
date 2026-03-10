@@ -39,7 +39,7 @@
                 </x-dropdown>
 
                 <x-text-area
-                    label="Names"
+                    label="Visitor Names"
                     name="names"
                     error-key="names"
                     placeholder="Enter names"
@@ -79,23 +79,26 @@
                         </div>
                     </div>
                 </div>
+
+                <x-text-area
+                    label="Purpose"
+                    name="purpose"
+                    error-key="purpose"
+                    placeholder="Enter purpose"
+                    wire:model.live="purpose"
+                />
             </div>
 
             <div data-step="2" class="space-y-4" @style(["display:none" => $currentStep !== 2])>
                 <x-title>OPTIONAL DETAILS</x-title>
 
-                <x-dropdown
+                <x-text-input
                     label="Previous Farm Visited"
-                    name="previousFarmLocationId"
-                    error-key="previousFarmLocationId"
-                    placeholder="Select previous farm (optional)"
-                    wire:model.live="previousFarmLocationId"
-                >
-                    <option value="">None</option>
-                    @foreach($this->previousFarmLocations as $location)
-                        <option value="{{ $location->id }}" {{ $previousFarmLocationId == $location->id ? 'selected' : '' }}>{{ $location->name }}</option>
-                    @endforeach
-                </x-dropdown>
+                    name="previousFarmLocation"
+                    type="text"
+                    :wireModel="'previousFarmLocation'"
+                    placeholder="Enter previous farm (optional)"
+                />
 
                 <x-text-input
                     label="Date of Visit"
@@ -110,14 +113,6 @@
                         </svg>
                     </x-button>
                 </x-text-input>
-
-                <x-text-area
-                    label="Purpose"
-                    name="purpose"
-                    error-key="purpose"
-                    placeholder="Enter purpose"
-                    wire:model.live="purpose"
-                />
             </div>
         </x-progress-navigation>
     </form>

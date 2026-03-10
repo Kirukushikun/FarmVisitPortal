@@ -39,7 +39,7 @@
                     $farm = $permit->farmLocation?->name ?: '';
                     $dateOfVisit = $permit->date_of_visit ? $permit->date_of_visit->format('F j, Y') : '';
                     $expectedDuration = permitPrintDuration($permit->expected_duration_hours);
-                    $previousFarm = $permit->previousFarmLocation?->name ?: '';
+                    $previousFarm = $permit->previous_farm_location ?? '';
                     $previousFarmDate = $permit->date_of_visit_previous_farm ? $permit->date_of_visit_previous_farm->format('F j, Y') : '';
                 @endphp
 
@@ -89,7 +89,7 @@
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($farm) }}</div>
                                     </div>
                                     <div>
-                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Name</div>
+                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Visitor Names</div>
                                         @if (is_string($permit->names) && trim($permit->names) !== '')
                                             <div class="text-gray-900 dark:text-white whitespace-pre-line">{{ trim($permit->names) }}</div>
                                         @else
@@ -157,8 +157,13 @@
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 w-1/4 align-top text-gray-900 dark:text-gray-100" colspan="2"><span class="font-bold text-gray-900 dark:text-gray-100">Date Filled:</span> {{ permitDisplayValue($dateFilled) }}</td>
                                     </tr>
                                     <tr>
+<<<<<<< HEAD
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2" rowspan="2">
                                             <div class="font-bold text-gray-900 dark:text-gray-100">NAME:</div>
+=======
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2">
+                                            <div class="font-bold text-gray-900 dark:text-gray-100">VISITOR NAMES:</div>
+>>>>>>> ec5c200247f2114ba2eea404924c6a3cb33a9ae8
                                             @if (is_string($permit->names) && trim($permit->names) !== '')
                                                 <div style="white-space: pre-line;">{{ trim($permit->names) }}</div>
                                             @else

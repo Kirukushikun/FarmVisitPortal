@@ -195,13 +195,13 @@
                                                 <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to log out of your account?</p>
                                                 <div class="flex gap-3 justify-center">
                                                     <button @click="showLogoutConfirmation = false" type="button"
-                                                            class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                                            class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
                                                         Stay Logged In
                                                     </button>
                                                     <form method="POST" action="{{ route('logout') }}">
                                                         @csrf
                                                         <button type="submit"
-                                                                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                                                                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer">
                                                             Yes, Log Out
                                                         </button>
                                                     </form>
@@ -368,13 +368,13 @@
                                         <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to log out of your account?</p>
                                         <div class="flex gap-3 justify-center">
                                             <button @click="showLogoutConfirmation = false" type="button"
-                                                    class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                                    class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
                                                 Stay Logged In
                                             </button>
                                             <form method="POST" action="{{ route('logout') }}">
                                                 @csrf
                                                 <button type="submit"
-                                                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                                                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer">
                                                     Yes, Log Out
                                                 </button>
                                             </form>
