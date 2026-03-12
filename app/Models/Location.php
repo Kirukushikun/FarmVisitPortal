@@ -12,12 +12,14 @@ class Location extends Model
 
     protected $fillable = [
         'name',
+        'farm_type',
         'is_disabled',
     ];
 
     protected function casts(): array
     {
         return [
+            'farm_type' => 'integer',
             'is_disabled' => 'boolean',
         ];
     }

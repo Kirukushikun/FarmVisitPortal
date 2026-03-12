@@ -37,6 +37,7 @@
 
                     $dateFilled = $permit->created_at ? $permit->created_at->format('F j, Y') : '';
                     $farm = $permit->farmLocation?->name ?: '';
+                    $farmType = (int) ($permit->farmLocation?->farm_type ?? 0);
                     $dateOfVisit = $permit->date_of_visit ? $permit->date_of_visit->format('F j, Y') : '';
                     $expectedDuration = permitPrintDuration($permit->expected_duration_hours);
                     $previousFarm = $permit->previous_farm_location ?? '';
@@ -118,7 +119,7 @@
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($expectedDuration) }}</div>
                                     </div>
                                     <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
-                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Previous Farm Visited</div>
+                                        <div class="font-semibold text-gray-700 dark:text-gray-200">{{ $farmType === 1 ? 'Previous Poultry Farm Visited' : 'Previous Swine Farm Visited' }}</div>
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($previousFarm) }}</div>
                                     </div>
                                     <div>
@@ -195,12 +196,18 @@
                                     <tr>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 text-center text-gray-900 dark:text-gray-100" colspan="4">
                                             <div class="font-bold text-gray-900 dark:text-gray-100">Farm Travel History</div>
-                                            <div class="text-sm text-gray-700 dark:text-gray-300">(Must have not visited other Poultry Farm 3 days Prior to the Farm Visit)</div>
+                                            <div class="text-sm text-gray-700 dark:text-gray-300">
+                                                @if ($farmType === 1)
+                                                    (Must have not visited other Poultry Farm 3 days Prior to the Farm Visit)
+                                                @else
+                                                    (Must have not visited other Swine Farm 5 days Prior to the Farm Visit)
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 text-gray-900 dark:text-gray-100">
-                                            <div class="font-bold text-center text-gray-900 dark:text-gray-100">Previous Farm Visited</div>
+                                            <div class="font-bold text-center text-gray-900 dark:text-gray-100">{{ $farmType === 1 ? 'Previous Poultry Farm Visited' : 'Previous Swine Farm Visited' }}</div>
                                         </td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">{{ permitDisplayValue($previousFarm) }}</td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 whitespace-nowrap text-gray-900 dark:text-gray-100">

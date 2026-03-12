@@ -98,9 +98,19 @@
                         :wireModel="'previousFarmLocation'"
                         placeholder="Enter previous farm (optional)"
                     />       
-                    <p class="text-xs text-gray-500 dark:text-gray-400" style="margin-top: -15px; margin-bottom: 20px;" >
-                        Must not have visited other Poultry Farm 3 days prior to the Farm Visit.
-                    </p>       
+                    @php
+                        $selectedFarmType = (int) (($this->farmLocations ?? collect())->firstWhere('id', (int) ($farmLocationId ?? 0))?->farm_type ?? 0);
+                        $disclaimer = match ($selectedFarmType) {
+                            0 => 'Must not have visited other Swine Farms 5 days prior to the Farm Visit.',
+                            1 => 'Must not have visited other Poultry Farms 3 days prior to the Farm Visit.',
+                            default => 'Must not have visited other Swine Farms 5 days prior to the Farm Visit.',
+                        };
+                    @endphp
+                    @if ($disclaimer !== '')
+                        <p class="text-xs text-gray-500 dark:text-gray-400" style="margin-top: -15px; margin-bottom: 20px;" >
+                            {{ $disclaimer }}
+                        </p>
+                    @endif
                 </div>
 
                 <x-text-input

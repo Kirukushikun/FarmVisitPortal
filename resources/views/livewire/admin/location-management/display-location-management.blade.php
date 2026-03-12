@@ -1,4 +1,14 @@
 <div>
+    @php
+        $farmTypeSubLabel = function ($value): string {
+            $value = (int) ($value ?? 0);
+            return match ($value) {
+                1 => 'Poultry Farm',
+                default => 'Swine Farm',
+            };
+        };
+    @endphp
+
     <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between md:gap-6">
         <div class="text-center md:text-left">
             <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Locations Management</h1>
@@ -84,7 +94,7 @@
                             <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200 text-center">Status</p>
                         </th>
                         <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 text-center">
-                            <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200 text-center">Area</p>
+                            <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200">Areas</p>
                         </th>
                         <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 text-center">
                             <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200">Actions</p>
@@ -96,6 +106,10 @@
                         <tr class="even:bg-slate-50 dark:even:bg-gray-700/50 hover:bg-slate-100 dark:hover:bg-gray-700">
                             <td class="p-3 md:p-4 py-4 md:py-5">
                                 <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ $location->name }}</p>
+                                @php $sub = $farmTypeSubLabel($location->farm_type ?? 0); @endphp
+                                @if ($sub !== '')
+                                    <p class="mt-1 block text-xs text-slate-500 dark:text-slate-400">{{ $sub }}</p>
+                                @endif
                             </td>
                             <td class="p-3 md:p-4 py-4 md:py-5 text-center">
                                 @if($location->is_disabled)
@@ -104,6 +118,7 @@
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">Enabled</span>
                                 @endif
                             </td>
+
                             <td class="p-3 md:p-4 py-4 md:py-5 text-center">
                                 <div class="flex justify-center">
                                     <button wire:click="$dispatch('openViewAreasLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors cursor-pointer">
@@ -136,6 +151,10 @@
                     <div class="flex justify-between items-start">
                         <div class="space-y-1">
                             <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $location->name }}</p>
+                            @php $sub = $farmTypeSubLabel($location->farm_type ?? 0); @endphp
+                            @if ($sub !== '')
+                                <p class="text-xs text-gray-600 dark:text-gray-400">{{ $sub }}</p>
+                            @endif
                         </div>
                         <div class="text-center">
                             @if($location->is_disabled)
