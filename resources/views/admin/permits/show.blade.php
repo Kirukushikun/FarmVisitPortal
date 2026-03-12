@@ -148,7 +148,7 @@
                                 <table class="w-full border border-gray-900 dark:border-gray-300" style="border-collapse: collapse; font-family: 'Times New Roman', Times, serif;">
                                     <colgroup>
                                         <col style="width: 24%;">
-                                        <col style="width: 51%;">
+                                        <col style="width: 35%;">
                                         <col style="width: 10%;">
                                         <col style="width: 15%;">
                                     </colgroup>
