@@ -319,7 +319,7 @@
 
                 <div class="relative w-full max-w-lg p-6 bg-white dark:bg-gray-800 shadow-xl dark:shadow-2xl rounded-lg">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Add Area</h3>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Add New Area</h3>
                         <button type="button" wire:click="closeAddAreaModal" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -332,7 +332,7 @@
                             <input
                                 wire:model.defer="newAreaName"
                                 type="text"
-                                placeholder="Area name"
+                                placeholder="Enter new area name"
                                 class="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                             />
                             @error('newAreaName')

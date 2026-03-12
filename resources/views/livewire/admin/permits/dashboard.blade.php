@@ -58,33 +58,11 @@
                     </button>
 
                     @if ($showFilterDropdown)
-                        <div class="absolute top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-xl border border-gray-200 dark:border-gray-700 z-50 left-0 right-0 md:left-auto md:right-0 md:w-80">
+                        <div class="absolute top-full mt-2 w-2xl bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-xl border border-gray-200 dark:border-gray-700 z-50 left-0 right-0 md:left-auto md:right-0">
                             <div class="p-4">
-                                <div class="grid grid-cols-2 gap-1">
+                                <div class="grid grid-cols-4 gap-2">
                                     <div>
-                                        <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Status</h3>
-                                        <div class="space-y-2">
-                                            <label class="flex items-center cursor-pointer">
-                                                <input type="checkbox" wire:model.defer="pendingStatusFilter" value="0" class="mr-2 cursor-pointer">
-                                                <span class="text-sm text-gray-700 dark:text-gray-300">Scheduled</span>
-                                            </label>
-                                            <label class="flex items-center cursor-pointer">
-                                                <input type="checkbox" wire:model.defer="pendingStatusFilter" value="1" class="mr-2 cursor-pointer">
-                                                <span class="text-sm text-gray-700 dark:text-gray-300">In Progress</span>
-                                            </label>
-                                            <label class="flex items-center cursor-pointer">
-                                                <input type="checkbox" wire:model.defer="pendingStatusFilter" value="2" class="mr-2 cursor-pointer">
-                                                <span class="text-sm text-gray-700 dark:text-gray-300">Completed</span>
-                                            </label>
-                                            <label class="flex items-center cursor-pointer">
-                                                <input type="checkbox" wire:model.defer="pendingStatusFilter" value="3" class="mr-2 cursor-pointer">
-                                                <span class="text-sm text-gray-700 dark:text-gray-300">Cancelled</span>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Date Range</h3>
+                                        <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Created Date</h3>
                                         <div class="space-y-2">
                                             <div>
                                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
@@ -111,6 +89,90 @@
                                                     wire:loading.attr="disabled"
                                                 />
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Visit Date</h3>
+                                        <div class="space-y-2">
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
+                                                <input
+                                                    type="date"
+                                                    wire:model.defer="visitDateFrom"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                                                    placeholder="YYYY-MM-DD"
+                                                    max="{{ $visitDateTo ?: now()->format('Y-m-d') }}"
+                                                    wire:target="visitDateFrom"
+                                                    wire:loading.attr="disabled"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
+                                                <input
+                                                    type="date"
+                                                    wire:model.defer="visitDateTo"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                                                    placeholder="YYYY-MM-DD"
+                                                    max="{{ now()->format('Y-m-d') }}"
+                                                    min="{{ $visitDateFrom ?: '' }}"
+                                                    wire:target="visitDateTo"
+                                                    wire:loading.attr="disabled"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Completed Date</h3>
+                                        <div class="space-y-2">
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
+                                                <input
+                                                    type="date"
+                                                    wire:model.defer="completedDateFrom"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                                                    placeholder="YYYY-MM-DD"
+                                                    max="{{ $completedDateTo ?: now()->format('Y-m-d') }}"
+                                                    wire:target="completedDateFrom"
+                                                    wire:loading.attr="disabled"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
+                                                <input
+                                                    type="date"
+                                                    wire:model.defer="completedDateTo"
+                                                    class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                                                    placeholder="YYYY-MM-DD"
+                                                    max="{{ now()->format('Y-m-d') }}"
+                                                    min="{{ $completedDateFrom ?: '' }}"
+                                                    wire:target="completedDateTo"
+                                                    wire:loading.attr="disabled"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Status</h3>
+                                        <div class="space-y-2">
+                                            <label class="flex items-center cursor-pointer">
+                                                <input type="checkbox" wire:model.defer="pendingStatusFilter" value="0" class="mr-2 cursor-pointer">
+                                                <span class="text-sm text-gray-700 dark:text-gray-300">Scheduled</span>
+                                            </label>
+                                            <label class="flex items-center cursor-pointer">
+                                                <input type="checkbox" wire:model.defer="pendingStatusFilter" value="1" class="mr-2 cursor-pointer">
+                                                <span class="text-sm text-gray-700 dark:text-gray-300">In Progress</span>
+                                            </label>
+                                            <label class="flex items-center cursor-pointer">
+                                                <input type="checkbox" wire:model.defer="pendingStatusFilter" value="2" class="mr-2 cursor-pointer">
+                                                <span class="text-sm text-gray-700 dark:text-gray-300">Completed</span>
+                                            </label>
+                                            <label class="flex items-center cursor-pointer">
+                                                <input type="checkbox" wire:model.defer="pendingStatusFilter" value="3" class="mr-2 cursor-pointer">
+                                                <span class="text-sm text-gray-700 dark:text-gray-300">Cancelled</span>
+                                            </label>
                                         </div>
                                     </div>
                                 </div>

@@ -34,6 +34,14 @@ class Dashboard extends Component
 
     public string $pendingDateTo = '';
 
+    public string $completedDateFrom = '';
+
+    public string $completedDateTo = '';
+
+    public string $visitDateFrom = '';
+
+    public string $visitDateTo = '';
+
     public bool $showFilterDropdown = false;
 
     public bool $showDeleteModal = false;
@@ -54,6 +62,10 @@ class Dashboard extends Component
         'status' => ['except' => ''],
         'dateFrom' => ['except' => ''],
         'dateTo' => ['except' => ''],
+        'completedDateFrom' => ['except' => ''],
+        'completedDateTo' => ['except' => ''],
+        'visitDateFrom' => ['except' => ''],
+        'visitDateTo' => ['except' => ''],
         'perPage' => ['except' => 10],
         'sortField' => ['except' => 'created_at'],
         'sortDirection' => ['except' => 'desc'],
@@ -80,6 +92,11 @@ class Dashboard extends Component
 
         $this->pendingDateFrom = $this->dateFrom;
         $this->pendingDateTo = $this->dateTo;
+
+        $this->completedDateFrom = (string) request()->query('completedDateFrom', '');
+        $this->completedDateTo = (string) request()->query('completedDateTo', '');
+        $this->visitDateFrom = (string) request()->query('visitDateFrom', '');
+        $this->visitDateTo = (string) request()->query('visitDateTo', '');
 
         $toast = session()->get('toast');
         if (is_array($toast) && isset($toast['message'])) {
@@ -143,6 +160,14 @@ class Dashboard extends Component
             $this->pendingDateTo = '';
         }
 
+        if ($this->completedDateFrom && $this->completedDateTo && $this->completedDateFrom > $this->completedDateTo) {
+            $this->completedDateTo = '';
+        }
+
+        if ($this->visitDateFrom && $this->visitDateTo && $this->visitDateFrom > $this->visitDateTo) {
+            $this->visitDateTo = '';
+        }
+
         $this->page = 1;
         $this->showFilterDropdown = false;
     }
@@ -154,6 +179,10 @@ class Dashboard extends Component
         $this->status = '';
         $this->dateFrom = '';
         $this->dateTo = '';
+        $this->completedDateFrom = '';
+        $this->completedDateTo = '';
+        $this->visitDateFrom = '';
+        $this->visitDateTo = '';
 
         $this->pendingDateFrom = '';
         $this->pendingDateTo = '';
@@ -307,9 +336,11 @@ class Dashboard extends Component
                 $query
                     ->where('permit_id', 'like', '%' . $search . '%')
                     ->orWhere('area', 'like', '%' . $search . '%')
-                    ->orWhere('names', 'like', '%' . $search . '%')
                     ->orWhereHas('farmLocation', function (Builder $farmQuery) use ($search) {
                         $farmQuery->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('createdBy', function (Builder $userQuery) use ($search) {
+                        $userQuery->where('name', 'like', '%' . $search . '%');
                     });
             });
         }
@@ -326,6 +357,26 @@ class Dashboard extends Component
                 $permits->whereDate('created_at', '>=', $this->dateFrom);
             } elseif ($this->dateTo) {
                 $permits->whereDate('created_at', '<=', $this->dateTo);
+            }
+        }
+
+        if ($this->completedDateFrom || $this->completedDateTo) {
+            if ($this->completedDateFrom && $this->completedDateTo) {
+                $permits->whereBetween('completed_at', [$this->completedDateFrom . ' 00:00:00', $this->completedDateTo . ' 23:59:59']);
+            } elseif ($this->completedDateFrom) {
+                $permits->whereDate('completed_at', '>=', $this->completedDateFrom);
+            } elseif ($this->completedDateTo) {
+                $permits->whereDate('completed_at', '<=', $this->completedDateTo);
+            }
+        }
+
+        if ($this->visitDateFrom || $this->visitDateTo) {
+            if ($this->visitDateFrom && $this->visitDateTo) {
+                $permits->whereBetween('date_of_visit', [$this->visitDateFrom, $this->visitDateTo]);
+            } elseif ($this->visitDateFrom) {
+                $permits->whereDate('date_of_visit', '>=', $this->visitDateFrom);
+            } elseif ($this->visitDateTo) {
+                $permits->whereDate('date_of_visit', '<=', $this->visitDateTo);
             }
         }
 

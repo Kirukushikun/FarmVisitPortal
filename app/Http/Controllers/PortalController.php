@@ -245,7 +245,7 @@ class PortalController extends Controller
             abort(403);
         }
 
-        return view('admin.locations');
+        return view('admin.farms');
     }
 
     public function adminPermits(Request $request): mixed

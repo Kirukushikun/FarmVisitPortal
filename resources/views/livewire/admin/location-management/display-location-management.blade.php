@@ -11,8 +11,8 @@
 
     <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between md:gap-6">
         <div class="text-center md:text-left">
-            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Locations Management</h1>
-            <p class="text-gray-600 dark:text-gray-400">Manage your locations here</p>
+            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Farms Management</h1>
+            <p class="text-gray-600 dark:text-gray-400">Manage your farms here</p>
         </div>
         <div class="flex flex-col gap-3 md:flex-row md:gap-3 md:items-center">
             <div class="flex flex-row gap-3 items-center w-full md:w-auto">
@@ -22,7 +22,7 @@
                     </svg>
                     <input
                         wire:model.live="search"
-                        placeholder="Search locations..."
+                        placeholder="Search farms..."
                         class="w-full pl-11 pr-12 py-3 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 shadow-sm dark:shadow-md"
                     />
                     <button type="button" wire:click="toggleFilterDropdown" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer">
