@@ -14,6 +14,10 @@
                 </div>
 
                 <div class="space-y-4 mb-6">
+                    @php
+                        $isStatusFilterActive = (bool) ($showStatusFilterDropdown || ($statusFilter ?? 'all') !== 'all');
+                    @endphp
+
                     <div class="relative">
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -25,8 +29,8 @@
                             class="w-full pl-9 pr-12 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                         />
 
-                        <button type="button" wire:click="toggleStatusFilterDropdown" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer" title="Status Filter ({{ ucfirst($statusFilter) }})">
-                            <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#9CA3AF" class="w-5 h-5">
+                        <button type="button" wire:click="toggleStatusFilterDropdown" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 transition-colors cursor-pointer {{ $isStatusFilterActive ? 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300' }}" title="Status Filter ({{ ucfirst($statusFilter) }})">
+                            <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5">
                                 <path fill-rule="evenodd" clip-rule="evenodd" d="M15 2v1.67l-5 4.759V14H6V8.429l-5-4.76V2h14zM7 8v5h2V8l5-4.76V3H2v.24L7 8z"/>
                             </svg>
                         </button>
