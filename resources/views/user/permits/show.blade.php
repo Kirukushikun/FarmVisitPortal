@@ -223,6 +223,25 @@
                 @if ((int) ($permit->status ?? 0) === 1 || (($permit->photos ?? collect())->count() > 0))
                     <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 pt-6 pb-2">
                         <livewire:permit-photo-upload :permit="$permit" :can-upload="(int) ($permit->status ?? 0) === 1" />
+
+                        @if ((int) ($permit->status ?? 0) === 1)
+                            <form id="completePermitForm" method="POST" action="{{ route('user.permits.complete', $permit) }}" class="mt-6">
+                                @csrf
+                                <x-text-area
+                                    label="Remarks"
+                                    name="remarks"
+                                    placeholder="Enter remarks (optional)"
+                                    :value="old('remarks', $permit->remarks ?? '')"
+                                />
+                            </form>
+                        @endif
+
+                        @if (is_string($permit->remarks ?? null) && trim((string) $permit->remarks) !== '')
+                            <div class="mt-6">
+                                <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks</div>
+                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-gray-900 dark:text-white whitespace-pre-line">{{ trim((string) $permit->remarks) }}</div>
+                            </div>
+                        @endif
                     </div>
                 @endif
 
@@ -235,9 +254,7 @@
                     @endphp
 
                     <div class="no-print mt-6 flex flex-col sm:flex-row gap-4 justify-center md:hidden" x-data="{ showCompleteConfirm: false, showCancelConfirm: false }">
-                        <form method="POST" action="{{ route('user.permits.complete', $permit) }}" class="flex-1">
-                            @csrf
-                            <button type="button" @click="showCompleteConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="w-full inline-flex justify-center items-center px-4 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                        <button type="button" @click="showCompleteConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="flex-1 w-full inline-flex justify-center items-center px-4 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
@@ -265,7 +282,7 @@
                                                         class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
                                                     Cancel
                                                 </button>
-                                                <button type="submit"
+                                                <button type="submit" form="completePermitForm"
                                                         class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer">
                                                     Yes, Complete
                                                 </button>
@@ -274,7 +291,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </form>
 
                         <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1" x-data="{ showCancelConfirm: false }">
                             @csrf
@@ -319,9 +335,7 @@
                     </div>
 
                     <div class="no-print mt-6 hidden md:flex flex-col sm:flex-row gap-4 justify-center" x-data="{ showCompleteConfirm: false, showCancelConfirm: false }">
-                        <form method="POST" action="{{ route('user.permits.complete', $permit) }}" class="flex-1 max-w-xs">
-                            @csrf
-                            <button type="button" @click="showCompleteConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="w-full inline-flex justify-center items-center px-6 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                        <button type="button" @click="showCompleteConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="flex-1 max-w-xs w-full inline-flex justify-center items-center px-6 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
@@ -349,7 +363,7 @@
                                                         class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
                                                     Cancel
                                                 </button>
-                                                <button type="submit"
+                                                <button type="submit" form="completePermitForm"
                                                         class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer">
                                                     Yes, Complete
                                                 </button>
@@ -358,7 +372,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </form>
 
                         <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1 max-w-xs" x-data="{ showCancelConfirm: false }">
                             @csrf

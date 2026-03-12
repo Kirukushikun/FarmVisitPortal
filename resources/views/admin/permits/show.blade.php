@@ -212,6 +212,13 @@
                         <livewire:permit-photo-upload :permit="$permit" :can-upload="false" />
                     </div>
                 @endif
+
+                @if (is_string($permit->remarks ?? null) && trim((string) $permit->remarks) !== '')
+                    <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 pt-6 pb-6">
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks</div>
+                        <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-gray-900 dark:text-white whitespace-pre-line">{{ trim((string) $permit->remarks) }}</div>
+                    </div>
+                @endif
             </div>
         </div>
     </x-navbar>
