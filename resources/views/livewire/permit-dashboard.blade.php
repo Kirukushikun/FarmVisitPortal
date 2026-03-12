@@ -76,7 +76,7 @@
                                     <!-- Visitor Information -->
                                     <div class="space-y-3">
                                         <div>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Visitor Name</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Visitor Names:</p>
                                             @if (is_string($permit->names) && trim($permit->names) !== '')
                                                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100 whitespace-pre-line">{{ trim($permit->names) }}</p>
                                             @else

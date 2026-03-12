@@ -47,7 +47,7 @@ class LoginForm extends Component
                 && Location::whereKey($locationId)->where('is_disabled', false)->exists();
 
             if (! $hasValidLocation) {
-                $this->addError('role', 'Please select a location first.');
+                $this->addError('role', 'Please select a farm first.');
                 return;
             }
         }

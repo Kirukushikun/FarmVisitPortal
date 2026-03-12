@@ -95,7 +95,7 @@
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($farm) }}</div>
                                     </div>
                                     <div>
-                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Visitor Names</div>
+                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Visitor Names:</div>
                                         @if (is_string($permit->names) && trim($permit->names) !== '')
                                             <div class="text-gray-900 dark:text-white whitespace-pre-line">{{ trim($permit->names) }}</div>
                                         @else

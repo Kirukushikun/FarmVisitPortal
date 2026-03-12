@@ -40,7 +40,7 @@
                                         <div class="space-y-2">
                                             <label class="flex items-center">
                                                 <input type="radio" wire:model="statusFilter" value="all" class="mr-2">
-                                                <span class="text-sm text-gray-700 dark:text-gray-300">All Locations</span>
+                                                <span class="text-sm text-gray-700 dark:text-gray-300">All Farms</span>
                                             </label>
                                             <label class="flex items-center">
                                                 <input type="radio" wire:model="statusFilter" value="disabled" class="mr-2">
@@ -64,7 +64,7 @@
                 </div>
 
                 <button type="button" wire:click="$dispatch('openCreateLocationModal')" class="inline-flex items-center justify-center px-4 py-3 text-sm font-medium text-white bg-orange-600 border border-orange-600 rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-150 whitespace-nowrap shrink-0 md:px-4 cursor-pointer">
-                    <span class="hidden md:inline">Add Location</span>
+                    <span class="hidden md:inline">Add Farm</span>
                     <span class="md:hidden">Add</span>
                 </button>
             </div>
@@ -138,7 +138,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-12 text-center">No locations found</td>
+                            <td colspan="4" class="px-6 py-12 text-center">No farms found</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -175,7 +175,7 @@
                     </div>
                 </div>
             @empty
-                <div class="flex flex-col items-center py-12">No locations found</div>
+                <div class="flex flex-col items-center py-12">No farms found</div>
             @endforelse
         </div>
 

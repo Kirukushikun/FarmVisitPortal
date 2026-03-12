@@ -8,7 +8,7 @@
             <form wire:submit.prevent="submit" class="space-y-4">
                 @if ($role === 'user')
                     <div class="rounded-xl bg-gray-50 dark:bg-gray-900/30 ring-1 ring-gray-200 dark:ring-gray-700 px-4 py-3">
-                        <p class="text-xs font-medium text-gray-600 dark:text-gray-300">Selected location</p>
+                        <p class="text-xs font-medium text-gray-600 dark:text-gray-300">Selected farm</p>
                         <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
                             {{ $selectedLocationName ?: 'Not selected' }}
                         </p>

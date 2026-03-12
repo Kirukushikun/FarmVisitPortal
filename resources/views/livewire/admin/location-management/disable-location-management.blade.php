@@ -5,7 +5,7 @@
 
             <div class="relative w-full max-w-md p-6 bg-white dark:bg-gray-800 shadow-xl dark:shadow-2xl rounded-lg">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ $isCurrentlyDisabled ? 'Enable Location' : 'Disable Location' }}</h3>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ $isCurrentlyDisabled ? 'Enable Farm' : 'Disable Farm' }}</h3>
                     <button type="button" wire:click="closeModal" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -27,13 +27,13 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-900 dark:text-white">
-                            {{ $isCurrentlyDisabled ? 'Enable location' : 'Disable location' }} <span class="font-semibold">{{ $locationName }}</span>?
+                            {{ $isCurrentlyDisabled ? 'Enable farm' : 'Disable farm' }} <span class="font-semibold">{{ $locationName }}</span>?
                         </p>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
                             @if($isCurrentlyDisabled)
-                                This will allow the location to be selected again.
+                                This will allow the farm to be selected again.
                             @else
-                                This will hide/disable the location from normal use. Data will be preserved.
+                                This will hide/disable the farm from normal use. Data will be preserved.
                             @endif
                         </p>
                     </div>
@@ -58,7 +58,7 @@
                         :loading="$processing"
                     >
                         <span wire:loading.remove wire:target="toggleDisable">
-                            {{ $isCurrentlyDisabled ? 'Enable Location' : 'Disable Location' }}
+                            {{ $isCurrentlyDisabled ? 'Enable Farm' : 'Disable Farm' }}
                         </span>
                         <span wire:loading.inline-flex wire:target="toggleDisable" class="inline-flex items-center gap-2">
                             <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
