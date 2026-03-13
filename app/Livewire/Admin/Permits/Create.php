@@ -230,7 +230,7 @@ class Create extends Component
                 'names' => ['required', 'string', 'min:2'],
                 'dateOfVisit' => ['required', 'date', 'after_or_equal:today'],
                 'expectedDurationHours' => ['required', 'numeric', 'gt:0'],
-                'purpose' => ['string', 'min:2'],
+                'purpose' => ['required', 'string', 'min:2'],
             ];
         }
 
