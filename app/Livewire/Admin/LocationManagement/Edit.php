@@ -15,6 +15,9 @@ class Edit extends Component
     #[Validate('required|string|min:2|max:100')]
     public string $name = '';
 
+    #[Validate('required|integer|in:0,1')]
+    public int $farmType = 0;
+
     public bool $showModal = false;
 
     protected $listeners = ['openEditLocationModal' => 'openModal'];
@@ -30,6 +33,10 @@ class Edit extends Component
 
         $this->locationId = $locationId;
         $this->name = (string) $location->name;
+        $this->farmType = (int) ($location->farm_type ?? 0);
+        if ($this->farmType !== 0 && $this->farmType !== 1) {
+            $this->farmType = 0;
+        }
         $this->resetValidation();
         $this->showModal = true;
     }
@@ -37,7 +44,7 @@ class Edit extends Component
     public function closeModal(): void
     {
         $this->showModal = false;
-        $this->reset(['locationId', 'name']);
+        $this->reset(['locationId', 'name', 'farmType']);
         $this->resetValidation();
     }
 
@@ -56,6 +63,7 @@ class Edit extends Component
 
         $location->update([
             'name' => $this->name,
+            'farm_type' => (int) $this->farmType,
         ]);
 
         Cache::forget(CacheKeys::locationsAll());

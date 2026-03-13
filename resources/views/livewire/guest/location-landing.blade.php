@@ -3,8 +3,8 @@
         <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6">
             <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Choose a Location</h1>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Select your farm/location to continue to login</p>
+                    <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Choose a Farm</h1>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Select your farm to continue to login</p>
                 </div>
 
                 <div class="w-full md:w-96">
@@ -15,7 +15,7 @@
                         <input
                             wire:model.live="search"
                             type="text"
-                            placeholder="Search locations..."
+                            placeholder="Search farms..."
                             class="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 pl-10 pr-4 py-3 text-sm text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                         />
                     </div>
@@ -46,7 +46,7 @@
             @empty
                 <div class="col-span-full">
                     <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-8 text-center">
-                        <p class="text-sm text-gray-600 dark:text-gray-400">No locations found.</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">No farms found.</p>
                     </div>
                 </div>
             @endforelse

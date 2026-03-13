@@ -24,6 +24,23 @@
                         />
                     </div>
 
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Farm Type</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                                <input type="radio" wire:model.live="farmType" value="0" class="text-indigo-600 focus:ring-indigo-500" />
+                                <span>Swine Farm</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                                <input type="radio" wire:model.live="farmType" value="1" class="text-indigo-600 focus:ring-indigo-500" />
+                                <span>Poultry Farm</span>
+                            </label>
+                        </div>
+                        @error('farmType')
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <div class="flex justify-end space-x-3">
                         <x-button
                             variant="outline-secondary"
@@ -41,7 +58,7 @@
                             wire:loading.attr="disabled"
                             wire:target="createLocation"
                         >
-                            <span wire:loading.remove wire:target="createLocation">Create Location</span>
+                            <span wire:loading.remove wire:target="createLocation">Create Farm</span>
                             <span wire:loading.inline-flex wire:target="createLocation" class="inline-flex items-center gap-2">
                                 <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

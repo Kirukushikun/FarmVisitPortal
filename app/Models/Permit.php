@@ -21,6 +21,7 @@ class Permit extends Model
         'previous_farm_location',
         'date_of_visit_previous_farm',
         'purpose',
+        'remarks',
         'status',
         'created_by',
         'received_by',

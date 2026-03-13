@@ -1,8 +1,20 @@
 <div>
+    @php
+        $farmTypeSubLabel = function ($value): string {
+            $value = (int) ($value ?? 0);
+            return match ($value) {
+                1 => 'Poultry Farm',
+                default => 'Swine Farm',
+            };
+        };
+
+        $isFilterActive = (bool) ($showFilterDropdown || ($statusFilter ?? 'all') !== 'all');
+    @endphp
+
     <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between md:gap-6">
         <div class="text-center md:text-left">
-            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Locations Management</h1>
-            <p class="text-gray-600 dark:text-gray-400">Manage your locations here</p>
+            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Farms Management</h1>
+            <p class="text-gray-600 dark:text-gray-400">Manage your farms here</p>
         </div>
         <div class="flex flex-col gap-3 md:flex-row md:gap-3 md:items-center">
             <div class="flex flex-row gap-3 items-center w-full md:w-auto">
@@ -12,11 +24,11 @@
                     </svg>
                     <input
                         wire:model.live="search"
-                        placeholder="Search locations..."
+                        placeholder="Search farms..."
                         class="w-full pl-11 pr-12 py-3 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 shadow-sm dark:shadow-md"
                     />
-                    <button type="button" wire:click="toggleFilterDropdown" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer">
-                        <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#9CA3AF" class="w-5 h-5">
+                    <button type="button" wire:click="toggleFilterDropdown" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 transition-colors cursor-pointer {{ $isFilterActive ? 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300' }}">
+                        <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5">
                             <path fill-rule="evenodd" clip-rule="evenodd" d="M15 2v1.67l-5 4.759V14H6V8.429l-5-4.76V2h14zM7 8v5h2V8l5-4.76V3H2v.24L7 8z"/>
                         </svg>
                     </button>
@@ -30,7 +42,7 @@
                                         <div class="space-y-2">
                                             <label class="flex items-center">
                                                 <input type="radio" wire:model="statusFilter" value="all" class="mr-2">
-                                                <span class="text-sm text-gray-700 dark:text-gray-300">All Locations</span>
+                                                <span class="text-sm text-gray-700 dark:text-gray-300">All Farms</span>
                                             </label>
                                             <label class="flex items-center">
                                                 <input type="radio" wire:model="statusFilter" value="disabled" class="mr-2">
@@ -54,7 +66,7 @@
                 </div>
 
                 <button type="button" wire:click="$dispatch('openCreateLocationModal')" class="inline-flex items-center justify-center px-4 py-3 text-sm font-medium text-white bg-orange-600 border border-orange-600 rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-150 whitespace-nowrap shrink-0 md:px-4 cursor-pointer">
-                    <span class="hidden md:inline">Add Location</span>
+                    <span class="hidden md:inline">Add Farm</span>
                     <span class="md:hidden">Add</span>
                 </button>
             </div>
@@ -84,7 +96,7 @@
                             <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200 text-center">Status</p>
                         </th>
                         <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 text-center">
-                            <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200 text-center">Area</p>
+                            <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200">Areas</p>
                         </th>
                         <th class="p-3 md:p-4 border-b border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 text-center">
                             <p class="text-xs md:text-sm font-semibold leading-none text-slate-700 dark:text-slate-200">Actions</p>
@@ -96,6 +108,10 @@
                         <tr class="even:bg-slate-50 dark:even:bg-gray-700/50 hover:bg-slate-100 dark:hover:bg-gray-700">
                             <td class="p-3 md:p-4 py-4 md:py-5">
                                 <p class="block text-xs md:text-sm text-slate-800 dark:text-slate-200">{{ $location->name }}</p>
+                                @php $sub = $farmTypeSubLabel($location->farm_type ?? 0); @endphp
+                                @if ($sub !== '')
+                                    <p class="mt-1 block text-xs text-slate-500 dark:text-slate-400">{{ $sub }}</p>
+                                @endif
                             </td>
                             <td class="p-3 md:p-4 py-4 md:py-5 text-center">
                                 @if($location->is_disabled)
@@ -104,6 +120,7 @@
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">Enabled</span>
                                 @endif
                             </td>
+
                             <td class="p-3 md:p-4 py-4 md:py-5 text-center">
                                 <div class="flex justify-center">
                                     <button wire:click="$dispatch('openViewAreasLocationModal', '{{ $location->id }}')" class="px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors cursor-pointer">
@@ -123,7 +140,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-12 text-center">No locations found</td>
+                            <td colspan="4" class="px-6 py-12 text-center">No farms found</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -136,6 +153,10 @@
                     <div class="flex justify-between items-start">
                         <div class="space-y-1">
                             <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $location->name }}</p>
+                            @php $sub = $farmTypeSubLabel($location->farm_type ?? 0); @endphp
+                            @if ($sub !== '')
+                                <p class="text-xs text-gray-600 dark:text-gray-400">{{ $sub }}</p>
+                            @endif
                         </div>
                         <div class="text-center">
                             @if($location->is_disabled)
@@ -156,7 +177,7 @@
                     </div>
                 </div>
             @empty
-                <div class="flex flex-col items-center py-12">No locations found</div>
+                <div class="flex flex-col items-center py-12">No farms found</div>
             @endforelse
         </div>
 

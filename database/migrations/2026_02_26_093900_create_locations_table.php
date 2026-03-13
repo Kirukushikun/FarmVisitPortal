@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('locations', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
+            $table->unsignedTinyInteger('farm_type')->default(0); // 0: Swine Farm, 1: Poultry Farm
             $table->unsignedTinyInteger('is_disabled')->default(0);
             $table->timestamps();
         });

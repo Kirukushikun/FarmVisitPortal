@@ -37,6 +37,7 @@
 
                     $dateFilled = $permit->created_at ? $permit->created_at->format('F j, Y') : '';
                     $farm = $permit->farmLocation?->name ?: '';
+                    $farmType = (int) ($permit->farmLocation?->farm_type ?? 0);
                     $dateOfVisit = $permit->date_of_visit ? $permit->date_of_visit->format('F j, Y') : '';
                     $expectedDuration = permitPrintDuration($permit->expected_duration_hours);
                     $previousFarm = $permit->previous_farm_location ?? '';
@@ -94,7 +95,7 @@
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($farm) }}</div>
                                     </div>
                                     <div>
-                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Visitor Names</div>
+                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Visitor Names:</div>
                                         @if (is_string($permit->names) && trim($permit->names) !== '')
                                             <div class="text-gray-900 dark:text-white whitespace-pre-line">{{ trim($permit->names) }}</div>
                                         @else
@@ -118,7 +119,7 @@
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($expectedDuration) }}</div>
                                     </div>
                                     <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
-                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Previous Farm Visited</div>
+                                        <div class="font-semibold text-gray-700 dark:text-gray-200">{{ $farmType === 1 ? 'Previous Poultry Farm Visited' : 'Previous Swine Farm Visited' }}</div>
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($previousFarm) }}</div>
                                     </div>
                                     <div>
@@ -195,12 +196,18 @@
                                     <tr>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 text-center text-gray-900 dark:text-gray-100" colspan="4">
                                             <div class="font-bold text-gray-900 dark:text-gray-100">Farm Travel History</div>
-                                            <div class="text-sm text-gray-700 dark:text-gray-300">(Must have not visited other Poultry Farm 3 days Prior to the Farm Visit)</div>
+                                            <div class="text-sm text-gray-700 dark:text-gray-300">
+                                                @if ($farmType === 1)
+                                                    (Must have not visited other Poultry Farm 3 days Prior to the Farm Visit)
+                                                @else
+                                                    (Must have not visited other Swine Farm 5 days Prior to the Farm Visit)
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 text-gray-900 dark:text-gray-100">
-                                            <div class="font-bold text-center text-gray-900 dark:text-gray-100">Previous Farm Visited</div>
+                                            <div class="font-bold text-center text-gray-900 dark:text-gray-100">{{ $farmType === 1 ? 'Previous Poultry Farm Visited' : 'Previous Swine Farm Visited' }}</div>
                                         </td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">{{ permitDisplayValue($previousFarm) }}</td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 whitespace-nowrap text-gray-900 dark:text-gray-100">
@@ -223,6 +230,25 @@
                 @if ((int) ($permit->status ?? 0) === 1 || (($permit->photos ?? collect())->count() > 0))
                     <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 pt-6 pb-2">
                         <livewire:permit-photo-upload :permit="$permit" :can-upload="(int) ($permit->status ?? 0) === 1" />
+
+                        @if ((int) ($permit->status ?? 0) === 1)
+                            <form id="completePermitForm" method="POST" action="{{ route('user.permits.complete', $permit) }}" class="mt-6">
+                                @csrf
+                                <x-text-area
+                                    label="Remarks"
+                                    name="remarks"
+                                    placeholder="Enter remarks (optional)"
+                                    :value="old('remarks', $permit->remarks ?? '')"
+                                />
+                            </form>
+                        @endif
+
+                        @if (is_string($permit->remarks ?? null) && trim((string) $permit->remarks) !== '')
+                            <div class="mt-6">
+                                <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks</div>
+                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-gray-900 dark:text-white whitespace-pre-line">{{ trim((string) $permit->remarks) }}</div>
+                            </div>
+                        @endif
                     </div>
                 @endif
 
@@ -235,9 +261,7 @@
                     @endphp
 
                     <div class="no-print mt-6 flex flex-col sm:flex-row gap-4 justify-center md:hidden" x-data="{ showCompleteConfirm: false, showCancelConfirm: false }">
-                        <form method="POST" action="{{ route('user.permits.complete', $permit) }}" class="flex-1">
-                            @csrf
-                            <button type="button" @click="showCompleteConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="w-full inline-flex justify-center items-center px-4 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                        <button type="button" @click="showCompleteConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="flex-1 w-full inline-flex justify-center items-center px-4 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
@@ -265,7 +289,7 @@
                                                         class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
                                                     Cancel
                                                 </button>
-                                                <button type="submit"
+                                                <button type="submit" form="completePermitForm"
                                                         class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer">
                                                     Yes, Complete
                                                 </button>
@@ -274,7 +298,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </form>
 
                         <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1" x-data="{ showCancelConfirm: false }">
                             @csrf
@@ -319,9 +342,7 @@
                     </div>
 
                     <div class="no-print mt-6 hidden md:flex flex-col sm:flex-row gap-4 justify-center" x-data="{ showCompleteConfirm: false, showCancelConfirm: false }">
-                        <form method="POST" action="{{ route('user.permits.complete', $permit) }}" class="flex-1 max-w-xs">
-                            @csrf
-                            <button type="button" @click="showCompleteConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="w-full inline-flex justify-center items-center px-6 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                        <button type="button" @click="showCompleteConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="flex-1 max-w-xs w-full inline-flex justify-center items-center px-6 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
@@ -349,7 +370,7 @@
                                                         class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
                                                     Cancel
                                                 </button>
-                                                <button type="submit"
+                                                <button type="submit" form="completePermitForm"
                                                         class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer">
                                                     Yes, Complete
                                                 </button>
@@ -358,7 +379,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </form>
 
                         <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1 max-w-xs" x-data="{ showCancelConfirm: false }">
                             @csrf

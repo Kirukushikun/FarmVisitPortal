@@ -157,10 +157,17 @@ class PortalController extends Controller
             return redirect()->back()->with('error', 'Permit cannot be completed.');
         }
 
+        $validated = $request->validate([
+            'remarks' => ['nullable', 'string', 'max:5000'],
+        ]);
+
         $permit->update([
             'status' => 2, // Completed
             'completed_at' => now(),
             'received_by' => $user->id,
+            'remarks' => isset($validated['remarks']) && is_string($validated['remarks']) && trim($validated['remarks']) !== ''
+                ? trim($validated['remarks'])
+                : null,
         ]);
 
         return redirect()->route('user.home')->with('success', 'Permit marked as completed successfully!');
@@ -191,6 +198,7 @@ class PortalController extends Controller
         $permit->update([
             'status' => 3, // Cancelled
             'received_by' => $user->id,
+            'remarks' => null,
         ]);
 
         return redirect()->route('user.home')->with('success', 'Permit cancelled successfully!');
@@ -237,7 +245,7 @@ class PortalController extends Controller
             abort(403);
         }
 
-        return view('admin.locations');
+        return view('admin.farms');
     }
 
     public function adminPermits(Request $request): mixed

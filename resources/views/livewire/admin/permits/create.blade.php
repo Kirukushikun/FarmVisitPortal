@@ -51,21 +51,20 @@
                     required
                 />
 
-                <x-text-input
-                    label="Date of Visit"
-                    name="dateOfVisit"
-                    type="date"
-                    :wireModel="'dateOfVisit'"
-                    :min="now()->toDateString()"
-                    required
-                >
-                    <x-button type="button" wire:click="clearDateOfVisit" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" title="Clear">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </x-button>
-                </x-text-input>
-
+    <x-text-input
+        label="Date of Visit"
+        name="dateOfVisit"
+        type="date"
+        :wireModel="'dateOfVisit'"
+        :min="now()->toDateString()"
+        required
+    >
+        <x-button type="button" wire:click="clearDateOfVisit" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" title="Clear">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </x-button>
+    </x-text-input>
 
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expected Duration    Hours) <span class="text-red-500">*</span></label>
                 <x-text-input
@@ -92,13 +91,28 @@
             <div data-step="2" class="space-y-4" @style(["display:none" => $currentStep !== 2])>
                 <x-title>OPTIONAL DETAILS</x-title>
 
-                <x-text-input
-                    label="Previous Farm Visited"
-                    name="previousFarmLocation"
-                    type="text"
-                    :wireModel="'previousFarmLocation'"
-                    placeholder="Enter previous farm (optional)"
-                />
+                <div>
+                    <x-text-input
+                        label="Previous Farm Visited"
+                        name="previousFarmLocation"
+                        type="text"
+                        :wireModel="'previousFarmLocation'"
+                        placeholder="Enter previous farm (optional)"
+                    />       
+                    @php
+                        $selectedFarmType = (int) (($this->farmLocations ?? collect())->firstWhere('id', (int) ($farmLocationId ?? 0))?->farm_type ?? 0);
+                        $disclaimer = match ($selectedFarmType) {
+                            0 => 'Must not have visited other Swine Farms 5 days prior to the Farm Visit.',
+                            1 => 'Must not have visited other Poultry Farms 3 days prior to the Farm Visit.',
+                            default => 'Must not have visited other Swine Farms 5 days prior to the Farm Visit.',
+                        };
+                    @endphp
+                    @if ($disclaimer !== '')
+                        <p class="text-xs text-gray-500 dark:text-gray-400" style="margin-top: -15px; margin-bottom: 20px;" >
+                            {{ $disclaimer }}
+                        </p>
+                    @endif
+                </div>
 
                 <x-text-input
                     label="Date Visited"

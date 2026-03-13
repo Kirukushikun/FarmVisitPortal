@@ -30,10 +30,10 @@
                 'active' => 'admin/admins*',
             ]] : []),
             [
-                'label' => 'Locations',
-                'href' => '/admin/locations',
+                'label' => 'Farms',
+                'href' => '/admin/farms',
                 'icon' => 'locations',
-                'active' => 'admin/locations*'
+                'active' => 'admin/farms*'
             ],
             [
                 'label' => 'Permits',

@@ -37,6 +37,7 @@
 
                     $dateFilled = $permit->created_at ? $permit->created_at->format('F j, Y') : '';
                     $farm = $permit->farmLocation?->name ?: '';
+                    $farmType = (int) ($permit->farmLocation?->farm_type ?? 0);
                     $dateOfVisit = $permit->date_of_visit ? $permit->date_of_visit->format('F j, Y') : '';
                     $expectedDuration = permitPrintDuration($permit->expected_duration_hours);
                     $previousFarm = $permit->previous_farm_location ?? '';
@@ -109,7 +110,7 @@
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($expectedDuration) }}</div>
                                     </div>
                                     <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
-                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Previous Farm Visited</div>
+                                        <div class="font-semibold text-gray-700 dark:text-gray-200">{{ $farmType === 1 ? 'Previous Poultry Farm Visited' : 'Previous Swine Farm Visited' }}</div>
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($previousFarm) }}</div>
                                     </div>
                                     <div>
@@ -148,7 +149,7 @@
                                 <table class="w-full border border-gray-900 dark:border-gray-300" style="border-collapse: collapse; font-family: 'Times New Roman', Times, serif;">
                                     <colgroup>
                                         <col style="width: 24%;">
-                                        <col style="width: 51%;">
+                                        <col style="width: 35%;">
                                         <col style="width: 10%;">
                                         <col style="width: 15%;">
                                     </colgroup>
@@ -182,12 +183,18 @@
                                     <tr>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 text-center text-gray-900 dark:text-gray-100" colspan="4">
                                             <div class="font-bold text-gray-900 dark:text-gray-100">Farm Travel History</div>
-                                            <div class="text-sm text-gray-700 dark:text-gray-300">(Must have not visited other Poultry Farm 3 days Prior to the Farm Visit)</div>
+                                            <div class="text-sm text-gray-700 dark:text-gray-300">
+                                                @if ($farmType === 1)
+                                                    (Must have not visited other Poultry Farm 3 days Prior to the Farm Visit)
+                                                @else
+                                                    (Must have not visited other Swine Farm 5 days Prior to the Farm Visit)
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 text-gray-900 dark:text-gray-100">
-                                            <div class="font-bold text-center text-gray-900 dark:text-gray-100">Previous Farm Visited</div>
+                                            <div class="font-bold text-center text-gray-900 dark:text-gray-100">{{ $farmType === 1 ? 'Previous Poultry Farm Visited' : 'Previous Swine Farm Visited' }}</div>
                                         </td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">{{ permitDisplayValue($previousFarm) }}</td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 whitespace-nowrap text-gray-900 dark:text-gray-100">
@@ -210,6 +217,13 @@
                 @if ((($permit->photos ?? collect())->count() > 0))
                     <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 pt-6 pb-2">
                         <livewire:permit-photo-upload :permit="$permit" :can-upload="false" />
+                    </div>
+                @endif
+
+                @if (is_string($permit->remarks ?? null) && trim((string) $permit->remarks) !== '')
+                    <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 pt-6 pb-6">
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks</div>
+                        <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-gray-900 dark:text-white whitespace-pre-line">{{ trim((string) $permit->remarks) }}</div>
                     </div>
                 @endif
             </div>

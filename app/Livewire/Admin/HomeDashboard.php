@@ -100,15 +100,12 @@ class HomeDashboard extends Component
     protected function loadData(): void
     {
         $now = now();
-
-        $weekStart = $now->copy()->startOfWeek(UnitValue::SUNDAY)->startOfDay();
-        $weekEnd = $now->copy()->endOfWeek(UnitValue::SATURDAY)->endOfDay();
-
-        $monthStart = $now->copy()->startOfMonth()->startOfDay();
-        $monthEnd = $now->copy()->endOfMonth()->endOfDay();
-
-        $yearStart = $now->copy()->startOfYear()->startOfDay();
-        $yearEnd = $now->copy()->endOfYear()->endOfDay();
+        $weekStart = $now->copy()->startOfWeek(UnitValue::SUNDAY);
+        $weekEnd = $weekStart->copy()->endOfWeek(UnitValue::SATURDAY);
+        $monthStart = $now->copy()->startOfMonth();
+        $monthEnd = $monthStart->copy()->endOfMonth();
+        $yearStart = $now->copy()->startOfYear();
+        $yearEnd = $now->copy()->endOfYear();
 
         [$start, $end] = match ($this->range) {
             'month' => [$monthStart, $monthEnd],
@@ -120,10 +117,13 @@ class HomeDashboard extends Component
             ->whereBetween('date_of_visit', [$start, $end])
             ->count();
 
+        $locationsCount = Location::query()->count();
+        $usersCount = $this->baseUsersQuery()->count();
+
         $this->cards = [
             'totals' => [
-                'users' => $this->baseUsersQuery()->count(),
-                'locations' => Location::query()->count(),
+                'users' => $usersCount,
+                'locations' => $locationsCount,
                 'permits' => $totalPermits,
             ],
         ];
@@ -135,8 +135,8 @@ class HomeDashboard extends Component
         ];
 
         $this->pie = [
-            'year' => $this->newEntitiesPieChart($yearStart, $yearEnd),
-            'overall' => $this->newEntitiesPieChart(null, null),
+            'year' => $this->newEntitiesPieChart($yearStart, $yearEnd, $locationsCount, $usersCount),
+            'overall' => $this->newEntitiesPieChart(null, null, $locationsCount, $usersCount),
         ];
 
         $this->calendar = $this->buildCalendar($this->calendarMonth, $this->selectedDay);
@@ -147,7 +147,7 @@ class HomeDashboard extends Component
         $this->calendar = $this->buildCalendar($this->calendarMonth, $this->selectedDay);
     }
 
-    protected function newEntitiesPieChart(?Carbon $start, ?Carbon $end): array
+    protected function newEntitiesPieChart(?Carbon $start, ?Carbon $end, ?int $cachedLocationsCount = null, ?int $cachedUsersCount = null): array
     {
         $permits = Permit::query();
         $users = $this->baseUsersQuery();
@@ -160,11 +160,11 @@ class HomeDashboard extends Component
         }
 
         $permitsCount = (int) $permits->count();
-        $usersCount = (int) $users->count();
-        $locationsCount = (int) $locations->count();
+        $usersCount = $cachedUsersCount ?? (int) $users->count();
+        $locationsCount = $cachedLocationsCount ?? (int) $locations->count();
 
         return [
-            'labels' => ['Permits', 'Users', 'Locations'],
+            'labels' => ['Permits', 'Users', 'Farms'],
             'datasets' => [
                 [
                     'data' => [$permitsCount, $usersCount, $locationsCount],

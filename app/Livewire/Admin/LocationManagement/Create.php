@@ -13,13 +13,16 @@ class Create extends Component
     #[Validate('required|string|min:2|max:100|unique:locations,name')]
     public string $name = '';
 
+    #[Validate('required|integer|in:0,1')]
+    public int $farmType = 0;
+
     public bool $showModal = false;
 
     protected $listeners = ['openCreateLocationModal' => 'openModal'];
 
     public function openModal(): void
     {
-        $this->reset(['name']);
+        $this->reset(['name', 'farmType']);
         $this->resetValidation();
         $this->showModal = true;
     }
@@ -27,7 +30,7 @@ class Create extends Component
     public function closeModal(): void
     {
         $this->showModal = false;
-        $this->reset(['name']);
+        $this->reset(['name', 'farmType']);
         $this->resetValidation();
     }
 
@@ -37,6 +40,7 @@ class Create extends Component
 
         Location::create([
             'name' => $this->name,
+            'farm_type' => (int) $this->farmType,
             'is_disabled' => false,
         ]);
 

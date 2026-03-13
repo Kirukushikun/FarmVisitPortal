@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('previous_farm_location')->nullable();
             $table->timestamp('date_of_visit_previous_farm')->nullable();
             $table->text('purpose')->nullable();
+            $table->text('remarks')->nullable();
 
             $table->unsignedTinyInteger('status')->default(0); //0:Schedulled, 1:In Progress, 2:Completed, 3:Cancelled
             $table->foreignId('created_by')->constrained('users');
