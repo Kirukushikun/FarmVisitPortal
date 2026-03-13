@@ -63,7 +63,7 @@
                 </x-text-input>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expected Duration <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expected Duration (Hours)<span class="text-red-500">*</span></label>
                     <div class="grid grid-cols-1 sm:grid-cols-1 gap-4">
                         <div>
                             <x-text-input
@@ -86,6 +86,7 @@
                     error-key="purpose"
                     placeholder="Enter purpose"
                     wire:model.live="purpose"
+                    required
                 />
             </div>
 

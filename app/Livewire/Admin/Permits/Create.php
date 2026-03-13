@@ -51,7 +51,7 @@ class Create extends Component
         'farmLocationId.required' => 'Please select a farm.',
         'farmLocationId.exists' => 'Please select a valid farm.',
         'dateOfVisit.required' => 'Please select the date of visit.',
-
+        'purpose.required' => 'Please enter the purpose of the visit.'
     ];
 
     protected array $validationAttributes = [
