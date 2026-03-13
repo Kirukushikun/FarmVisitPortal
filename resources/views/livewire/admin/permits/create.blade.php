@@ -66,7 +66,7 @@
         </x-button>
     </x-text-input>
 
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expected Duration    Hours) <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expected Duration    (Hours) <span class="text-red-500">*</span></label>
                 <x-text-input
                     label=""
                     name="expectedDurationHours"
