@@ -291,7 +291,7 @@ class Edit extends Component
             'expectedDurationHours' => ['required', 'numeric', 'gt:0'],
             'previousFarmLocation' => ['nullable', 'string', 'min:2'],
             'dateOfVisitPreviousFarm' => ['nullable', 'date', 'before_or_equal:today'],
-            'purpose' => ['nullable', 'string'],
+            'purpose' => ['string', 'min:2'],
         ];
 
         // For dateOfVisit, allow past dates if the permit already has a past date

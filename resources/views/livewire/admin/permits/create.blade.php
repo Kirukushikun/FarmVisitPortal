@@ -51,20 +51,20 @@
                     required
                 />
 
-    <x-text-input
-        label="Date of Visit"
-        name="dateOfVisit"
-        type="date"
-        :wireModel="'dateOfVisit'"
-        :min="now()->toDateString()"
-        required
-    >
-        <x-button type="button" wire:click="clearDateOfVisit" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" title="Clear">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-        </x-button>
-    </x-text-input>
+                <x-text-input
+                    label="Date of Visit"
+                    name="dateOfVisit"
+                    type="date"
+                    :wireModel="'dateOfVisit'"
+                    :min="now()->toDateString()"
+                    required
+                >
+                    <x-button type="button" wire:click="clearDateOfVisit" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" title="Clear">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </x-button>
+                </x-text-input>
 
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expected Duration    (Hours) <span class="text-red-500">*</span></label>
                 <x-text-input
