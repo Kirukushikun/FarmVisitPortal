@@ -38,14 +38,94 @@
                     @endforeach
                 </x-dropdown>
 
-                <x-text-area
-                    label="Visitor Names"
-                    name="names"
-                    error-key="names"
-                    placeholder="Enter names"
-                    wire:model.live="names"
-                    required
-                />
+                {{-- Mode Toggle --}}
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Visitor Entry Mode
+                    </label>
+                    <div class="inline-flex w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 p-1 gap-1">
+                        <button type="button"
+                            wire:click="switchNamesMode('simple')"
+                            class="flex flex-1 justify-center items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer
+                                {{ $namesMode === 'simple'
+                                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+                            </svg>
+                            Single Origin
+                        </button>
+                        <button type="button"
+                            wire:click="switchNamesMode('detailed')"
+                            class="flex flex-1 justify-center items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer
+                                {{ $namesMode === 'detailed'
+                                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" />
+                            </svg>
+                            Multiple Origin
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Simple Mode --}}
+                @if($namesMode === 'simple')
+                    <x-text-area
+                        label="Visitor Names"
+                        name="namesSimple"
+                        error-key="namesSimple"
+                        placeholder="Enter names"
+                        wire:model.live="namesSimple"
+                        required
+                    />
+                @endif
+
+                {{-- Detailed Mode --}}
+                @if($namesMode === 'detailed')
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Visitor Names <span class="text-red-500">*</span>
+                    </label>
+
+                    @foreach($namesGroups as $i => $group)
+                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2 mb-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Group {{ $i + 1 }}</span>
+                                @if(count($namesGroups) > 1)
+                                    <button type="button" wire:click="removeNamesGroup({{ $i }})"
+                                        class="text-red-400 hover:text-red-600 text-xs cursor-pointer">
+                                        Remove
+                                    </button>
+                                @endif
+                            </div>
+                            <x-text-input
+                                label="Origin"
+                                name="namesGroups[{{ $i }}][origin]"
+                                type="text"
+                                :wireModel="'namesGroups.' . $i . '.origin'"
+                                placeholder="e.g. Laguna"
+                                required
+                            />
+                            <x-text-area
+                                label="Names"
+                                name="namesGroups[{{ $i }}][names]"
+                                error-key="namesGroups.{{ $i }}.names"
+                                placeholder="Enter names from this origin"
+                                wire:model.live="namesGroups.{{ $i }}.names"
+                                required
+                            />
+                        </div>
+                    @endforeach
+
+                    <button type="button" wire:click="addNamesGroup"
+                        class="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-1 cursor-pointer">
+                        + Add another origin
+                    </button>
+
+                    @error('namesGroups')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                @endif
 
                 <x-text-input
                     label="Date of Visit"

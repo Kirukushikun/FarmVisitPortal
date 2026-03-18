@@ -36,6 +36,13 @@ class Create extends Component
 
     public ?string $returnUrl = null;
 
+    public string $namesMode = 'simple'; // 'simple' or 'detailed'
+    public string $namesSimple = '';
+    public array $namesGroups = [
+        ['origin' => '', 'names' => ''],
+    ];
+
+
     protected array $messages = [
         'required' => 'Please fill in this field.',
         'integer' => 'Please enter a valid number.',
@@ -57,7 +64,9 @@ class Create extends Component
     protected array $validationAttributes = [
         'areaId' => 'area',
         'farmLocationId' => 'farm',
-        'names' => 'names',
+        'namesSimple' => 'visitor names',
+        'namesGroups.*.origin' => 'origin',
+        'namesGroups.*.names' => 'names',
         'dateOfVisit' => 'date of visit',
         'expectedDurationHours' => 'expected duration (hours)',
         'previousFarmLocation' => 'previous farm visited',
@@ -132,7 +141,7 @@ class Create extends Component
             $permit = Permit::create([
                 'area_id' => $this->areaId,
                 'farm_location_id' => (int) $this->farmLocationId,
-                'names' => $this->names,
+                'names' => $this->buildNamesPayload(),
                 'date_of_visit' => Carbon::parse($this->dateOfVisit),
                 'expected_duration_hours' => $durationHours,
                 'previous_farm_location' => trim($this->previousFarmLocation) !== '' ? trim($this->previousFarmLocation) : null,
@@ -227,7 +236,10 @@ class Create extends Component
                           ->where('is_disabled', false);
                 })],
                 'farmLocationId' => ['required', 'integer', Rule::exists('locations', 'id')],
-                'names' => ['required', 'string', 'min:2'],
+                'namesSimple' => ['required_if:namesMode,simple', 'nullable', 'string', 'min:2'],
+                'namesGroups' => ['required_if:namesMode,detailed', 'nullable', 'array', 'min:1'],
+                'namesGroups.*.origin' => ['required_if:namesMode,detailed', 'nullable', 'string', 'min:2'],
+                'namesGroups.*.names' => ['required_if:namesMode,detailed', 'nullable', 'string', 'min:2'],
                 'dateOfVisit' => ['required', 'date', 'after_or_equal:today'],
                 'expectedDurationHours' => ['required', 'numeric', 'gt:0'],
                 'purpose' => ['required', 'string', 'min:2'],
@@ -242,6 +254,43 @@ class Create extends Component
         }
 
         return [];
+    }
+
+    public function addNamesGroup(): void
+    {
+        $this->namesGroups[] = ['origin' => '', 'names' => ''];
+    }
+
+    public function removeNamesGroup(int $index): void
+    {
+        if (count($this->namesGroups) > 1) {
+            array_splice($this->namesGroups, $index, 1);
+            $this->namesGroups = array_values($this->namesGroups);
+        }
+    }
+
+    public function switchNamesMode(string $mode): void
+    {
+        $this->namesMode = $mode;
+        $this->resetValidation();
+    }
+
+    protected function buildNamesPayload(): string
+    {
+        if ($this->namesMode === 'detailed') {
+            return json_encode([
+                'mode' => 'detailed',
+                'groups' => array_map(fn($g) => [
+                    'origin' => trim($g['origin']),
+                    'names' => trim($g['names']),
+                ], $this->namesGroups),
+            ]);
+        }
+
+        return json_encode([
+            'mode' => 'simple',
+            'value' => trim($this->namesSimple),
+        ]);
     }
 
     protected function rulesForSubmit(): array

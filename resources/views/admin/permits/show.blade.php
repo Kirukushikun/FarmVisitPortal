@@ -1,3 +1,4 @@
+
 <x-layout>
     <x-navbar :breadcrumbs="[
         ['label' => 'Permits', 'href' => route('admin.permits.index')],
@@ -42,6 +43,13 @@
                     $expectedDuration = permitPrintDuration($permit->expected_duration_hours);
                     $previousFarm = $permit->previous_farm_location ?? '';
                     $previousFarmDate = $permit->date_of_visit_previous_farm ? $permit->date_of_visit_previous_farm->format('F j, Y') : '';
+                    $namesData = null;
+                    if (is_string($permit->names) && trim($permit->names) !== '') {
+                        $decoded = json_decode($permit->names, true);
+                        if (is_array($decoded) && isset($decoded['mode'])) {
+                            $namesData = $decoded;
+                        }
+                    }
                 @endphp
 
                 <style>
@@ -91,10 +99,19 @@
                                     </div>
                                     <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Visitor Names</div>
-                                        @if (is_string($permit->names) && trim($permit->names) !== '')
-                                            <div class="text-gray-900 dark:text-white whitespace-pre-line">{{ trim($permit->names) }}</div>
+                                        @if ($namesData && $namesData['mode'] === 'detailed')
+                                            <div class="space-y-1 mt-1">
+                                                @foreach ($namesData['groups'] as $group)
+                                                    <div class="text-gray-900 dark:text-white">
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">[{{ $group['origin'] }}]</span>
+                                                        {{ $group['names'] }}
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @elseif ($namesData)
+                                            <div class="text-gray-900 dark:text-white whitespace-pre-line">{{ $namesData['value'] }}</div>
                                         @else
-                                            <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($permit->names ?? null) }}</div>
+                                            <div class="text-gray-900 dark:text-white whitespace-pre-line">{{ permitDisplayValue($permit->names ?? null) }}</div>
                                         @endif
                                     </div>
                                     <div>
@@ -157,20 +174,22 @@
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2"><span class="font-bold text-gray-900 dark:text-gray-100">FARM:</span> {{ permitDisplayValue($farm) }}</td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2"><span class="font-bold text-gray-900 dark:text-gray-100">Date Filled:</span> {{ permitDisplayValue($dateFilled) }}</td>
                                     </tr>
-                                    <tr>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2" rowspan="2">
-                                            <div class="font-bold text-gray-900 dark:text-gray-100">VISITOR NAMES:</div>
-                                            @if (is_string($permit->names) && trim($permit->names) !== '')
-                                                <div style="white-space: pre-line;">{{ trim($permit->names) }}</div>
-                                            @else
-                                                <div>{{ permitDisplayValue($permit->names ?? null) }}</div>
-                                            @endif
-                                        </td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2">
-                                            <div class="font-bold text-gray-900 dark:text-gray-100">Area / Section / Department to Visit:</div>
-                                            <div>{{ permitDisplayValue($permit->area->name ?? null) }}</div>
-                                        </td>
-                                    </tr>
+                                    <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2" rowspan="2">
+                                        <div class="font-bold text-gray-900 dark:text-gray-100">VISITOR NAMES:</div>
+                                        @if ($namesData && $namesData['mode'] === 'detailed')
+                                            <div class="space-y-1 mt-1">
+                                                @foreach ($namesData['groups'] as $group)
+                                                    <div>
+                                                        <span class="font-semibold">{{ $group['origin'] }}:</span> {{ $group['names'] }}
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @elseif ($namesData)
+                                            <div style="white-space: pre-line;">{{ $namesData['value'] }}</div>
+                                        @else
+                                            <div style="white-space: pre-line;">{{ permitDisplayValue($permit->names ?? null) }}</div>
+                                        @endif
+                                    </td>
                                     <tr>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top whitespace-nowrap text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">DATE of VISIT</span></td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">{{ permitDisplayValue($dateOfVisit) }}</td>

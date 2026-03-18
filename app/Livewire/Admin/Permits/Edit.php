@@ -36,6 +36,12 @@ class Edit extends Component
 
     public ?string $returnUrl = null;
 
+    public string $namesMode = 'simple';
+    public string $namesSimple = '';
+    public array $namesGroups = [
+        ['origin' => '', 'names' => ''],
+    ];
+
     public Permit $permit;
 
     protected array $messages = [
@@ -59,7 +65,9 @@ class Edit extends Component
     protected array $validationAttributes = [
         'areaId' => 'area',
         'farmLocationId' => 'farm',
-        'names' => 'names',
+        'namesSimple' => 'visitor names',
+        'namesGroups.*.origin' => 'origin',
+        'namesGroups.*.names' => 'names',
         'dateOfVisit' => 'date of visit',
         'expectedDurationHours' => 'expected duration (hours)',
         'previousFarmLocation' => 'previous farm visited',
@@ -94,14 +102,28 @@ class Edit extends Component
     {
         $this->areaId = (int) ($this->permit->area_id ?? 0);
         $this->farmLocationId = (string) ($this->permit->farm_location_id ?? '');
-        $this->names = $this->permit->names ?? '';
         $this->dateOfVisit = $this->permit->date_of_visit?->format('Y-m-d') ?? '';
-        
         $this->expectedDurationHours = (string) ($this->permit->expected_duration_hours ?? '');
-        
         $this->previousFarmLocation = (string) ($this->permit->previous_farm_location ?? '');
         $this->dateOfVisitPreviousFarm = $this->permit->date_of_visit_previous_farm?->format('Y-m-d') ?? '';
         $this->purpose = $this->permit->purpose ?? '';
+
+        // Hydrate names
+        $raw = $this->permit->names ?? '';
+        $decoded = is_array($raw) ? $raw : json_decode($raw, true);
+
+        if (is_array($decoded) && isset($decoded['mode'])) {
+            $this->namesMode = $decoded['mode'];
+            if ($decoded['mode'] === 'detailed') {
+                $this->namesGroups = $decoded['groups'] ?? [['origin' => '', 'names' => '']];
+            } else {
+                $this->namesSimple = $decoded['value'] ?? '';
+            }
+        } else {
+            // Legacy plain string — fall back to simple mode
+            $this->namesMode = 'simple';
+            $this->namesSimple = $raw;
+        }
     }
 
     public function nextStep(): void
@@ -136,7 +158,7 @@ class Edit extends Component
             $this->permit->update([
                 'area_id' => $this->areaId,
                 'farm_location_id' => (int) $this->farmLocationId,
-                'names' => $this->names,
+                'names' => $this->buildNamesPayload(),
                 'date_of_visit' => $newDateOfVisit,
                 'expected_duration_hours' => $durationHours,
                 'previous_farm_location' => trim($this->previousFarmLocation) !== '' ? trim($this->previousFarmLocation) : null,
@@ -183,7 +205,7 @@ class Edit extends Component
 
     protected function stepForFailedFields(array $failedFields): int
     {
-        $step1Fields = ['areaId', 'farmLocationId', 'names', 'dateOfVisit', 'expectedDurationHours'];
+        $step1Fields = ['areaId', 'farmLocationId', 'namesSimple', 'namesGroups', 'dateOfVisit', 'expectedDurationHours'];
         foreach ($step1Fields as $field) {
             if (in_array($field, $failedFields, true)) {
                 return 1;
@@ -282,12 +304,52 @@ class Edit extends Component
             ->get();
     }
 
+    public function addNamesGroup(): void
+    {
+        $this->namesGroups[] = ['origin' => '', 'names' => ''];
+    }
+
+    public function removeNamesGroup(int $index): void
+    {
+        if (count($this->namesGroups) > 1) {
+            array_splice($this->namesGroups, $index, 1);
+            $this->namesGroups = array_values($this->namesGroups);
+        }
+    }
+
+    public function switchNamesMode(string $mode): void
+    {
+        $this->namesMode = $mode;
+        $this->resetValidation();
+    }
+
+    protected function buildNamesPayload(): string
+    {
+        if ($this->namesMode === 'detailed') {
+            return json_encode([
+                'mode' => 'detailed',
+                'groups' => array_map(fn($g) => [
+                    'origin' => trim($g['origin']),
+                    'names' => trim($g['names']),
+                ], $this->namesGroups),
+            ]);
+        }
+
+        return json_encode([
+            'mode' => 'simple',
+            'value' => trim($this->namesSimple),
+        ]);
+    }
+
     protected function rulesForSubmit(): array
     {
         $rules = [
             'areaId' => ['required', 'integer', 'exists:areas,id'],
             'farmLocationId' => ['required', 'integer', 'exists:locations,id'],
-            'names' => ['required', 'string'],
+            'namesSimple' => ['required_if:namesMode,simple', 'nullable', 'string', 'min:2'],
+            'namesGroups' => ['required_if:namesMode,detailed', 'nullable', 'array', 'min:1'],
+            'namesGroups.*.origin' => ['required_if:namesMode,detailed', 'nullable', 'string', 'min:2'],
+            'namesGroups.*.names' => ['required_if:namesMode,detailed', 'nullable', 'string', 'min:2'],
             'expectedDurationHours' => ['required', 'numeric', 'gt:0'],
             'previousFarmLocation' => ['nullable', 'string', 'min:2'],
             'dateOfVisitPreviousFarm' => ['nullable', 'date', 'before_or_equal:today'],

@@ -77,10 +77,31 @@
                                     <div class="space-y-3">
                                         <div>
                                             <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Visitor Names:</p>
-                                            @if (is_string($permit->names) && trim($permit->names) !== '')
-                                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 whitespace-pre-line">{{ trim($permit->names) }}</p>
+                                            @php
+                                                $cardNamesData = null;
+                                                $rawNames = $permit->names;
+                                                if (is_array($rawNames) && isset($rawNames['mode'])) {
+                                                    $cardNamesData = $rawNames;
+                                                } elseif (is_string($rawNames) && trim($rawNames) !== '') {
+                                                    $cardDecoded = json_decode($rawNames, true);
+                                                    if (is_array($cardDecoded) && isset($cardDecoded['mode'])) {
+                                                        $cardNamesData = $cardDecoded;
+                                                    }
+                                                }
+                                            @endphp
+                                            @if ($cardNamesData && $cardNamesData['mode'] === 'detailed')
+                                                <div class="space-y-0.5">
+                                                    @foreach ($cardNamesData['groups'] as $group)
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                            <span class="text-xs text-gray-500 dark:text-gray-400">[{{ $group['origin'] }}]</span>
+                                                            {{ $group['names'] }}
+                                                        </p>
+                                                    @endforeach
+                                                </div>
+                                            @elseif ($cardNamesData)
+                                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 whitespace-pre-line">{{ $cardNamesData['value'] }}</p>
                                             @else
-                                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $permit->names }}</p>
+                                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 whitespace-pre-line">{{ is_string($rawNames) ? trim($rawNames) : '' }}</p>
                                             @endif
                                         </div>
                                     </div>

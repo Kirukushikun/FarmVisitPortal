@@ -31,6 +31,7 @@ class Permit extends Model
     protected function casts(): array
     {
         return [
+            'names' => 'array',
             'area_id' => 'integer',
             'farm_location_id' => 'integer',
             'created_by' => 'integer',
