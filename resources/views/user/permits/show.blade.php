@@ -249,9 +249,15 @@
                     </div>
                 </div>
 
-                @if ((int) ($permit->status ?? 0) === 1 || (($permit->photos ?? collect())->count() > 0))
+                @php
+                    $viewer = Auth::user();
+                    $isAdmin = (int) ($viewer->user_type ?? 0) === 1;
+                    $isAcceptedByCurrentUser = (int) ($permit->received_by ?? 0) === (int) ($viewer->id ?? 0);
+                @endphp
+
+                @if (in_array((int) ($permit->status ?? 0), [1, 4]) || (($permit->photos ?? collect())->count() > 0))
                     <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 pt-6 pb-2">
-                        <livewire:permit-photo-upload :permit="$permit" :can-upload="(int) ($permit->status ?? 0) === 1" />
+                        <livewire:permit-photo-upload :permit="$permit" :can-upload="in_array((int) ($permit->status ?? 0), [1, 4])" />
 
                         @if ((int) ($permit->status ?? 0) === 1)
                             <form id="completePermitForm" method="POST" action="{{ route('user.permits.complete', $permit) }}" class="mt-6">
@@ -276,52 +282,40 @@
 
                 <!-- Action Buttons -->
                 @if ((int) ($permit->status ?? 0) === 1)
-                    @php
-                        $viewer = Auth::user();
-                        $isAdmin = (int) ($viewer->user_type ?? 0) === 1;
-                        $isAcceptedByCurrentUser = (int) ($permit->received_by ?? 0) === (int) ($viewer->id ?? 0);
-                    @endphp
-
-                    <div class="no-print mt-6 flex flex-col sm:flex-row gap-4 justify-center md:hidden" x-data="{ showCompleteConfirm: false, showCancelConfirm: false }">
+                    <!-- Mobile -->
+                    <div class="no-print mt-6 flex flex-col sm:flex-row gap-4 justify-center md:hidden" x-data="{ showCompleteConfirm: false, showCancelConfirm: false, showHoldModal: false }">
+                        <!-- Complete Button -->
                         <button type="button" @click="showCompleteConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="flex-1 w-full inline-flex justify-center items-center px-4 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                Complete
-                            </button>
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Complete
+                        </button>
 
-                            <!-- Complete Confirmation Modal -->
-                            <div x-show="showCompleteConfirm"
-                                x-cloak
-                                class="fixed inset-0 z-50 overflow-y-auto"
-                                style="display: none;">
-                                <div class="fixed inset-0 bg-black/50" @click="showCompleteConfirm = false"></div>
-                                <div class="relative min-h-screen flex items-center justify-center p-4">
-                                    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-                                        <div class="text-center">
-                                            <div class="mx-auto mb-4 text-green-500 w-16 h-16">
-                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
-                                            </div>
-                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Complete Permit?</h3>
-                                            <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as completed?</p>
-                                            <div class="flex gap-3 justify-center">
-                                                <button @click="showCompleteConfirm = false" type="button"
-                                                        class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
-                                                    Cancel
-                                                </button>
-                                                <button type="submit" form="completePermitForm"
-                                                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer">
-                                                    Yes, Complete
-                                                </button>
-                                            </div>
+                        <!-- Complete Confirmation Modal -->
+                        <div x-show="showCompleteConfirm" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+                            <div class="fixed inset-0 bg-black/50" @click="showCompleteConfirm = false"></div>
+                            <div class="relative min-h-screen flex items-center justify-center p-4">
+                                <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+                                    <div class="text-center">
+                                        <div class="mx-auto mb-4 text-green-500 w-16 h-16">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                        </div>
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Complete Permit?</h3>
+                                        <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as completed?</p>
+                                        <div class="flex gap-3 justify-center">
+                                            <button @click="showCompleteConfirm = false" type="button" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">Cancel</button>
+                                            <button type="submit" form="completePermitForm" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer">Yes, Complete</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                        <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1" x-data="{ showCancelConfirm: false }">
+                        <!-- Did Not Arrive -->
+                        <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1">
                             @csrf
                             <button type="button" @click="showCancelConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="w-full inline-flex justify-center items-center px-4 py-3 bg-red-600 dark:bg-red-700 text-white font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -329,12 +323,7 @@
                                 </svg>
                                 Did Not Arrive
                             </button>
-
-                            <!-- Cancel Confirmation Modal -->
-                            <div x-show="showCancelConfirm"
-                                x-cloak
-                                class="fixed inset-0 z-50 overflow-y-auto"
-                                style="display: none;">
+                            <div x-show="showCancelConfirm" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
                                 <div class="fixed inset-0 bg-black/50" @click="showCancelConfirm = false"></div>
                                 <div class="relative min-h-screen flex items-center justify-center p-4">
                                     <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
@@ -347,15 +336,34 @@
                                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Did Not Arrive?</h3>
                                             <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as did not arrive?</p>
                                             <div class="flex gap-3 justify-center">
-                                                <button @click="showCancelConfirm = false" type="button"
-                                                        class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
-                                                    Cancel
-                                                </button>
-                                                <button type="submit"
-                                                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer">
-                                                    Yes, Did Not Arrive
-                                                </button>
+                                                <button @click="showCancelConfirm = false" type="button" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">Cancel</button>
+                                                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer">Yes, Did Not Arrive</button>
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Hold Button -->
+                        <form method="POST" action="{{ route('user.permits.hold', $permit) }}" class="flex-1">
+                            @csrf
+                            <button type="button" @click="showHoldModal = true" class="w-full inline-flex justify-center items-center px-4 py-3 bg-orange-500 dark:bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-600 dark:hover:bg-orange-500 transition-colors cursor-pointer">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                On Hold
+                            </button>
+                            <div x-show="showHoldModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display:none;">
+                                <div class="fixed inset-0 bg-black/50" @click="showHoldModal = false"></div>
+                                <div class="relative min-h-screen flex items-center justify-center p-4">
+                                    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Put Permit On Hold?</h3>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Explain the issue so the admin can review.</p>
+                                        <textarea name="hold_reason" rows="4" required placeholder="e.g. Visitor names do not match IDs presented..." class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 mb-4"></textarea>
+                                        <div class="flex gap-3 justify-end">
+                                            <button type="button" @click="showHoldModal = false" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 cursor-pointer">Cancel</button>
+                                            <button type="submit" class="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 cursor-pointer">Confirm Hold</button>
                                         </div>
                                     </div>
                                 </div>
@@ -363,46 +371,40 @@
                         </form>
                     </div>
 
-                    <div class="no-print mt-6 hidden md:flex flex-col sm:flex-row gap-4 justify-center" x-data="{ showCompleteConfirm: false, showCancelConfirm: false }">
+                    <!-- Desktop -->
+                    <div class="no-print mt-6 hidden md:flex flex-col sm:flex-row gap-4 justify-center" x-data="{ showCompleteConfirm: false, showCancelConfirm: false, showHoldModal: false }">
+                        <!-- Complete Button -->
                         <button type="button" @click="showCompleteConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="flex-1 max-w-xs w-full inline-flex justify-center items-center px-6 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                Complete
-                            </button>
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Complete
+                        </button>
 
-                            <!-- Complete Confirmation Modal -->
-                            <div x-show="showCompleteConfirm"
-                                x-cloak
-                                class="fixed inset-0 z-50 overflow-y-auto"
-                                style="display: none;">
-                                <div class="fixed inset-0 bg-black/50" @click="showCompleteConfirm = false"></div>
-                                <div class="relative min-h-screen flex items-center justify-center p-4">
-                                    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-                                        <div class="text-center">
-                                            <div class="mx-auto mb-4 text-green-500 w-16 h-16">
-                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
-                                            </div>
-                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Complete Permit?</h3>
-                                            <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as completed?</p>
-                                            <div class="flex gap-3 justify-center">
-                                                <button @click="showCompleteConfirm = false" type="button"
-                                                        class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
-                                                    Cancel
-                                                </button>
-                                                <button type="submit" form="completePermitForm"
-                                                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer">
-                                                    Yes, Complete
-                                                </button>
-                                            </div>
+                        <!-- Complete Confirmation Modal -->
+                        <div x-show="showCompleteConfirm" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+                            <div class="fixed inset-0 bg-black/50" @click="showCompleteConfirm = false"></div>
+                            <div class="relative min-h-screen flex items-center justify-center p-4">
+                                <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+                                    <div class="text-center">
+                                        <div class="mx-auto mb-4 text-green-500 w-16 h-16">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                        </div>
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Complete Permit?</h3>
+                                        <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as completed?</p>
+                                        <div class="flex gap-3 justify-center">
+                                            <button @click="showCompleteConfirm = false" type="button" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">Cancel</button>
+                                            <button type="submit" form="completePermitForm" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer">Yes, Complete</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                        <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1 max-w-xs" x-data="{ showCancelConfirm: false }">
+                        <!-- Did Not Arrive -->
+                        <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1 max-w-xs">
                             @csrf
                             <button type="button" @click="showCancelConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="w-full inline-flex justify-center items-center px-6 py-3 bg-red-600 dark:bg-red-700 text-white font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -410,12 +412,7 @@
                                 </svg>
                                 Did Not Arrive
                             </button>
-
-                            <!-- Cancel Confirmation Modal -->
-                            <div x-show="showCancelConfirm"
-                                x-cloak
-                                class="fixed inset-0 z-50 overflow-y-auto"
-                                style="display: none;">
+                            <div x-show="showCancelConfirm" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
                                 <div class="fixed inset-0 bg-black/50" @click="showCancelConfirm = false"></div>
                                 <div class="relative min-h-screen flex items-center justify-center p-4">
                                     <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
@@ -428,15 +425,34 @@
                                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Did Not Arrive?</h3>
                                             <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as did not arrive?</p>
                                             <div class="flex gap-3 justify-center">
-                                                <button @click="showCancelConfirm = false" type="button"
-                                                        class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
-                                                    Cancel
-                                                </button>
-                                                <button type="submit"
-                                                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer">
-                                                    Yes, Did Not Arrive
-                                                </button>
+                                                <button @click="showCancelConfirm = false" type="button" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">Cancel</button>
+                                                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer">Yes, Did Not Arrive</button>
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Hold Button -->
+                        <form method="POST" action="{{ route('user.permits.hold', $permit) }}" class="flex-1 max-w-xs">
+                            @csrf
+                            <button type="button" @click="showHoldModal = true" class="w-full inline-flex justify-center items-center px-6 py-3 bg-orange-500 dark:bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-600 dark:hover:bg-orange-500 transition-colors cursor-pointer">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                On Hold
+                            </button>
+                            <div x-show="showHoldModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display:none;">
+                                <div class="fixed inset-0 bg-black/50" @click="showHoldModal = false"></div>
+                                <div class="relative min-h-screen flex items-center justify-center p-4">
+                                    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Put Permit On Hold?</h3>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Explain the issue so the admin can review.</p>
+                                        <textarea name="hold_reason" rows="4" required placeholder="e.g. Visitor names do not match IDs presented..." class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 mb-4"></textarea>
+                                        <div class="flex gap-3 justify-end">
+                                            <button type="button" @click="showHoldModal = false" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 cursor-pointer">Cancel</button>
+                                            <button type="submit" class="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 cursor-pointer">Confirm Hold</button>
                                         </div>
                                     </div>
                                 </div>
@@ -444,6 +460,73 @@
                         </form>
                     </div>
                 @endif
+
+                <!-- Hold / Admin Response Panel -->
+                @if (in_array((int) ($permit->status ?? 0), [4, 5]))
+                    <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-orange-200 dark:border-orange-700 px-6 py-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="font-semibold text-orange-600 dark:text-orange-400">
+                                {{ (int) ($permit->status ?? 0) === 4 ? 'Permit On Hold' : 'Permit Returned for Correction' }}
+                            </span>
+                        </div>
+
+                        @if ($permit->hold_reason)
+                            <div class="mb-4">
+                                <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Hold Reason</div>
+                                <div class="rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-pre-line">{{ $permit->hold_reason }}</div>
+                            </div>
+                        @endif
+
+                        @if ($permit->admin_response)
+                            <div class="mb-4">
+                                <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Admin Response</div>
+                                <div class="rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-pre-line">{{ $permit->admin_response }}</div>
+                            </div>
+                        @endif
+
+                        @if ((int) ($permit->status ?? 0) === 4 && $isAdmin)
+                            <form method="POST" action="{{ route('user.permits.respond', $permit) }}" x-data="{ action: '' }">
+                                @csrf
+                                <input type="hidden" name="action" x-bind:value="action">
+                                <div class="mb-3">
+                                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Your Response (optional)</label>
+                                    <textarea name="admin_response" rows="3" placeholder="Add a note for the guard or permit creator..." class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                                </div>
+                                <div class="flex flex-wrap gap-3">
+                                    <button type="submit" @click="action = 'approve'" class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 cursor-pointer">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                        Approve — Let Them In
+                                    </button>
+                                    <button type="submit" @click="action = 'return'" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 cursor-pointer">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                                        Return for Correction
+                                    </button>
+                                    <button type="submit" @click="action = 'reject'" class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 cursor-pointer">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        Reject — Turn Away
+                                    </button>
+                                </div>
+                            </form>
+                        @endif
+
+                        @if ((int) ($permit->status ?? 0) === 5)
+                            @php $canResubmit = $isAdmin || (int) ($permit->created_by ?? 0) === (int) ($viewer->id ?? 0); @endphp
+                            @if ($canResubmit)
+                                <form method="POST" action="{{ route('user.permits.resubmit', $permit) }}" class="mt-2">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 cursor-pointer">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                        Edit & Resubmit
+                                    </button>
+                                </form>
+                            @endif
+                        @endif
+                    </div>
+                @endif
+                
             </div>
         </div>
     </x-navbar>

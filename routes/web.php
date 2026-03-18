@@ -41,6 +41,12 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
 
     Route::post('/user/permits/{permit}/cancel', [PortalController::class, 'cancelPermit'])->name('user.permits.cancel');
 
+    Route::post('/user/permits/{permit}/hold', [PortalController::class, 'holdPermit'])->name('user.permits.hold');
+
+    Route::post('/user/permits/{permit}/respond-to-hold', [PortalController::class, 'respondToHold'])->name('user.permits.respond-to-hold');
+
+    Route::post('/user/permits/{permit}/resubmit', [PortalController::class, 'resubmitPermit'])->name('user.permits.resubmit');
+
     Route::get('/admin/home', [PortalController::class, 'adminHome'])->name('admin.home');
 
     Route::get('/admin/users', [PortalController::class, 'adminUsers'])->name('admin.users');
