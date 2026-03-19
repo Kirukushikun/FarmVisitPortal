@@ -280,6 +280,19 @@
                     </div>
                 @endif
 
+                @if ($permit->admin_response && in_array((int) ($permit->status ?? 0), [1]))
+                    <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-green-200 dark:border-green-700 px-6 py-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span class="font-semibold text-green-600 dark:text-green-400">Approved by Admin</span>
+                        </div>
+                        <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Admin Response</div>
+                        <div class="rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-pre-line">{{ $permit->admin_response }}</div>
+                    </div>
+                @endif
+                
                 <!-- Action Buttons -->
                 @if ((int) ($permit->status ?? 0) === 1)
                     <!-- Mobile -->

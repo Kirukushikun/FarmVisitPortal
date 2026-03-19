@@ -10,6 +10,10 @@
                 return '<span style="display: inline-flex; align-items: center; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #dcfce7; color: #166534;">Completed</span>';
             case 3:
                 return '<span style="display: inline-flex; align-items: center; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #fecaca; color: #991b1b;">Cancelled</span>';
+            case 4:
+                return '<span style="display: inline-flex; align-items: center; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #fed7aa; color: #9a3412;">On Hold</span>';
+            case 5:
+                return '<span style="display: inline-flex; align-items: center; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #ede9fe; color: #5b21b6;">Returned</span>';
             default:
                 return '<span style="display: inline-flex; align-items: center; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #f3f4f6; color: #374151;">Unknown</span>';
         }
@@ -181,6 +185,14 @@
                                             <label class="flex items-center cursor-pointer">
                                                 <input type="checkbox" wire:model.defer="pendingStatusFilter" value="3" class="mr-2 cursor-pointer">
                                                 <span class="text-sm text-gray-700 dark:text-gray-300">Cancelled</span>
+                                            </label>
+                                            <label class="flex items-center cursor-pointer">
+                                                <input type="checkbox" wire:model.defer="pendingStatusFilter" value="4" class="mr-2 cursor-pointer">
+                                                <span class="text-sm text-gray-700 dark:text-gray-300">On Hold</span>
+                                            </label>
+                                            <label class="flex items-center cursor-pointer">
+                                                <input type="checkbox" wire:model.defer="pendingStatusFilter" value="5" class="mr-2 cursor-pointer">
+                                                <span class="text-sm text-gray-700 dark:text-gray-300">Returned</span>
                                             </label>
                                         </div>
                                     </div>
