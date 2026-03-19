@@ -26,6 +26,13 @@ class Permit extends Model
         'created_by',
         'received_by',
         'completed_at',
+
+        'hold_reason',
+        'held_at',
+        'held_by',
+        'admin_response',
+        'responded_at',
+        'responded_by',
     ];
 
     protected function casts(): array
@@ -41,6 +48,11 @@ class Permit extends Model
             'date_of_visit' => 'datetime',
             'date_of_visit_previous_farm' => 'datetime',
             'completed_at' => 'datetime',
+
+            'held_at' => 'datetime',
+            'responded_at' => 'datetime',
+            'held_by' => 'integer',
+            'responded_by' => 'integer',
         ];
     }
 
@@ -95,5 +107,15 @@ class Permit extends Model
     public function photos(): HasMany
     {
         return $this->hasMany(PermitPhoto::class);
+    }
+
+    public function heldBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'held_by');
+    }
+
+    public function respondedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'responded_by');
     }
 }

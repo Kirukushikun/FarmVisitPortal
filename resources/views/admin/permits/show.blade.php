@@ -233,16 +233,84 @@
                     </div>
                 </div>
 
-                @if ((($permit->photos ?? collect())->count() > 0))
+                @php
+                    $viewer = Auth::user();
+                    $isAdmin = in_array((int) ($viewer->user_type ?? 0), [1, 2]);
+                @endphp
+
+                {{-- Photos --}}
+                @if ((($permit->photos ?? collect())->count() > 0) || in_array((int) ($permit->status ?? 0), [1, 4]))
                     <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 pt-6 pb-2">
                         <livewire:permit-photo-upload :permit="$permit" :can-upload="false" />
                     </div>
                 @endif
 
+                {{-- Remarks --}}
                 @if (is_string($permit->remarks ?? null) && trim((string) $permit->remarks) !== '')
                     <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 pt-6 pb-6">
                         <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks</div>
                         <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-gray-900 dark:text-white whitespace-pre-line">{{ trim((string) $permit->remarks) }}</div>
+                    </div>
+                @endif
+
+                {{-- Hold / Admin Response Panel --}}
+                @if (in_array((int) ($permit->status ?? 0), [4, 5]))
+                    <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-orange-200 dark:border-orange-700 px-6 py-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="font-semibold text-orange-600 dark:text-orange-400">
+                                {{ (int) ($permit->status ?? 0) === 4 ? 'Permit On Hold' : 'Permit Rejected' }}
+                            </span>
+                        </div>
+
+                        @if ($permit->hold_reason)
+                            <div class="mb-4">
+                                <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Hold Reason</div>
+                                <div class="rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-pre-line">{{ $permit->hold_reason }}</div>
+                            </div>
+                        @endif
+
+                        @if ($permit->admin_response)
+                            <div class="mb-4">
+                                <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Admin Response</div>
+                                <div class="rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-pre-line">{{ $permit->admin_response }}</div>
+                            </div>
+                        @endif
+
+                        @if ((int) ($permit->status ?? 0) === 4 && $isAdmin)
+                            <form method="POST" action="{{ route('admin.permits.respond', $permit) }}" x-data="{ action: '' }">
+                                @csrf
+                                <input type="hidden" name="action" x-bind:value="action">
+                                <div class="mb-3">
+                                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Your Response (optional)</label>
+                                    <textarea name="admin_response" rows="3"
+                                        placeholder="Add a note for the guard or permit creator..."
+                                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                                </div>
+                                <div class="flex flex-wrap gap-3">
+                                    <button type="submit" @click="action = 'approve'" class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 cursor-pointer">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                        Approve — Let Them In
+                                    </button>
+                                    <button type="submit" @click="action = 'reject'" class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 cursor-pointer">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        Reject — Turn Away
+                                    </button>
+                                </div>
+                            </form>
+                        @endif
+
+                        @if ((int) ($permit->status ?? 0) === 5 && $isAdmin)
+                            <form method="POST" action="{{ route('admin.permits.resubmit', $permit) }}" class="mt-2">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 cursor-pointer">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    Edit & Resubmit
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 @endif
             </div>

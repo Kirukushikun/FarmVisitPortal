@@ -41,6 +41,12 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
 
     Route::post('/user/permits/{permit}/cancel', [PortalController::class, 'cancelPermit'])->name('user.permits.cancel');
 
+    Route::post('/user/permits/{permit}/hold', [PortalController::class, 'holdPermit'])->name('user.permits.hold');
+
+    Route::post('/user/permits/{permit}/respond-to-hold', [PortalController::class, 'respondToHold'])->name('user.permits.respond-to-hold');
+
+    Route::post('/user/permits/{permit}/resubmit', [PortalController::class, 'resubmitPermit'])->name('user.permits.resubmit');
+
     Route::get('/admin/home', [PortalController::class, 'adminHome'])->name('admin.home');
 
     Route::get('/admin/users', [PortalController::class, 'adminUsers'])->name('admin.users');
@@ -56,6 +62,10 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
     Route::get('/admin/permits/{permit}/edit', [PortalController::class, 'adminEditPermit'])->name('admin.permits.edit');
 
     Route::get('/admin/permits/{permit}', [PortalController::class, 'adminShowPermit'])->name('admin.permits.show');
+
+    Route::post('/admin/permits/{permit}/respond', [PortalController::class, 'respondToHold'])->name('admin.permits.respond');
+    
+    Route::post('/admin/permits/{permit}/resubmit', [PortalController::class, 'resubmitPermit'])->name('admin.permits.resubmit');
 
     Route::get('/admin/change-password', [PortalController::class, 'adminChangePassword'])->name('admin.change-password');
 });

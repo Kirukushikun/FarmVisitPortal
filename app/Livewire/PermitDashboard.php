@@ -46,6 +46,8 @@ class PermitDashboard extends Component
             1 => 'blue',
             2 => 'green',
             3 => 'red',
+            4 => 'orange',
+            5 => 'purple',
         ];
         
         return $colors[$status] ?? 'gray';

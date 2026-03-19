@@ -562,8 +562,9 @@
         </div>
     @endif
 
-    <template x-if="attachedPhotos.length === 0">
-        <div class="flex items-center gap-2 mb-6">
+<template x-if="attachedPhotos.length === 0">
+    <div class="flex items-center gap-2 mb-6">
+        @if($canUpload)
             <button 
                 @click="openAttachAction(); $event.preventDefault()"
                 type="button"
@@ -580,11 +581,11 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
                 </template>
-
                 <span class="ml-2 text-blue-600 dark:text-blue-300" x-text="attachMode === 'upload' ? 'Upload photo' : 'Take photo'"></span>
             </button>
-        </div>
-    </template>
+        @endif
+    </div>
+</template>
 
     <template x-if="attachedPhotos.length > 0">
         <div class="flex flex-col sm:flex-row gap-2 mb-6">

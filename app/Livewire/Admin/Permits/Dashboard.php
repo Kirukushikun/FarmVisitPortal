@@ -79,7 +79,7 @@ class Dashboard extends Component
         $this->page = (int) request()->query('page', 1);
         $this->status = (string) request()->query('status', '');
 
-        $allowed = ['0', '1', '2', '3'];
+        $allowed = ['0', '1', '2', '3', '4', '5'];
         $statusParts = array_filter(array_map('trim', explode(',', $this->status)), fn ($v) => $v !== '');
         $statusParts = array_values(array_unique($statusParts));
         $statusParts = array_values(array_filter($statusParts, fn ($v) => in_array((string) $v, $allowed, true)));

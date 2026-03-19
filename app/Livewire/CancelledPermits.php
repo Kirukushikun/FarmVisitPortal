@@ -64,6 +64,8 @@ class CancelledPermits extends Component
             1 => 'In Progress',
             2 => 'Completed',
             3 => 'Cancelled',
+            4 => 'On Hold',
+            5 => 'Returned',
         ];
         
         return $labels[$status] ?? 'Unknown';
@@ -71,11 +73,14 @@ class CancelledPermits extends Component
 
     public function getStatusColor($status)
     {
+        
         $colors = [
             0 => 'yellow',
             1 => 'blue',
             2 => 'green',
             3 => 'red',
+            4 => 'orange',
+            5 => 'purple',
         ];
         
         return $colors[$status] ?? 'gray';

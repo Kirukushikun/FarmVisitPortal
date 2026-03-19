@@ -191,7 +191,7 @@ class PortalController extends Controller
             }
         }
 
-        if ((int) ($permit->status ?? 0) !== 1) {
+        if (! in_array((int) ($permit->status ?? 0), [1, 4])) {
             return redirect()->back()->with('error', 'Permit cannot be cancelled.');
         }
 
@@ -308,5 +308,97 @@ class PortalController extends Controller
         }
 
         return view('auth.change-password-page');
+    }
+
+    public function holdPermit(Request $request, Permit $permit): mixed
+    {
+        $user = $request->user();
+
+        $userFarmLocationId = $this->userLocationId($request, $user);
+        $permitFarmLocationId = (int) ($permit->farm_location_id ?? 0);
+
+        if ($userFarmLocationId <= 0 || $permitFarmLocationId <= 0 || $userFarmLocationId !== $permitFarmLocationId) {
+            abort(403);
+        }
+
+        if ((int) ($permit->status ?? 0) !== 1) {
+            return redirect()->back()->with('error', 'Permit cannot be put on hold.');
+        }
+
+        $validated = $request->validate([
+            'hold_reason' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $permit->update([
+            'status' => 4, // On Hold
+            'hold_reason' => trim($validated['hold_reason']),
+            'held_at' => now(),
+            'held_by' => $user->id,
+        ]);
+
+        return redirect()->back()->with('success', 'Permit placed on hold.');
+    }
+
+    public function respondToHold(Request $request, Permit $permit): mixed
+    {
+        $user = $request->user();
+
+        if (! $this->isAdminType($user)) {
+            abort(403);
+        }
+
+        if ((int) ($permit->status ?? 0) !== 4) {
+            return redirect()->back()->with('error', 'Permit is not on hold.');
+        }
+
+        $validated = $request->validate([
+            'action' => ['required', 'in:approve,return,reject'],
+            'admin_response' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $newStatus = match ($validated['action']) {
+            'approve' => 1, // Back to In Progress
+            'return'  => 5, // Returned
+            'reject'  => 3, // Cancelled
+        };
+
+        $permit->update([
+            'status' => $newStatus,
+            'admin_response' => isset($validated['admin_response']) && trim($validated['admin_response']) !== ''
+                ? trim($validated['admin_response'])
+                : null,
+            'responded_at' => now(),
+            'responded_by' => $user->id,
+            'completed_at' => $newStatus === 3 ? now() : $permit->completed_at,
+        ]);
+
+        return redirect()->back()->with('success', 'Response submitted successfully.');
+    }
+
+    public function resubmitPermit(Request $request, Permit $permit): mixed
+    {
+        $user = $request->user();
+
+        if ((int) ($permit->status ?? 0) !== 5) {
+            return redirect()->back()->with('error', 'Permit cannot be resubmitted.');
+        }
+
+        // Only creator or admin can resubmit
+        $isAdmin = $this->isAdminType($user);
+        if (! $isAdmin && (int) ($permit->created_by ?? 0) !== (int) ($user->id ?? 0)) {
+            abort(403);
+        }
+
+        $permit->update([
+            'status' => 0, // Back to Scheduled
+            'hold_reason' => null,
+            'held_at' => null,
+            'held_by' => null,
+            'admin_response' => null,
+            'responded_at' => null,
+            'responded_by' => null,
+        ]);
+
+        return redirect()->route('admin.permits.edit', $permit)->with('success', 'Permit returned to scheduled. Please update and resubmit.');
     }
 }
