@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::table('permits', function (Blueprint $table) {
             $table->tinyInteger('status')->default(0)->change(); // already exists, no change needed
             $table->text('hold_reason')->nullable()->after('remarks');
+            $table->boolean('red_alert')->default(false);
             $table->timestamp('held_at')->nullable()->after('hold_reason');
             $table->foreignId('held_by')->nullable()->constrained('users')->nullOnDelete()->after('held_at');
             $table->text('admin_response')->nullable()->after('held_by');

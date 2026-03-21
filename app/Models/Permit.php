@@ -28,6 +28,7 @@ class Permit extends Model
         'completed_at',
 
         'hold_reason',
+        'red_alert',
         'held_at',
         'held_by',
         'admin_response',
@@ -49,6 +50,7 @@ class Permit extends Model
             'date_of_visit_previous_farm' => 'datetime',
             'completed_at' => 'datetime',
 
+            'red_alert' => 'boolean',
             'held_at' => 'datetime',
             'responded_at' => 'datetime',
             'held_by' => 'integer',

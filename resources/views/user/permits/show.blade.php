@@ -462,6 +462,16 @@
                                     <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
                                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Put Permit On Hold?</h3>
                                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Explain the issue so the admin can review.</p>
+                                        <div class="flex items-center justify-between p-3 mb-4 rounded-lg border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20">
+                                            <div>
+                                                <div class="text-sm font-semibold text-red-600 dark:text-red-400">🚨 Red Alert</div>
+                                                <div class="text-xs text-red-500 dark:text-red-400 mt-0.5">Visitors have not met the required days since last farm visit</div>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer ml-3">
+                                                <input type="checkbox" name="red_alert" value="1" class="sr-only peer">
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                                            </label>
+                                        </div>
                                         <textarea name="hold_reason" rows="4" required placeholder="e.g. Visitor names do not match IDs presented..." class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 mb-4"></textarea>
                                         <div class="flex gap-3 justify-end">
                                             <button type="button" @click="showHoldModal = false" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 cursor-pointer">Cancel</button>

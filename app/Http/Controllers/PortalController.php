@@ -327,6 +327,7 @@ class PortalController extends Controller
 
         $validated = $request->validate([
             'hold_reason' => ['required', 'string', 'max:5000'],
+            'red_alert' => ['nullable', 'boolean'],
         ]);
 
         $permit->update([
@@ -334,6 +335,7 @@ class PortalController extends Controller
             'hold_reason' => trim($validated['hold_reason']),
             'held_at' => now(),
             'held_by' => $user->id,
+            'red_alert' => (bool) ($validated['red_alert'] ?? false),
         ]);
 
         return redirect()->back()->with('success', 'Permit placed on hold.');
