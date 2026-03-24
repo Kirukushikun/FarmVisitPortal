@@ -207,13 +207,14 @@
                     @endif
                 </div>
 
-                <a
-                    href="{{ route('admin.permits.create', ['return' => $returnUrl]) }}"
+                <button
+                    type="button"
+                    wire:click="openOriginModal"
                     class="inline-flex items-center justify-center px-4 py-3 text-sm font-medium text-white bg-orange-600 border border-orange-600 rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-150 whitespace-nowrap shrink-0 md:px-4 cursor-pointer"
                 >
                     <span class="hidden md:inline">Create Permit</span>
                     <span class="md:hidden">Create</span>
-                </a>
+                </button>
             </div>
         </div>
     </div>
@@ -441,4 +442,5 @@
 
 @include('livewire.admin.permits.delete-permit')
 @include('livewire.admin.permits.reschedule-permit')
+@include('livewire.admin.permits.origin-modal')
 </div>

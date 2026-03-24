@@ -39,7 +39,7 @@ class Edit extends Component
     public string $namesMode = 'simple';
     public string $namesSimple = '';
     public array $namesGroups = [
-        ['origin' => '', 'names' => ''],
+        ['origin' => '', 'names' => '', 'previous_farm' => '', 'date_visited' => ''],
     ];
 
     public Permit $permit;
@@ -108,21 +108,27 @@ class Edit extends Component
         $this->dateOfVisitPreviousFarm = $this->permit->date_of_visit_previous_farm?->format('Y-m-d') ?? '';
         $this->purpose = $this->permit->purpose ?? '';
 
-        // Hydrate names
         $raw = $this->permit->names ?? '';
         $decoded = is_array($raw) ? $raw : json_decode($raw, true);
 
         if (is_array($decoded) && isset($decoded['mode'])) {
             $this->namesMode = $decoded['mode'];
             if ($decoded['mode'] === 'detailed') {
-                $this->namesGroups = $decoded['groups'] ?? [['origin' => '', 'names' => '']];
+                $this->namesGroups = array_map(fn($g) => [
+                    'origin' => $g['origin'] ?? '',
+                    'names' => $g['names'] ?? '',
+                    'previous_farm' => $g['previous_farm'] ?? '',
+                    'date_visited' => $g['date_visited'] ?? '',
+                ], $decoded['groups'] ?? [['origin' => '', 'names' => '', 'previous_farm' => '', 'date_visited' => '']]);
+                $this->visibleStepIds = [1]; // no step 2 for detailed
             } else {
                 $this->namesSimple = $decoded['value'] ?? '';
+                $this->visibleStepIds = [1, 2];
             }
         } else {
-            // Legacy plain string — fall back to simple mode
             $this->namesMode = 'simple';
-            $this->namesSimple = $raw;
+            $this->namesSimple = is_string($raw) ? $raw : '';
+            $this->visibleStepIds = [1, 2];
         }
     }
 
@@ -306,7 +312,7 @@ class Edit extends Component
 
     public function addNamesGroup(): void
     {
-        $this->namesGroups[] = ['origin' => '', 'names' => ''];
+        $this->namesGroups[] = ['origin' => '', 'names' => '', 'previous_farm' => '', 'date_visited' => ''];
     }
 
     public function removeNamesGroup(int $index): void
@@ -317,28 +323,24 @@ class Edit extends Component
         }
     }
 
-    public function switchNamesMode(string $mode): void
-    {
-        $this->namesMode = $mode;
-        $this->resetValidation();
-    }
-
-    protected function buildNamesPayload(): string
+    protected function buildNamesPayload(): array
     {
         if ($this->namesMode === 'detailed') {
-            return json_encode([
+            return [
                 'mode' => 'detailed',
                 'groups' => array_map(fn($g) => [
                     'origin' => trim($g['origin']),
                     'names' => trim($g['names']),
+                    'previous_farm' => trim($g['previous_farm'] ?? ''),
+                    'date_visited' => $g['date_visited'] ?? '',
                 ], $this->namesGroups),
-            ]);
+            ];
         }
 
-        return json_encode([
+        return [
             'mode' => 'simple',
             'value' => trim($this->namesSimple),
-        ]);
+        ];
     }
 
     protected function rulesForSubmit(): array
@@ -351,18 +353,17 @@ class Edit extends Component
             'namesGroups.*.origin' => ['required_if:namesMode,detailed', 'nullable', 'string', 'min:2'],
             'namesGroups.*.names' => ['required_if:namesMode,detailed', 'nullable', 'string', 'min:2'],
             'expectedDurationHours' => ['required', 'numeric', 'gt:0'],
-            'previousFarmLocation' => ['nullable', 'string', 'min:2'],
-            'dateOfVisitPreviousFarm' => ['nullable', 'date', 'before_or_equal:today'],
             'purpose' => ['required', 'string', 'min:2'],
         ];
 
-        // For dateOfVisit, allow past dates if the permit already has a past date
-        // but don't allow setting future dates to past dates
+        if ($this->namesMode === 'simple') {
+            $rules['previousFarmLocation'] = ['nullable', 'string', 'min:2'];
+            $rules['dateOfVisitPreviousFarm'] = ['nullable', 'date', 'before_or_equal:today'];
+        }
+
         if ($this->permit->date_of_visit && $this->permit->date_of_visit->isPast()) {
-            // Permit has past date - allow any date (including past)
             $rules['dateOfVisit'] = ['required', 'date'];
         } else {
-            // Permit has current/future date - don't allow setting to past
             $rules['dateOfVisit'] = ['required', 'date', 'after_or_equal:today'];
         }
 
@@ -384,5 +385,34 @@ class Edit extends Component
     public function render()
     {
         return view('livewire.admin.permits.edit');
+    }
+
+    public function getGroupAlertsProperty(): array
+    {
+        $alerts = [];
+        $farmType = (int) ($this->getFarmLocationsProperty()->firstWhere('id', (int) $this->farmLocationId)?->farm_type ?? -1);
+
+        $requiredDays = match($farmType) {
+            0 => 5,
+            1 => 3,
+            default => null,
+        };
+
+        if ($requiredDays === null) return $alerts;
+
+        foreach ($this->namesGroups as $i => $group) {
+            $dateVisited = $group['date_visited'] ?? '';
+            if ($dateVisited === '') continue;
+
+            $visited = Carbon::parse($dateVisited)->startOfDay();
+            $today = now()->startOfDay();
+            $diffDays = $visited->diffInDays($today);
+
+            if ($diffDays < $requiredDays) {
+                $alerts[$i] = true;
+            }
+        }
+
+        return $alerts;
     }
 }

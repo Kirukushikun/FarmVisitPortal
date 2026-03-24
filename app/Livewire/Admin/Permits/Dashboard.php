@@ -46,6 +46,8 @@ class Dashboard extends Component
 
     public bool $showDeleteModal = false;
 
+    public bool $showOriginModal = false;
+
     public $permitToDelete = null;
 
     public bool $showRescheduleModal = false;
@@ -244,6 +246,23 @@ class Dashboard extends Component
         $this->permitToDelete->delete();
         $this->closeDeleteModal();
         $this->dispatch('showToast', message: 'Permit deleted successfully!', type: 'success');
+    }
+
+    public function openOriginModal(): void
+    {
+        $this->showOriginModal = true;
+    }
+
+    public function closeOriginModal(): void
+    {
+        $this->showOriginModal = false;
+    }
+
+    public function selectOriginMode(string $mode): void
+    {
+        $this->showOriginModal = false;
+        $url = route('admin.permits.create', ['return' => $this->returnUrl, 'mode' => $mode]);
+        $this->redirect($url);
     }
 
     public function reschedulePermit(int $permitId): void

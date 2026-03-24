@@ -39,7 +39,7 @@ class Create extends Component
     public string $namesMode = 'simple'; // 'simple' or 'detailed'
     public string $namesSimple = '';
     public array $namesGroups = [
-        ['origin' => '', 'names' => ''],
+        ['origin' => '', 'names' => '', 'previous_farm' => '', 'date_visited' => ''],
     ];
 
 
@@ -76,6 +76,12 @@ class Create extends Component
 
     public function mount(): void
     {
+        $mode = request()->query('mode', 'single');
+        if ($mode === 'multiple') {
+            $this->namesMode = 'detailed';
+            $this->visibleStepIds = [1];
+        }
+
         $return = request()->query('return');
         if (is_string($return) && $return !== '' && str_starts_with($return, '/')) {
             $this->returnUrl = $return;
@@ -233,7 +239,7 @@ class Create extends Component
             return [
                 'areaId' => ['required', 'integer', Rule::exists('areas', 'id')->where(function ($query) {
                     $query->where('location_id', (int) $this->farmLocationId)
-                          ->where('is_disabled', false);
+                        ->where('is_disabled', false);
                 })],
                 'farmLocationId' => ['required', 'integer', Rule::exists('locations', 'id')],
                 'namesSimple' => ['required_if:namesMode,simple', 'nullable', 'string', 'min:2'],
@@ -247,10 +253,10 @@ class Create extends Component
         }
 
         if ($step === 2) {
-            return [
+            return $this->namesMode === 'simple' ? [
                 'previousFarmLocation' => ['nullable', 'string', 'min:2'],
                 'dateOfVisitPreviousFarm' => ['nullable', 'date', 'before_or_equal:today'],
-            ];
+            ] : [];
         }
 
         return [];
@@ -258,7 +264,7 @@ class Create extends Component
 
     public function addNamesGroup(): void
     {
-        $this->namesGroups[] = ['origin' => '', 'names' => ''];
+        $this->namesGroups[] = ['origin' => '', 'names' => '', 'previous_farm' => '', 'date_visited' => ''];
     }
 
     public function removeNamesGroup(int $index): void
@@ -272,25 +278,29 @@ class Create extends Component
     public function switchNamesMode(string $mode): void
     {
         $this->namesMode = $mode;
+        $this->visibleStepIds = $mode === 'detailed' ? [1] : [1, 2];
+        $this->currentStep = 1;
         $this->resetValidation();
     }
 
-    protected function buildNamesPayload(): string
+    protected function buildNamesPayload(): array
     {
         if ($this->namesMode === 'detailed') {
-            return json_encode([
+            return [
                 'mode' => 'detailed',
                 'groups' => array_map(fn($g) => [
                     'origin' => trim($g['origin']),
                     'names' => trim($g['names']),
+                    'previous_farm' => trim($g['previous_farm'] ?? ''),
+                    'date_visited' => $g['date_visited'] ?? '',
                 ], $this->namesGroups),
-            ]);
+            ];
         }
 
-        return json_encode([
+        return [
             'mode' => 'simple',
             'value' => trim($this->namesSimple),
-        ]);
+        ];
     }
 
     protected function rulesForSubmit(): array
@@ -305,6 +315,35 @@ class Create extends Component
     {
         $hours = (float) ($this->expectedDurationHours ?? 0);
         return $hours > 0 ? $hours : null;
+    }
+
+    public function getGroupAlertsProperty(): array
+    {
+        $alerts = [];
+        $farmType = (int) (($this->getFarmLocationsProperty()->firstWhere('id', (int) $this->farmLocationId))?->farm_type ?? -1);
+        
+        $requiredDays = match($farmType) {
+            0 => 5,
+            1 => 3,
+            default => null,
+        };
+
+        if ($requiredDays === null) return $alerts;
+
+        foreach ($this->namesGroups as $i => $group) {
+            $dateVisited = $group['date_visited'] ?? '';
+            if ($dateVisited === '') continue;
+
+            $visited = \Carbon\Carbon::parse($dateVisited)->startOfDay();
+            $today = now()->startOfDay();
+            $diffDays = $visited->diffInDays($today);
+
+            if ($diffDays < $requiredDays) {
+                $alerts[$i] = true;
+            }
+        }
+
+        return $alerts;
     }
 
     public function render()

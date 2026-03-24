@@ -42,37 +42,6 @@
                     @endif
                 </x-dropdown>
 
-                {{-- Mode Toggle --}}
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Visitor Entry Mode
-                    </label>
-                    <div class="inline-flex w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 p-1 gap-1">
-                        <button type="button"
-                            wire:click="switchNamesMode('simple')"
-                            class="flex flex-1 justify-center items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer
-                                {{ $namesMode === 'simple'
-                                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
-                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
-                            </svg>
-                            Single Origin
-                        </button>
-                        <button type="button"
-                            wire:click="switchNamesMode('detailed')"
-                            class="flex flex-1 justify-center items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer
-                                {{ $namesMode === 'detailed'
-                                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
-                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" />
-                            </svg>
-                            Multiple Origin
-                        </button>
-                    </div>
-                </div>
-
                 {{-- Simple Mode --}}
                 @if($namesMode === 'simple')
                     <x-text-area
@@ -87,12 +56,24 @@
 
                 {{-- Detailed Mode --}}
                 @if($namesMode === 'detailed')
+                    @php
+                        $selectedFarmType = (int) (($this->farmLocations ?? collect())->firstWhere('id', (int) ($farmLocationId ?? 0))?->farm_type ?? 0);
+                        $requiredDays = match($selectedFarmType) {
+                            0 => 5,
+                            1 => 3,
+                            2 => null, // no restriction
+                            default => null,
+                        };
+                    @endphp
+
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Visitor Names <span class="text-red-500">*</span>
+                        Visitor Groups <span class="text-red-500">*</span>
                     </label>
 
                     @foreach($namesGroups as $i => $group)
-                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2 mb-2">
+                        @php $isAlert = $this->groupAlerts[$i] ?? false; @endphp
+                        <div class="border rounded-lg p-3 space-y-2 mb-2 transition-colors {{ $isAlert ? 'border-red-400 dark:border-red-500 bg-red-50 dark:bg-red-900/10' : 'border-gray-200 dark:border-gray-700' }}">
+
                             <div class="flex items-center justify-between">
                                 <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Group {{ $i + 1 }}</span>
                                 @if(count($namesGroups) > 1)
@@ -102,6 +83,18 @@
                                     </button>
                                 @endif
                             </div>
+
+                            @if($isAlert)
+                                <div class="flex items-center gap-2 px-3 py-2 rounded-md bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-600">
+                                    <svg class="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span class="text-xs font-medium text-red-600 dark:text-red-400">
+                                        🚨 Alert: This group has not met the required {{ $requiredDays }}-day interval since their last farm visit.
+                                    </span>
+                                </div>
+                            @endif
+
                             <x-text-input
                                 label="Origin"
                                 name="namesGroups[{{ $i }}][origin]"
@@ -118,6 +111,22 @@
                                 wire:model.live="namesGroups.{{ $i }}.names"
                                 required
                             />
+                            <x-text-input
+                                label="Previous Farm Visited (optional)"
+                                name="namesGroups[{{ $i }}][previous_farm]"
+                                type="text"
+                                :wireModel="'namesGroups.' . $i . '.previous_farm'"
+                                placeholder="e.g. San Pedro Farm"
+                            />
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date Visited (optional)</label>
+                                <input
+                                    type="date"
+                                    wire:model.live="namesGroups.{{ $i }}.date_visited"
+                                    max="{{ now()->toDateString() }}"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
                         </div>
                     @endforeach
 
@@ -169,44 +178,47 @@
             </div>
 
             <div data-step="2" class="space-y-4" @style(["display:none" => $currentStep !== 2])>
-                <x-title>OPTIONAL DETAILS</x-title>
+                @if($namesMode === 'simple')
+                    <x-title>OPTIONAL DETAILS</x-title>
 
-                <div>
+                    <div>
+                        <x-text-input
+                            label="Previous Farm Visited"
+                            name="previousFarmLocation"
+                            type="text"
+                            :wireModel="'previousFarmLocation'"
+                            placeholder="Enter previous farm (optional)"
+                        />       
+                        @php
+                            $selectedFarmType = (int) (($this->farmLocations ?? collect())->firstWhere('id', (int) ($farmLocationId ?? 0))?->farm_type ?? 0);
+                            $disclaimer = match ($selectedFarmType) {
+                                0 => 'Must not have visited other Swine Farms 5 days prior to the Farm Visit.',
+                                1 => 'Must not have visited other Poultry Farms 3 days prior to the Farm Visit.',
+                                2 => 'No restrictions on previous farm visits.',
+                                default => 'Must not have visited other Swine Farms 5 days prior to the Farm Visit.',
+                            };
+                        @endphp
+                        @if ($disclaimer !== '')
+                            <p class="text-xs text-gray-500 dark:text-gray-400" style="margin-top: -15px; margin-bottom: 20px;" >
+                                {{ $disclaimer }}
+                            </p>
+                        @endif
+                    </div>
+
                     <x-text-input
-                        label="Previous Farm Visited"
-                        name="previousFarmLocation"
-                        type="text"
-                        :wireModel="'previousFarmLocation'"
-                        placeholder="Enter previous farm (optional)"
-                    />       
-                    @php
-                        $selectedFarmType = (int) (($this->farmLocations ?? collect())->firstWhere('id', (int) ($farmLocationId ?? 0))?->farm_type ?? 0);
-                        $disclaimer = match ($selectedFarmType) {
-                            0 => 'Must not have visited other Swine Farms 5 days prior to the Farm Visit.',
-                            1 => 'Must not have visited other Poultry Farms 3 days prior to the Farm Visit.',
-                            default => 'Must not have visited other Swine Farms 5 days prior to the Farm Visit.',
-                        };
-                    @endphp
-                    @if ($disclaimer !== '')
-                        <p class="text-xs text-gray-500 dark:text-gray-400" style="margin-top: -15px; margin-bottom: 20px;" >
-                            {{ $disclaimer }}
-                        </p>
-                    @endif
-                </div>
-
-                <x-text-input
-                    label="Date Visited"
-                    name="dateOfVisitPreviousFarm"
-                    type="date"
-                    :wireModel="'dateOfVisitPreviousFarm'"
-                    :max="now()->toDateString()"
-                >
-                    <x-button type="button" wire:click="clearPreviousFarmDate" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" title="Clear">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </x-button>
-                </x-text-input>
+                        label="Date Visited"
+                        name="dateOfVisitPreviousFarm"
+                        type="date"
+                        :wireModel="'dateOfVisitPreviousFarm'"
+                        :max="now()->toDateString()"
+                    >
+                        <x-button type="button" wire:click="clearPreviousFarmDate" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" title="Clear">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </x-button>
+                    </x-text-input>
+                @endif
             </div>
         </x-progress-navigation>
     </form>

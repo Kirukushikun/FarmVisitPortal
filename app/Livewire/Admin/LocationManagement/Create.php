@@ -13,7 +13,7 @@ class Create extends Component
     #[Validate('required|string|min:2|max:100|unique:locations,name')]
     public string $name = '';
 
-    #[Validate('required|integer|in:0,1')]
+    #[Validate('required|integer|in:0,1,2')]
     public int $farmType = 0;
 
     public bool $showModal = false;

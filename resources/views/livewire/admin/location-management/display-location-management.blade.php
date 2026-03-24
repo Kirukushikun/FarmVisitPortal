@@ -13,8 +13,8 @@
 
     <div class="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between md:gap-6">
         <div class="text-center md:text-left">
-            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Farms Management</h1>
-            <p class="text-gray-600 dark:text-gray-400">Manage your farms here</p>
+            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Location Management</h1>
+            <p class="text-gray-600 dark:text-gray-400">Manage your locations here</p>
         </div>
         <div class="flex flex-col gap-3 md:flex-row md:gap-3 md:items-center">
             <div class="flex flex-row gap-3 items-center w-full md:w-auto">
@@ -24,7 +24,7 @@
                     </svg>
                     <input
                         wire:model.live="search"
-                        placeholder="Search farms..."
+                        placeholder="Search locations..."
                         class="w-full pl-11 pr-12 py-3 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 shadow-sm dark:shadow-md"
                     />
                     <button type="button" wire:click="toggleFilterDropdown" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 transition-colors cursor-pointer {{ $isFilterActive ? 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300' }}">
@@ -66,7 +66,7 @@
                 </div>
 
                 <button type="button" wire:click="$dispatch('openCreateLocationModal')" class="inline-flex items-center justify-center px-4 py-3 text-sm font-medium text-white bg-orange-600 border border-orange-600 rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-150 whitespace-nowrap shrink-0 md:px-4 cursor-pointer">
-                    <span class="hidden md:inline">Add Farm</span>
+                    <span class="hidden md:inline">Add Location</span>
                     <span class="md:hidden">Add</span>
                 </button>
             </div>

@@ -7,46 +7,73 @@
             <div class="p-4">
                 @php
                     function permitPrintDuration(null|int|float|string $hours): string {
-                        if ($hours === null) {
-                            return '';
-                        }
-
+                        if ($hours === null) return '';
                         $hoursFloat = max(0, (float) $hours);
                         $totalSeconds = (int) round($hoursFloat * 3600);
-
                         $displayHours = intdiv($totalSeconds, 3600);
                         $displayMinutes = intdiv($totalSeconds % 3600, 60);
                         $displaySeconds = $totalSeconds % 60;
-
                         return sprintf('%02d:%02d:%02d', $displayHours, $displayMinutes, $displaySeconds);
                     }
 
                     function permitDisplayValue(mixed $value): string {
+                        // Guard against arrays and objects (e.g. names cast as array/json in model)
+                        if (is_array($value) || is_object($value)) return 'N/A';
                         $value = is_string($value) ? trim($value) : $value;
-
-                        if ($value === null) {
-                            return 'N/A';
-                        }
-
-                        if (is_string($value) && $value === '') {
-                            return 'N/A';
-                        }
-
+                        if ($value === null || $value === '') return 'N/A';
                         return (string) $value;
                     }
 
-                    $dateFilled = $permit->created_at ? $permit->created_at->format('F j, Y') : '';
-                    $farm = $permit->farmLocation?->name ?: '';
-                    $farmType = (int) ($permit->farmLocation?->farm_type ?? 0);
-                    $dateOfVisit = $permit->date_of_visit ? $permit->date_of_visit->format('F j, Y') : '';
+                    $dateFilled       = $permit->created_at?->format('F j, Y') ?? '';
+                    $farm             = $permit->farmLocation?->name ?? '';
+                    $farmType         = (int) ($permit->farmLocation?->farm_type ?? 0);
+                    $areaName         = $permit->area?->name ?? '';
+                    $dateOfVisit      = $permit->date_of_visit?->format('F j, Y') ?? '';
                     $expectedDuration = permitPrintDuration($permit->expected_duration_hours);
-                    $previousFarm = $permit->previous_farm_location ?? '';
-                    $previousFarmDate = $permit->date_of_visit_previous_farm ? $permit->date_of_visit_previous_farm->format('F j, Y') : '';
+
+                    // Decode names — handles both string (raw JSON) and array (model cast)
+                    $rawNames  = $permit->names;
                     $namesData = null;
-                    if (is_string($permit->names) && trim($permit->names) !== '') {
-                        $decoded = json_decode($permit->names, true);
+                    if (is_array($rawNames) && isset($rawNames['mode'])) {
+                        $namesData = $rawNames;
+                    } elseif (is_string($rawNames) && trim($rawNames) !== '') {
+                        $decoded = json_decode($rawNames, true);
                         if (is_array($decoded) && isset($decoded['mode'])) {
                             $namesData = $decoded;
+                        }
+                    }
+
+                    $isDetailedMode = $namesData && $namesData['mode'] === 'detailed';
+                    $isSimpleMode   = $namesData && $namesData['mode'] === 'simple';
+
+                    // Simple mode fields (stored at permit level)
+                    $previousFarm     = $permit->previous_farm_location ?? '';
+                    $previousFarmDate = $permit->date_of_visit_previous_farm?->format('F j, Y') ?? '';
+
+                    // Detailed mode: previous farm info lives inside each group
+                    $groups = $isDetailedMode ? ($namesData['groups'] ?? []) : [];
+
+                    $requiredDays = $farmType === 1 ? 3 : 5;
+                    $hasRedAlert = (bool) ($permit->red_alert ?? false);
+
+                    if (!$hasRedAlert) {
+                        if ($isDetailedMode) {
+                            foreach ($groups as $group) {
+                                $dateVisited = $group['date_visited'] ?? '';
+                                if ($dateVisited === '') continue;
+                                $diff = \Carbon\Carbon::parse($dateVisited)->startOfDay()
+                                    ->diffInDays(\Carbon\Carbon::parse($permit->date_of_visit)->startOfDay());
+                                if ($diff < $requiredDays) {
+                                    $hasRedAlert = true;
+                                    break;
+                                }
+                            }
+                        } elseif ($isSimpleMode && $permit->date_of_visit_previous_farm) {
+                            $diff = $permit->date_of_visit_previous_farm->startOfDay()
+                                ->diffInDays(\Carbon\Carbon::parse($permit->date_of_visit)->startOfDay());
+                            if ($diff < $requiredDays) {
+                                $hasRedAlert = true;
+                            }
                         }
                     }
                 @endphp
@@ -61,31 +88,27 @@
                         .print-bg { background: white !important; }
                         .text-gray-900, .text-gray-900 * { color: #111827 !important; }
                         .text-gray-700, .text-gray-700 * { color: #374151 !important; }
-                        .dark\\:text-white, .dark\\:text-white * { color: #111827 !important; }
-                        .dark\\:text-gray-200, .dark\\:text-gray-200 * { color: #374151 !important; }
-                        .dark\\:bg-gray-800 { background: white !important; }
-                        .dark\\:bg-gray-900 { background: white !important; }
-                        .dark\\:border-gray-700 { border-color: #e5e7eb !important; }
-                    }
-                    
-                    /* Dark mode styles for better contrast */
-                    @media (prefers-color-scheme: dark) {
-                        .dark .border-black { border-color: #d1d5db !important; }
-                        .dark .text-gray-900 { color: #f9fafb !important; }
-                        .dark .font-bold { color: #f3f4f6 !important; }
+                        .dark\:text-white, .dark\:text-white * { color: #111827 !important; }
+                        .dark\:text-gray-200, .dark\:text-gray-200 * { color: #374151 !important; }
+                        .dark\:bg-gray-800 { background: white !important; }
+                        .dark\:bg-gray-900 { background: white !important; }
+                        .dark\:border-gray-700 { border-color: #e5e7eb !important; }
                     }
                 </style>
 
                 <div class="w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-8 pt-6 pb-6 mx-auto print-page print-bg">
-
                     <div class="print-wrap">
+
+                        {{-- ===================== MOBILE ===================== --}}
                         <div class="no-print md:hidden">
                             <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
                                 <div class="flex justify-between items-center">
-                                    <div class="text-lg font-semibold text-gray-900 dark:text-white">FARM VISIT PERMIT {{ $permit->permit_id ?? '' }}</div>
+                                    <div class="text-lg font-semibold text-gray-900 dark:text-white">
+                                        FARM VISIT PERMIT {{ $permit->permit_id ?? '' }}
+                                    </div>
                                     <a href="{{ route('user.home') }}" class="inline-flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white cursor-pointer">
                                         <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                                         </svg>
                                         <span class="text-sm">Back</span>
                                     </a>
@@ -95,37 +118,32 @@
                                 <div class="mt-4 space-y-3 text-sm">
                                     <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Area</div>
-                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($permit->area->name ?? null) }}</div>
+                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($areaName) }}</div>
                                     </div>
                                     <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Farm</div>
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($farm) }}</div>
                                     </div>
+
+                                    {{-- Visitor Names --}}
                                     <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Visitor Names</div>
-                                        @if ($namesData && $namesData['mode'] === 'detailed')
+                                        @if ($isDetailedMode)
                                             <div class="space-y-1 mt-1">
-                                                @foreach ($namesData['groups'] as $group)
-                                                    <div class="text-gray-900 dark:text-white">
-                                                        <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">[{{ $group['origin'] }}]</span>
-                                                        {{ $group['names'] }}
+                                                @foreach ($groups as $group)
+                                                    <div>
+                                                        <span class="font-semibold">{{ $group['origin'] }}:</span>
+                                                        {{ implode(', ', array_filter(array_map('trim', explode("\n", $group['names'])))) }}
                                                     </div>
                                                 @endforeach
                                             </div>
-                                        @elseif ($namesData)
+                                        @elseif ($isSimpleMode)
                                             <div class="text-gray-900 dark:text-white whitespace-pre-line">{{ $namesData['value'] }}</div>
                                         @else
-                                            <div class="text-gray-900 dark:text-white whitespace-pre-line">{{ permitDisplayValue($permit->names ?? null) }}</div>
+                                            <div class="text-gray-900 dark:text-white">N/A</div>
                                         @endif
                                     </div>
-                                    <div>
-                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Area/Department to Visit</div>
-                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($permit->area->name ?? null) }}</div>
-                                    </div>
-                                    <div>
-                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Destination</div>
-                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($farm) }}</div>
-                                    </div>
+
                                     <div>
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Date of Visit</div>
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($dateOfVisit) }}</div>
@@ -134,22 +152,63 @@
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Expected Duration</div>
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($expectedDuration) }}</div>
                                     </div>
-                                    <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
-                                        <div class="font-semibold text-gray-700 dark:text-gray-200">{{ $farmType === 1 ? 'Previous Poultry Farm Visited' : 'Previous Swine Farm Visited' }}</div>
-                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($previousFarm) }}</div>
-                                    </div>
                                     <div>
-                                        <div class="font-semibold text-gray-700 dark:text-gray-200">Previous Farm Date of Visit</div>
-                                        <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($previousFarmDate) }}</div>
-                                    </div>
-                                    <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
                                         <div class="font-semibold text-gray-700 dark:text-gray-200">Purpose</div>
                                         <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($permit->purpose ?? null) }}</div>
                                     </div>
+
+                                    {{-- Farm Travel History --}}
+                                    <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
+                                        <div class="font-semibold text-gray-700 dark:text-gray-200 mb-1">Farm Travel History</div>
+                                        @if ($isDetailedMode)
+                                            {{-- Per-group previous farm --}}
+                                            @foreach ($groups as $i => $group)
+                                                @if (!empty($group['previous_farm']) || !empty($group['date_visited']))
+                                                    <div class="mb-2 p-2 rounded bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700">
+                                                        <div class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">Group {{ $i + 1 }}: {{ $group['origin'] }}</div>
+                                                        <div class="text-gray-900 dark:text-white text-xs">
+                                                            <span class="font-medium">Previous Farm:</span> {{ permitDisplayValue($group['previous_farm'] ?? null) }}
+                                                        </div>
+                                                        <div class="text-gray-900 dark:text-white text-xs">
+                                                            <span class="font-medium">Date Visited:</span>
+                                                            {{ !empty($group['date_visited']) ? \Carbon\Carbon::parse($group['date_visited'])->format('F j, Y') : 'N/A' }}
+                                                        </div>
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        @else
+                                            {{-- Simple mode: permit-level previous farm --}}
+                                            <div>
+                                                <div class="font-semibold text-gray-700 dark:text-gray-200">
+                                                    {{ $farmType === 1 ? 'Previous Poultry Farm Visited' : 'Previous Swine Farm Visited' }}
+                                                </div>
+                                                <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($previousFarm) }}</div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <div class="font-semibold text-gray-700 dark:text-gray-200">Previous Farm Date of Visit</div>
+                                                <div class="text-gray-900 dark:text-white">{{ permitDisplayValue($previousFarmDate) }}</div>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
+
+                            @if ($hasRedAlert)
+                                <div class="no-print mt-4 flex items-center gap-2 px-4 py-3 rounded-lg bg-red-600 text-white">
+                                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <div>
+                                        <div class="font-bold text-sm">🚨 RED ALERT</div>
+                                        <div class="text-xs opacity-90">
+                                            Visitors have not met the required {{ $requiredDays }}-day interval since their last farm visit.
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
+                        {{-- ===================== DESKTOP / PRINT ===================== --}}
                         <div class="hidden md:block print:block">
                             <div class="flex justify-center mb-2">
                                 <img src="{{ asset('images/BGC.png') }}" alt="BGC" class="h-20 w-48" />
@@ -159,7 +218,7 @@
                                 <div class="text-sm text-gray-900 dark:text-white">{{ permitDisplayValue($dateFilled) }}</div>
                                 <a href="{{ route('user.home') }}" class="no-print inline-flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white cursor-pointer">
                                     <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                                     </svg>
                                     <span class="text-sm">Back</span>
                                 </a>
@@ -179,45 +238,72 @@
                                         <col style="width: 15%;">
                                         <col style="width: 15%;">
                                     </colgroup>
+
+                                    {{-- Row 1: Area | Farm | Date Filled --}}
                                     <tr>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 w-1/4 align-top text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">AREA:</span> {{ permitDisplayValue($permit->area ?? null) }}</td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 w-1/2 align-top text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">FARM:</span> {{ permitDisplayValue($farm) }}</td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 w-1/4 align-top text-gray-900 dark:text-gray-100" colspan="2"><span class="font-bold text-gray-900 dark:text-gray-100">Date Filled:</span> {{ permitDisplayValue($dateFilled) }}</td>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">
+                                            <span class="font-bold">AREA:</span> {{ permitDisplayValue($areaName) }}
+                                        </td>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">
+                                            <span class="font-bold">FARM:</span> {{ permitDisplayValue($farm) }}
+                                        </td>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2">
+                                            <span class="font-bold">Date Filled:</span> {{ permitDisplayValue($dateFilled) }}
+                                        </td>
                                     </tr>
+
+                                    {{-- Row 2: Visitor Names | Area/Section --}}
                                     <tr>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2">
-                                            <div class="font-bold text-gray-900 dark:text-gray-100">VISITOR NAMES:</div>
-                                            @if ($namesData && $namesData['mode'] === 'detailed')
+                                            <div class="font-bold">VISITOR NAMES:</div>
+                                            @if ($isDetailedMode)
                                                 <div class="space-y-1 mt-1">
-                                                    @foreach ($namesData['groups'] as $group)
-                                                        <div><span class="font-semibold">{{ $group['origin'] }}:</span> {{ $group['names'] }}</div>
+                                                    @foreach ($groups as $group)
+                                                        <div>
+                                                            <span class="font-semibold">{{ $group['origin'] }}:</span>
+                                                            {{ implode(', ', array_filter(array_map('trim', explode("\n", $group['names'])))) }}
+                                                        </div>
                                                     @endforeach
                                                 </div>
-                                            @elseif ($namesData)
+                                            @elseif ($isSimpleMode)
                                                 <div style="white-space: pre-line;">{{ $namesData['value'] }}</div>
                                             @else
-                                                <div style="white-space: pre-line;">{{ permitDisplayValue($permit->names ?? null) }}</div>
+                                                <div>N/A</div>
                                             @endif
                                         </td>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="2">
-                                            <div class="font-bold text-gray-900 dark:text-gray-100">Area / Section / Department to Visit:</div>
-                                            <div>{{ permitDisplayValue($permit->area ?? null) }}</div>
+                                            <div class="font-bold">Area / Section / Department to Visit:</div>
+                                            <div>{{ permitDisplayValue($areaName) }}</div>
                                         </td>
                                     </tr>
+
+                                    {{-- Row 3: Destination | Date of Visit --}}
                                     <tr>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">DESTINATION</span></td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">{{ permitDisplayValue($farm) }}</td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 whitespace-nowrap text-gray-900 dark:text-gray-100"><span class="font-bold text-gray-900 dark:text-gray-100">DATE of VISIT</span></td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 whitespace-nowrap text-gray-900 dark:text-gray-100">{{ permitDisplayValue($dateOfVisit) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 text-center text-gray-900 dark:text-gray-100" colspan="4">
-                                            <span class="font-bold text-gray-900 dark:text-gray-100">Expected Duration:</span> {{ permitDisplayValue($expectedDuration) }}
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">
+                                            <span class="font-bold">DESTINATION</span>
+                                        </td>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">
+                                            {{ permitDisplayValue($farm) }}
+                                        </td>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top whitespace-nowrap text-gray-900 dark:text-gray-100">
+                                            <span class="font-bold">DATE of VISIT</span>
+                                        </td>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top whitespace-nowrap text-gray-900 dark:text-gray-100">
+                                            {{ permitDisplayValue($dateOfVisit) }}
                                         </td>
                                     </tr>
+
+                                    {{-- Row 4: Expected Duration --}}
                                     <tr>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 text-center text-gray-900 dark:text-gray-100" colspan="4">
-                                            <div class="font-bold text-gray-900 dark:text-gray-100">Farm Travel History</div>
+                                            <span class="font-bold">Expected Duration:</span> {{ permitDisplayValue($expectedDuration) }}
+                                        </td>
+                                    </tr>
+
+                                    {{-- Row 5: Farm Travel History Header --}}
+                                    <tr>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 text-center text-gray-900 dark:text-gray-100" colspan="4">
+                                            <div class="font-bold">Farm Travel History</div>
                                             <div class="text-sm text-gray-700 dark:text-gray-300">
                                                 @if ($farmType === 1)
                                                     (Must have not visited other Poultry Farm 3 days Prior to the Farm Visit)
@@ -227,24 +313,74 @@
                                             </div>
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 text-gray-900 dark:text-gray-100">
-                                            <div class="font-bold text-center text-gray-900 dark:text-gray-100">{{ $farmType === 1 ? 'Previous Poultry Farm Visited' : 'Previous Swine Farm Visited' }}</div>
-                                        </td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">{{ permitDisplayValue($previousFarm) }}</td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 whitespace-nowrap text-gray-900 dark:text-gray-100">
-                                            <div class="font-bold text-center text-gray-900 dark:text-gray-100">Date of Visit :</div>
-                                        </td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top w-1/4 whitespace-nowrap text-gray-900 dark:text-gray-100">{{ permitDisplayValue($previousFarmDate) }}</td>
-                                    </tr>
+
+                                    {{-- Row 6: Previous Farm Info --}}
+                                    @if ($isDetailedMode)
+                                        {{-- Detailed mode: one row per group that has farm travel data --}}
+                                        @foreach ($groups as $i => $group)
+                                            <tr>
+                                                <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">
+                                                    <div class="font-bold text-center text-xs">{{ $group['origin'] }}</div>
+                                                </td>
+                                                <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">
+                                                    <span class="font-semibold text-xs">
+                                                        {{ $farmType === 1 ? 'Prev. Poultry Farm:' : 'Prev. Swine Farm:' }}
+                                                    </span>
+                                                    {{ permitDisplayValue($group['previous_farm'] ?? null) }}
+                                                </td>
+                                                <td class="border border-gray-900 dark:border-gray-300 p-2 align-top whitespace-nowrap text-gray-900 dark:text-gray-100">
+                                                    <div class="font-bold text-center">Date of Visit:</div>
+                                                </td>
+                                                <td class="border border-gray-900 dark:border-gray-300 p-2 align-top whitespace-nowrap text-gray-900 dark:text-gray-100">
+                                                    {{ !empty($group['date_visited']) ? \Carbon\Carbon::parse($group['date_visited'])->format('F j, Y') : 'N/A' }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @else
+                                        {{-- Simple mode: single permit-level previous farm --}}
+                                        <tr>
+                                            <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">
+                                                <div class="font-bold text-center">
+                                                    {{ $farmType === 1 ? 'Previous Poultry Farm Visited' : 'Previous Swine Farm Visited' }}
+                                                </div>
+                                            </td>
+                                            <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">
+                                                {{ permitDisplayValue($previousFarm) }}
+                                            </td>
+                                            <td class="border border-gray-900 dark:border-gray-300 p-2 align-top whitespace-nowrap text-gray-900 dark:text-gray-100">
+                                                <div class="font-bold text-center">Date of Visit:</div>
+                                            </td>
+                                            <td class="border border-gray-900 dark:border-gray-300 p-2 align-top whitespace-nowrap text-gray-900 dark:text-gray-100">
+                                                {{ permitDisplayValue($previousFarmDate) }}
+                                            </td>
+                                        </tr>
+                                    @endif
+
+                                    {{-- Row 7: Purpose --}}
                                     <tr>
                                         <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100">
-                                            <div class="font-bold text-center text-gray-900 dark:text-gray-100">PURPOSE</div>
+                                            <div class="font-bold text-center">PURPOSE</div>
                                         </td>
-                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="3">{{ permitDisplayValue($permit->purpose ?? null) }}</td>
+                                        <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100" colspan="3">
+                                            {{ permitDisplayValue($permit->purpose ?? null) }}
+                                        </td>
                                     </tr>
                                 </table>
                             </div>
+
+                            @if ($hasRedAlert)
+                                <div class="no-print mt-4 flex items-center gap-2 px-4 py-3 rounded-lg bg-red-600 text-white">
+                                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <div>
+                                        <div class="font-bold text-sm">🚨 RED ALERT</div>
+                                        <div class="text-xs opacity-90">
+                                            Visitors have not met the required {{ $requiredDays }}-day interval since their last farm visit.
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -255,6 +391,7 @@
                     $isAcceptedByCurrentUser = (int) ($permit->received_by ?? 0) === (int) ($viewer->id ?? 0);
                 @endphp
 
+                {{-- Photo Upload + Remarks --}}
                 @if (in_array((int) ($permit->status ?? 0), [1, 4]) || (($permit->photos ?? collect())->count() > 0))
                     <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 pt-6 pb-2">
                         <livewire:permit-photo-upload :permit="$permit" :can-upload="in_array((int) ($permit->status ?? 0), [1, 4])" />
@@ -280,8 +417,20 @@
                     </div>
                 @endif
 
+                {{-- Admin Approved Panel --}}
                 @if ($permit->admin_response && in_array((int) ($permit->status ?? 0), [1]))
                     <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-green-200 dark:border-green-700 px-6 py-6">
+                        @if ($permit->red_alert)
+                            <div class="flex items-center gap-2 mb-4 px-4 py-3 rounded-lg bg-red-600 text-white">
+                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <div>
+                                    <div class="font-bold text-sm">🚨 RED ALERT</div>
+                                    <div class="text-xs opacity-90">Visitors have not met the required days since their last farm visit.</div>
+                                </div>
+                            </div>
+                        @endif
                         <div class="flex items-center gap-2 mb-3">
                             <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -292,76 +441,75 @@
                         <div class="rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-pre-line">{{ $permit->admin_response }}</div>
                     </div>
                 @endif
-                
-                <!-- Action Buttons -->
+
+                {{-- Action Buttons --}}
                 @if ((int) ($permit->status ?? 0) === 1)
-                    <!-- Mobile -->
-                    <div class="no-print mt-6 flex flex-col sm:flex-row gap-4 justify-center md:hidden" x-data="{ showCompleteConfirm: false, showCancelConfirm: false, showHoldModal: false }">
-                        <!-- Complete Button -->
-                        <button type="button" @click="showCompleteConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="flex-1 w-full inline-flex justify-center items-center px-4 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                    {{-- Mobile --}}
+                    <div class="no-print mt-6 flex flex-col sm:flex-row gap-4 justify-center md:hidden"
+                         x-data="{ showCompleteConfirm: false, showCancelConfirm: false, showHoldModal: false }">
+
+                        <button type="button" @click="showCompleteConfirm = true"
+                            @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0)
+                            class="flex-1 w-full inline-flex justify-center items-center px-4 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
                             Complete
                         </button>
 
-                        <!-- Complete Confirmation Modal -->
-                        <div x-show="showCompleteConfirm" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+                        <div x-show="showCompleteConfirm" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display:none;">
                             <div class="fixed inset-0 bg-black/50" @click="showCompleteConfirm = false"></div>
                             <div class="relative min-h-screen flex items-center justify-center p-4">
-                                <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-                                    <div class="text-center">
-                                        <div class="mx-auto mb-4 text-green-500 w-16 h-16">
-                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                        </div>
-                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Complete Permit?</h3>
-                                        <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as completed?</p>
-                                        <div class="flex gap-3 justify-center">
-                                            <button @click="showCompleteConfirm = false" type="button" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">Cancel</button>
-                                            <button type="submit" form="completePermitForm" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer">Yes, Complete</button>
-                                        </div>
+                                <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 text-center">
+                                    <div class="mx-auto mb-4 text-green-500 w-16 h-16">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Complete Permit?</h3>
+                                    <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as completed?</p>
+                                    <div class="flex gap-3 justify-center">
+                                        <button @click="showCompleteConfirm = false" type="button" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">Cancel</button>
+                                        <button type="submit" form="completePermitForm" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer">Yes, Complete</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Did Not Arrive -->
                         <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1">
                             @csrf
-                            <button type="button" @click="showCancelConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="w-full inline-flex justify-center items-center px-4 py-3 bg-red-600 dark:bg-red-700 text-white font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                            <button type="button" @click="showCancelConfirm = true"
+                                @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0)
+                                class="w-full inline-flex justify-center items-center px-4 py-3 bg-red-600 dark:bg-red-700 text-white font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
                                 Did Not Arrive
                             </button>
-                            <div x-show="showCancelConfirm" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+                            <div x-show="showCancelConfirm" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display:none;">
                                 <div class="fixed inset-0 bg-black/50" @click="showCancelConfirm = false"></div>
                                 <div class="relative min-h-screen flex items-center justify-center p-4">
-                                    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-                                        <div class="text-center">
-                                            <div class="mx-auto mb-4 text-red-500 w-16 h-16">
-                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                </svg>
-                                            </div>
-                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Did Not Arrive?</h3>
-                                            <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as did not arrive?</p>
-                                            <div class="flex gap-3 justify-center">
-                                                <button @click="showCancelConfirm = false" type="button" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">Cancel</button>
-                                                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer">Yes, Did Not Arrive</button>
-                                            </div>
+                                    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 text-center">
+                                        <div class="mx-auto mb-4 text-red-500 w-16 h-16">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                        </div>
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Did Not Arrive?</h3>
+                                        <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as did not arrive?</p>
+                                        <div class="flex gap-3 justify-center">
+                                            <button @click="showCancelConfirm = false" type="button" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">Cancel</button>
+                                            <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer">Yes, Did Not Arrive</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </form>
 
-                        <!-- Hold Button -->
                         <form method="POST" action="{{ route('user.permits.hold', $permit) }}" class="flex-1">
                             @csrf
-                            <button type="button" @click="showHoldModal = true" class="w-full inline-flex justify-center items-center px-4 py-3 bg-orange-500 dark:bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-600 dark:hover:bg-orange-500 transition-colors cursor-pointer">
+                            <button type="button" @click="showHoldModal = true"
+                                class="w-full inline-flex justify-center items-center px-4 py-3 bg-orange-500 dark:bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-600 dark:hover:bg-orange-500 transition-colors cursor-pointer">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
@@ -384,73 +532,72 @@
                         </form>
                     </div>
 
-                    <!-- Desktop -->
-                    <div class="no-print mt-6 hidden md:flex flex-col sm:flex-row gap-4 justify-center" x-data="{ showCompleteConfirm: false, showCancelConfirm: false, showHoldModal: false }">
-                        <!-- Complete Button -->
-                        <button type="button" @click="showCompleteConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="flex-1 max-w-xs w-full inline-flex justify-center items-center px-6 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                    {{-- Desktop --}}
+                    <div class="no-print mt-6 hidden md:flex flex-col sm:flex-row gap-4 justify-center"
+                         x-data="{ showCompleteConfirm: false, showCancelConfirm: false, showHoldModal: false }">
+
+                        <button type="button" @click="showCompleteConfirm = true"
+                            @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0)
+                            class="flex-1 max-w-xs inline-flex justify-center items-center px-6 py-3 bg-green-600 dark:bg-green-700 text-white font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
                             Complete
                         </button>
 
-                        <!-- Complete Confirmation Modal -->
-                        <div x-show="showCompleteConfirm" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+                        <div x-show="showCompleteConfirm" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display:none;">
                             <div class="fixed inset-0 bg-black/50" @click="showCompleteConfirm = false"></div>
                             <div class="relative min-h-screen flex items-center justify-center p-4">
-                                <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-                                    <div class="text-center">
-                                        <div class="mx-auto mb-4 text-green-500 w-16 h-16">
-                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                        </div>
-                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Complete Permit?</h3>
-                                        <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as completed?</p>
-                                        <div class="flex gap-3 justify-center">
-                                            <button @click="showCompleteConfirm = false" type="button" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">Cancel</button>
-                                            <button type="submit" form="completePermitForm" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer">Yes, Complete</button>
-                                        </div>
+                                <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 text-center">
+                                    <div class="mx-auto mb-4 text-green-500 w-16 h-16">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Complete Permit?</h3>
+                                    <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as completed?</p>
+                                    <div class="flex gap-3 justify-center">
+                                        <button @click="showCompleteConfirm = false" type="button" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">Cancel</button>
+                                        <button type="submit" form="completePermitForm" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer">Yes, Complete</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Did Not Arrive -->
                         <form method="POST" action="{{ route('user.permits.cancel', $permit) }}" class="flex-1 max-w-xs">
                             @csrf
-                            <button type="button" @click="showCancelConfirm = true" @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0) class="w-full inline-flex justify-center items-center px-6 py-3 bg-red-600 dark:bg-red-700 text-white font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                            <button type="button" @click="showCancelConfirm = true"
+                                @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0)
+                                class="w-full inline-flex justify-center items-center px-6 py-3 bg-red-600 dark:bg-red-700 text-white font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
                                 Did Not Arrive
                             </button>
-                            <div x-show="showCancelConfirm" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+                            <div x-show="showCancelConfirm" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display:none;">
                                 <div class="fixed inset-0 bg-black/50" @click="showCancelConfirm = false"></div>
                                 <div class="relative min-h-screen flex items-center justify-center p-4">
-                                    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-                                        <div class="text-center">
-                                            <div class="mx-auto mb-4 text-red-500 w-16 h-16">
-                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                </svg>
-                                            </div>
-                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Did Not Arrive?</h3>
-                                            <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as did not arrive?</p>
-                                            <div class="flex gap-3 justify-center">
-                                                <button @click="showCancelConfirm = false" type="button" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">Cancel</button>
-                                                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer">Yes, Did Not Arrive</button>
-                                            </div>
+                                    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 text-center">
+                                        <div class="mx-auto mb-4 text-red-500 w-16 h-16">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                        </div>
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Did Not Arrive?</h3>
+                                        <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to mark this permit as did not arrive?</p>
+                                        <div class="flex gap-3 justify-center">
+                                            <button @click="showCancelConfirm = false" type="button" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">Cancel</button>
+                                            <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer">Yes, Did Not Arrive</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </form>
 
-                        <!-- Hold Button -->
                         <form method="POST" action="{{ route('user.permits.hold', $permit) }}" class="flex-1 max-w-xs">
                             @csrf
-                            <button type="button" @click="showHoldModal = true" class="w-full inline-flex justify-center items-center px-6 py-3 bg-orange-500 dark:bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-600 dark:hover:bg-orange-500 transition-colors cursor-pointer">
+                            <button type="button" @click="showHoldModal = true"
+                                class="w-full inline-flex justify-center items-center px-6 py-3 bg-orange-500 dark:bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-600 dark:hover:bg-orange-500 transition-colors cursor-pointer">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
@@ -484,7 +631,7 @@
                     </div>
                 @endif
 
-                <!-- Hold / Admin Response Panel -->
+                {{-- Hold / Admin Response Panel --}}
                 @if (in_array((int) ($permit->status ?? 0), [4, 5]))
                     <div class="no-print mt-6 w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-orange-200 dark:border-orange-700 px-6 py-6">
                         <div class="flex items-center gap-2 mb-4">
@@ -549,7 +696,7 @@
                         @endif
                     </div>
                 @endif
-                
+
             </div>
         </div>
     </x-navbar>
