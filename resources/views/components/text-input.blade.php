@@ -52,7 +52,7 @@
             id="{{ $name }}"
             name="{{ $name }}"
             @if($wireModel)
-                wire:model="{{ $wireModel }}"
+                wire:model.live="{{ $wireModel }}"
             @else
                 value="{{ old($name, $value) }}"
             @endif

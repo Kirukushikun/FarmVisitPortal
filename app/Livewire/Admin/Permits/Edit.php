@@ -390,7 +390,10 @@ class Edit extends Component
     public function getGroupAlertsProperty(): array
     {
         $alerts = [];
-        $farmType = (int) ($this->getFarmLocationsProperty()->firstWhere('id', (int) $this->farmLocationId)?->farm_type ?? -1);
+
+        if ($this->dateOfVisit === '') return $alerts;
+
+        $farmType = (int) (($this->getFarmLocationsProperty()->firstWhere('id', (int) $this->farmLocationId))?->farm_type ?? -1);
 
         $requiredDays = match($farmType) {
             0 => 5,
@@ -400,13 +403,14 @@ class Edit extends Component
 
         if ($requiredDays === null) return $alerts;
 
+        $visitDate = Carbon::parse($this->dateOfVisit)->startOfDay();
+
         foreach ($this->namesGroups as $i => $group) {
             $dateVisited = $group['date_visited'] ?? '';
             if ($dateVisited === '') continue;
 
-            $visited = Carbon::parse($dateVisited)->startOfDay();
-            $today = now()->startOfDay();
-            $diffDays = $visited->diffInDays($today);
+            $previousVisit = Carbon::parse($dateVisited)->startOfDay();
+            $diffDays = $previousVisit->diffInDays($visitDate);
 
             if ($diffDays < $requiredDays) {
                 $alerts[$i] = true;
