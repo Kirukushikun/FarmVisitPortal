@@ -23,16 +23,9 @@
                     }
 
                     function permitDisplayValue(mixed $value): string {
+                        if (is_array($value) || is_object($value)) return 'N/A'; // add this
                         $value = is_string($value) ? trim($value) : $value;
-
-                        if ($value === null) {
-                            return 'N/A';
-                        }
-
-                        if (is_string($value) && $value === '') {
-                            return 'N/A';
-                        }
-
+                        if ($value === null || $value === '') return 'N/A';
                         return (string) $value;
                     }
 
@@ -44,8 +37,11 @@
                     $previousFarm = $permit->previous_farm_location ?? '';
                     $previousFarmDate = $permit->date_of_visit_previous_farm ? $permit->date_of_visit_previous_farm->format('F j, Y') : '';
                     $namesData = null;
-                    if (is_string($permit->names) && trim($permit->names) !== '') {
-                        $decoded = json_decode($permit->names, true);
+                    $rawNames = $permit->names;
+                    if (is_array($rawNames) && isset($rawNames['mode'])) {
+                        $namesData = $rawNames;
+                    } elseif (is_string($rawNames) && trim($rawNames) !== '') {
+                        $decoded = json_decode($rawNames, true);
                         if (is_array($decoded) && isset($decoded['mode'])) {
                             $namesData = $decoded;
                         }
