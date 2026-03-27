@@ -11,6 +11,14 @@ class Permit extends Model
 {
     use HasFactory;
 
+    // Status constants
+    const STATUS_SCHEDULED   = 0;
+    const STATUS_IN_PROGRESS = 1;
+    const STATUS_COMPLETED   = 2;
+    const STATUS_CANCELLED   = 3;
+    const STATUS_ON_HOLD     = 4;
+    const STATUS_RETURNED    = 5;
+
     protected $fillable = [
         'permit_id',
         'area_id',
@@ -22,46 +30,34 @@ class Permit extends Model
         'date_of_visit_previous_farm',
         'purpose',
         'remarks',
+        'red_alert',
         'status',
         'created_by',
         'received_by',
         'completed_at',
-
-        'hold_reason',
-        'red_alert',
-        'held_at',
-        'held_by',
-        'admin_response',
-        'responded_at',
-        'responded_by',
     ];
 
     protected function casts(): array
     {
         return [
-            'names' => 'array',
-            'area_id' => 'integer',
-            'farm_location_id' => 'integer',
-            'created_by' => 'integer',
-            'received_by' => 'integer',
-            'status' => 'integer',
-            'expected_duration_hours' => 'decimal:2',
-            'date_of_visit' => 'datetime',
+            'names'                       => 'array',
+            'area_id'                     => 'integer',
+            'farm_location_id'            => 'integer',
+            'created_by'                  => 'integer',
+            'received_by'                 => 'integer',
+            'status'                      => 'integer',
+            'expected_duration_hours'     => 'decimal:2',
+            'date_of_visit'               => 'datetime',
             'date_of_visit_previous_farm' => 'datetime',
-            'completed_at' => 'datetime',
-
-            'red_alert' => 'boolean',
-            'held_at' => 'datetime',
-            'responded_at' => 'datetime',
-            'held_by' => 'integer',
-            'responded_by' => 'integer',
+            'completed_at'                => 'datetime',
+            'red_alert'                   => 'boolean',
         ];
     }
 
     protected static function booted(): void
     {
         static::creating(function (self $permit) {
-            if (!$permit->permit_id) {
+            if (! $permit->permit_id) {
                 $permit->permit_id = self::generatePermitId();
             }
         });
@@ -78,13 +74,17 @@ class Permit extends Model
 
         if ($lastPermit && is_string($lastPermit->permit_id)) {
             $lastNumber = (int) substr($lastPermit->permit_id, 3);
-            $newNumber = $lastNumber + 1;
+            $newNumber  = $lastNumber + 1;
         } else {
             $newNumber = 1;
         }
 
         return $year . '-' . str_pad((string) $newNumber, 6, '0', STR_PAD_LEFT);
     }
+
+    // -------------------------------------------------------------------------
+    // Relationships
+    // -------------------------------------------------------------------------
 
     public function area(): BelongsTo
     {
@@ -111,13 +111,66 @@ class Permit extends Model
         return $this->hasMany(PermitPhoto::class);
     }
 
-    public function heldBy(): BelongsTo
+    public function logs(): HasMany
     {
-        return $this->belongsTo(User::class, 'held_by');
+        return $this->hasMany(PermitLog::class)->orderBy('created_at', 'asc');
     }
 
-    public function respondedBy(): BelongsTo
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    public function lastAdminLog(): ?PermitLog
     {
-        return $this->belongsTo(User::class, 'responded_by');
+        return $this->logs()
+            ->whereIn('action', [
+                PermitLog::ACTION_APPROVED,
+                PermitLog::ACTION_REJECTED,
+                PermitLog::ACTION_RETURNED,
+                PermitLog::ACTION_OVERRIDE,
+            ])
+            ->latest()
+            ->first();
+    }
+
+    public function wasAdminApproved(): bool
+    {
+        $log = $this->lastAdminLog();
+        if (! $log) return false;
+        return in_array((int) $log->action, [
+            PermitLog::ACTION_APPROVED,
+            PermitLog::ACTION_OVERRIDE,
+        ], true);
+    }
+
+    public function wasAdminRejected(): bool
+    {
+        $log = $this->lastAdminLog();
+        if (! $log) return false;
+        return (int) $log->action === PermitLog::ACTION_REJECTED;
+    }
+
+    public function redAlertGroups(): array
+    {
+        $names = $this->names;
+        if (! is_array($names) || ($names['mode'] ?? '') !== 'detailed') {
+            return [];
+        }
+
+        $farmType     = (int) ($this->farmLocation?->farm_type ?? 0);
+        $requiredDays = $farmType === 1 ? 3 : 5;
+        $visitDate    = \Carbon\Carbon::parse($this->date_of_visit)->startOfDay();
+        $alertGroups  = [];
+
+        foreach ($names['groups'] ?? [] as $i => $group) {
+            $dateVisited = $group['date_visited'] ?? '';
+            if ($dateVisited === '') continue;
+            $prev = \Carbon\Carbon::parse($dateVisited)->startOfDay();
+            if ($prev->diffInDays($visitDate) < $requiredDays) {
+                $alertGroups[] = $i;
+            }
+        }
+
+        return $alertGroups;
     }
 }
