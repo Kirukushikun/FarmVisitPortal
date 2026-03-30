@@ -1,3 +1,4 @@
+<!--  -->
 <x-layout>
     <x-navbar :breadcrumbs="[
         ['label' => 'Dashboard', 'href' => route('user.home')],
@@ -116,18 +117,9 @@
                     $adminRejected = $lastAdminLog && (int) $lastAdminLog->action === 4;
 
                     // Button visibility
-                    $showCompleteOnly = $currentStatus === 1 && $wasEverHeld && $adminApproved;
-                    $showAllActions   = $currentStatus === 1 && ! $showCompleteOnly;
-                    $showAnyButtons   = $showCompleteOnly || $showAllActions;
+                    $showAllActions = $currentStatus === 1;
+                    $showAnyButtons = $currentStatus === 1;
 
-                    // Zone 2 banner type — one signal only
-                    $bannerType = null;
-                    if ($currentStatus === 1 && $adminApproved)       $bannerType = 'approved';
-                    elseif ($currentStatus === 4)                      $bannerType = 'on_hold';
-                    elseif ($currentStatus === 3 && $adminRejected)    $bannerType = 'rejected';
-                    elseif ($currentStatus === 5)                      $bannerType = 'returned';
-                    // Red alert without any of the above statuses gets its own banner
-                    $showRedAlertBanner = $hasRedAlert && $bannerType === null && $currentStatus === 1 && ! $adminApproved;
                 @endphp
 
                 <style>
@@ -243,10 +235,9 @@
                                             @if ($isDetailedMode)
                                                 <div class="space-y-1 mt-1">
                                                     @foreach ($groups as $i => $group)
-                                                        <div class="{{ in_array($i, $alertGroupIdxs) ? 'text-red-700' : '' }}">
+                                                        <div>
                                                             <span class="font-semibold">{{ $group['origin'] }}:</span>
                                                             {{ implode(', ', array_filter(array_map('trim', explode("\n", $group['names'])))) }}
-                                                            @if (in_array($i, $alertGroupIdxs)) 🚨 @endif
                                                         </div>
                                                     @endforeach
                                                 </div>
@@ -279,7 +270,7 @@
                                     @if ($isDetailedMode)
                                         @foreach ($groups as $i => $group)
                                             <tr>
-                                                <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100"><div class="font-bold text-center text-xs">{{ $group['origin'] }} @if(in_array($i,$alertGroupIdxs)) 🚨 @endif</div></td>
+                                                <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100"><div class="font-bold text-center text-xs">{{ $group['origin'] }}</div></td>
                                                 <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100"><span class="font-semibold text-xs">{{ $farmType === 1 ? 'Prev. Poultry Farm:' : 'Prev. Swine Farm:' }}</span> {{ $displayVal($group['previous_farm'] ?? null) }}</td>
                                                 <td class="border border-gray-900 dark:border-gray-300 p-2 align-top whitespace-nowrap text-gray-900 dark:text-gray-100"><div class="font-bold text-center">Date of Visit:</div></td>
                                                 <td class="border border-gray-900 dark:border-gray-300 p-2 align-top whitespace-nowrap text-gray-900 dark:text-gray-100">{{ !empty($group['date_visited']) ? \Carbon\Carbon::parse($group['date_visited'])->format('F j, Y') : 'N/A' }}</td>
@@ -305,69 +296,20 @@
                 </div>
 
                 {{-- ================================================================
-                     ZONE 2 — STATUS BANNER
-                     One signal. Red alert is folded in contextually.
-                     Only renders when there is something notable to show.
-                     ================================================================ --}}
-                @if ($bannerType || $showRedAlertBanner)
-                    @php
-                        $bannerKey = $bannerType ?? 'red_alert';
-                        $bannerConfig = match ($bannerKey) {
-                            'approved'   => ['bg' => 'bg-green-600',  'border' => 'border-green-200 dark:border-green-700',  'icon' => 'check'],
-                            'on_hold'    => ['bg' => 'bg-orange-500', 'border' => 'border-orange-200 dark:border-orange-700', 'icon' => 'warn'],
-                            'rejected'   => ['bg' => 'bg-red-600',    'border' => 'border-red-200 dark:border-red-700',       'icon' => 'warn'],
-                            'returned'   => ['bg' => 'bg-purple-600', 'border' => 'border-purple-200 dark:border-purple-700', 'icon' => 'arrow'],
-                            'red_alert'  => ['bg' => 'bg-red-600',    'border' => 'border-red-200 dark:border-red-700',       'icon' => 'warn'],
-                            default      => ['bg' => 'bg-gray-500',   'border' => 'border-gray-200 dark:border-gray-700',     'icon' => 'warn'],
-                        };
-                    @endphp
-                    <div class="no-print w-full rounded-xl shadow-sm overflow-hidden border {{ $bannerConfig['border'] }} bg-white dark:bg-gray-800">
-                        {{-- Colored header --}}
-                        <div class="px-5 py-4 {{ $bannerConfig['bg'] }} text-white flex items-start gap-3">
+                    ZONE 2 — RED ALERT ONLY
+                    Everything else is communicated through the activity trail.
+                    ================================================================ --}}
+                @if ($hasRedAlert && in_array($currentStatus, [0, 1]))
+                    <div class="no-print w-full rounded-xl overflow-hidden border border-red-200 dark:border-red-700 bg-white dark:bg-gray-800">
+                        <div class="bg-red-600 text-white px-5 py-4 flex items-start gap-3">
                             <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                @if ($bannerConfig['icon'] === 'check')
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                @elseif ($bannerConfig['icon'] === 'arrow')
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7m0 0l7-7m-7 7h18"/>
-                                @else
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                @endif
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            <div class="flex-1">
-                                <div class="font-bold text-sm leading-snug">
-                                    @if ($bannerKey === 'approved')   ✅ Admin Approved — Let Them In
-                                    @elseif ($bannerKey === 'on_hold') ⏸ On Hold — Awaiting Admin Decision
-                                    @elseif ($bannerKey === 'rejected') 🚫 Entry Denied — Permit Rejected
-                                    @elseif ($bannerKey === 'returned') 🔄 Returned for Correction
-                                    @elseif ($bannerKey === 'red_alert') 🚨 Red Alert
-                                    @endif
-                                </div>
-                                {{-- Fold red alert into banner subtitle when relevant --}}
-                                @if ($hasRedAlert && ! in_array($bannerKey, ['approved']))
-                                    <div class="text-xs opacity-90 mt-1">{{ $redAlertMessage }}</div>
-                                @endif
-                                @if ($bannerKey === 'rejected')
-                                    <div class="text-xs opacity-90 mt-1">Visitors may contact Purchasing/Admin to clarify and request reconsideration.</div>
-                                @endif
-                                @if ($bannerKey === 'on_hold')
-                                    <div class="text-xs opacity-90 mt-1">Please wait for admin to review and respond before taking further action.</div>
-                                @endif
+                            <div>
+                                <div class="font-bold text-sm">🚨 Red Alert</div>
+                                <div class="text-xs opacity-90 mt-0.5">{{ $redAlertMessage }}</div>
                             </div>
                         </div>
-                        {{-- Body: show last admin message --}}
-                        @if (in_array($bannerKey, ['approved', 'rejected', 'returned']) && $lastAdminLog?->message)
-                            <div class="px-5 py-4 border-t {{ $bannerConfig['border'] }}">
-                                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Admin Note</div>
-                                <div class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{{ $lastAdminLog->message }}</div>
-                            </div>
-                        @endif
-                        {{-- Body: show hold reason --}}
-                        @if ($bannerKey === 'on_hold' && $lastHoldLog?->message)
-                            <div class="px-5 py-4 border-t {{ $bannerConfig['border'] }}">
-                                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Hold Reason</div>
-                                <div class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{{ $lastHoldLog->message }}</div>
-                            </div>
-                        @endif
                     </div>
                 @endif
 
@@ -383,12 +325,13 @@
                                 <x-text-area label="Remarks" name="remarks" placeholder="Enter remarks (optional)" :value="old('remarks', $permit->remarks ?? '')" />
                             </form>
                         @endif
-                        @if (is_string($permit->remarks ?? null) && trim((string) $permit->remarks) !== '')
-                            <div class="mt-4">
-                                <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks</div>
-                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-gray-900 dark:text-white whitespace-pre-line">{{ trim((string) $permit->remarks) }}</div>
-                            </div>
-                        @endif
+                    </div>
+                @endif
+
+                @if (is_string($permit->remarks ?? null) && trim((string) $permit->remarks) !== '')
+                    <div class="no-print w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 pt-5 pb-5">
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks</div>
+                        <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-gray-900 dark:text-white whitespace-pre-line text-sm">{{ trim((string) $permit->remarks) }}</div>
                     </div>
                 @endif
 
@@ -399,6 +342,12 @@
                     <div class="no-print w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 py-6">
                         <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-4">Permit Activity</div>
                         <div class="space-y-3">
+                            @php
+                                $logUserIds = $permit->logs->pluck('changed_by')->unique()->filter();
+                                $logUsers = \App\Models\User::whereIn('id', $logUserIds)
+                                    ->get()
+                                    ->pluck('full_name', 'id');
+                            @endphp
                             @foreach ($permit->logs as $log)
                                 @php
                                     $lc = match ((int) $log->action) {
@@ -420,49 +369,13 @@
                                             @endif
                                             <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto whitespace-nowrap">{{ $log->created_at->format('M j, Y g:i A') }}</span>
                                         </div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">by {{ $log->changedBy?->name ?? 'Unknown' }}</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">by {{ $log->changedBy?->first_name . ' ' . $log->changedBy?->last_name ?? 'Unknown' }}</div>
                                         @if ($log->message)
                                             <div class="mt-2 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line bg-white/70 dark:bg-gray-800/70 rounded px-3 py-2 border border-white dark:border-gray-600">{{ $log->message }}</div>
                                         @endif
                                     </div>
                                 </div>
                             @endforeach
-                        </div>
-                    </div>
-                @endif
-
-                {{-- ================================================================
-                     ACTION BUTTONS — always last
-                     ================================================================ --}}
-
-                {{-- Complete Only — post hold/approval --}}
-                @if ($showCompleteOnly)
-                    <div class="no-print w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-green-200 dark:border-green-700 px-6 py-5"
-                         x-data="{ showConfirm: false }">
-                        <div class="flex items-center justify-between gap-4">
-                            <div>
-                                <div class="text-sm font-semibold text-green-700 dark:text-green-400">Admin has cleared this permit.</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Mark the visit as complete once visitors have finished.</div>
-                            </div>
-                            <button type="button" @click="showConfirm = true"
-                                class="shrink-0 inline-flex items-center px-5 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors cursor-pointer">
-                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                Complete Visit
-                            </button>
-                        </div>
-                        <div x-show="showConfirm" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display:none;">
-                            <div class="fixed inset-0 bg-black/50" @click="showConfirm = false"></div>
-                            <div class="relative min-h-screen flex items-center justify-center p-4">
-                                <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 text-center">
-                                    <div class="mx-auto mb-4 text-green-500 w-14 h-14"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Complete Permit?</h3>
-                                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-5">Are you sure you want to mark this permit as completed?</p>
-                                    <div class="flex gap-3 justify-center">
-                                        <button @click="showConfirm = false" type="button" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 cursor-pointer">Cancel</button>
-                                        <button type="submit" form="completePermitForm" class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 cursor-pointer">Yes, Complete</button>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 @endif

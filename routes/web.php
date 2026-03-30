@@ -67,5 +67,9 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
     
     Route::post('/admin/permits/{permit}/resubmit', [PortalController::class, 'resubmitPermit'])->name('admin.permits.resubmit');
 
+    Route::post('/admin/permits/{permit}/override', [PortalController::class, 'overrideReject'])->name('admin.permits.override');
+
     Route::get('/admin/change-password', [PortalController::class, 'adminChangePassword'])->name('admin.change-password');
+
+
 });

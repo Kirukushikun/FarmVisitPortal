@@ -318,7 +318,7 @@ class PortalController extends Controller
         }
 
         $validated = $request->validate([
-            'action'         => ['required', 'in:approve,return,reject'],
+            'action'         => ['required', 'in:approve,reject'], // removed 'return'
             'admin_response' => ['nullable', 'string', 'max:5000'],
         ]);
 
@@ -328,18 +328,17 @@ class PortalController extends Controller
 
         $newStatus = match ($validated['action']) {
             'approve' => Permit::STATUS_IN_PROGRESS,
-            'return'  => Permit::STATUS_RETURNED,
             'reject'  => Permit::STATUS_CANCELLED,
         };
 
         $actionCode = match ($validated['action']) {
             'approve' => PermitLog::ACTION_APPROVED,
-            'return'  => PermitLog::ACTION_RETURNED,
             'reject'  => PermitLog::ACTION_REJECTED,
         };
 
         $permit->update([
             'status'       => $newStatus,
+            'red_alert'    => $newStatus === Permit::STATUS_IN_PROGRESS ? false : $permit->red_alert,
             'completed_at' => $newStatus === Permit::STATUS_CANCELLED ? now() : $permit->completed_at,
         ]);
 
@@ -380,9 +379,10 @@ class PortalController extends Controller
 
         $permit->update([
             'status'       => Permit::STATUS_IN_PROGRESS,
+            'red_alert'    => false,
             'completed_at' => null,
         ]);
-
+        
         $this->addLog($permit, PermitLog::ACTION_OVERRIDE, (int) $user->id, $message);
 
         return redirect()->back()->with('success', 'Permit overridden. Visitors may now enter.');

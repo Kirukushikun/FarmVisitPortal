@@ -1,3 +1,4 @@
+<!-- Admin Permit Show -->
 <x-layout>
     <x-navbar :breadcrumbs="[
         ['label' => 'Permits', 'href' => route('admin.permits.index')],
@@ -113,7 +114,6 @@
                     $bannerType = null;
                     if ($currentStatus === 4)                          $bannerType = 'on_hold';
                     elseif ($currentStatus === 3 && $adminRejected)    $bannerType = 'rejected';
-                    elseif ($currentStatus === 5)                      $bannerType = 'returned';
                     elseif ($currentStatus === 2)                      $bannerType = 'completed';
                     elseif ($currentStatus === 3 && ! $adminRejected)  $bannerType = 'cancelled';
 
@@ -220,9 +220,8 @@
                                             @if ($isDetailedMode)
                                                 <div class="space-y-1 mt-1">
                                                     @foreach ($namesData['groups'] as $i => $group)
-                                                        <div class="{{ in_array($i, $alertGroupIdxs) ? 'text-red-700' : '' }}">
+                                                        <div>
                                                             <span class="font-semibold">{{ $group['origin'] }}:</span> {{ $group['names'] }}
-                                                            @if (in_array($i, $alertGroupIdxs)) 🚨 @endif
                                                         </div>
                                                     @endforeach
                                                 </div>
@@ -255,7 +254,7 @@
                                     @if ($isDetailedMode)
                                         @foreach ($groups as $i => $group)
                                             <tr>
-                                                <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100"><div class="font-bold text-center text-xs">{{ $group['origin'] }} @if(in_array($i,$alertGroupIdxs)) 🚨 @endif</div></td>
+                                                <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100"><div class="font-bold text-center text-xs">{{ $group['origin'] }}</div></td>
                                                 <td class="border border-gray-900 dark:border-gray-300 p-2 align-top text-gray-900 dark:text-gray-100"><span class="font-semibold text-xs">{{ $farmType === 1 ? 'Prev. Poultry Farm:' : 'Prev. Swine Farm:' }}</span> {{ $displayVal($group['previous_farm'] ?? null) }}</td>
                                                 <td class="border border-gray-900 dark:border-gray-300 p-2 align-top whitespace-nowrap text-gray-900 dark:text-gray-100"><div class="font-bold text-center">Date of Visit:</div></td>
                                                 <td class="border border-gray-900 dark:border-gray-300 p-2 align-top whitespace-nowrap text-gray-900 dark:text-gray-100">{{ !empty($group['date_visited']) ? \Carbon\Carbon::parse($group['date_visited'])->format('F j, Y') : 'N/A' }}</td>
@@ -281,19 +280,29 @@
                 </div>
 
                 {{-- ================================================================
+                    ZONE 2 — RED ALERT ONLY
+                    Everything else is communicated through the activity trail.
+                    ================================================================ --}}
+                @if ($hasRedAlert && in_array($currentStatus, [0, 1]))
+                    <div class="no-print w-full rounded-xl overflow-hidden border border-red-200 dark:border-red-700 bg-white dark:bg-gray-800">
+                        <div class="bg-red-600 text-white px-5 py-4 flex items-start gap-3">
+                            <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <div class="font-bold text-sm">🚨 Red Alert</div>
+                                <div class="text-xs opacity-90 mt-0.5">{{ $redAlertMessage }}</div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- ================================================================
                      PHOTOS
                      ================================================================ --}}
                 @if ((($permit->photos ?? collect())->count() > 0) || in_array($currentStatus, [1, 4]))
                     <div class="no-print w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 pt-6 pb-4">
                         <livewire:permit-photo-upload :permit="$permit" :can-upload="false" />
-                    </div>
-                @endif
-
-                {{-- Remarks --}}
-                @if (is_string($permit->remarks ?? null) && trim((string) $permit->remarks) !== '')
-                    <div class="no-print w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 pt-5 pb-5">
-                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-2">Guard Remarks</div>
-                        <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-gray-900 dark:text-white whitespace-pre-line text-sm">{{ trim((string) $permit->remarks) }}</div>
                     </div>
                 @endif
 
@@ -325,7 +334,7 @@
                                             @endif
                                             <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto whitespace-nowrap">{{ $log->created_at->format('M j, Y g:i A') }}</span>
                                         </div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">by {{ $log->changedBy?->name ?? 'Unknown' }}</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">by {{ $log->changedBy?->first_name . ' ' . $log->changedBy?->last_name ?? 'Unknown' }}</div>
                                         @if ($log->message)
                                             <div class="mt-2 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line bg-white/70 dark:bg-gray-800/70 rounded px-3 py-2 border border-white dark:border-gray-600">{{ $log->message }}</div>
                                         @endif
@@ -357,10 +366,6 @@
                                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                         Approve — Let Them In
                                     </button>
-                                    <button type="submit" @click="action = 'return'" class="inline-flex items-center px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 cursor-pointer">
-                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                                        Return for Correction
-                                    </button>
                                     <button type="submit" @click="action = 'reject'" class="inline-flex items-center px-4 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 cursor-pointer">
                                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                         Reject — Turn Away
@@ -384,21 +389,6 @@
                                 <button type="submit" class="inline-flex items-center px-4 py-2.5 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600 cursor-pointer">
                                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                     Override — Let Them In
-                                </button>
-                            </form>
-                        </div>
-                    @endif
-
-                    {{-- Resubmit (Returned) --}}
-                    @if ($currentStatus === 5)
-                        <div class="no-print w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-purple-200 dark:border-purple-700 px-6 py-6">
-                            <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Returned for Correction</div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">This permit was returned. Edit and resubmit to put it back in the queue.</p>
-                            <form method="POST" action="{{ route('admin.permits.resubmit', $permit) }}">
-                                @csrf
-                                <button type="submit" class="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 cursor-pointer">
-                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                                    Edit & Resubmit
                                 </button>
                             </form>
                         </div>
