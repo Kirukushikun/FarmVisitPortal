@@ -3,64 +3,104 @@
 namespace App\Console\Commands;
 
 use App\Models\Permit;
+use App\Models\PermitLog;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 
 class UpdatePermitStatuses extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'permits:update-statuses';
+    protected $description = 'Activate scheduled permits for today, auto-complete in-progress permits after 24hrs, cancel missed permits.';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Update permit statuses based on visit dates - today becomes in progress, past dates become cancelled (unless completed)';
-
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
         $this->info('Starting permit status update...');
-        
-        $today = now()->startOfDay();
-        $updatedCount = 0;
-        
-        // Update permits with visit date today to "In Progress" (status 1)
-        // Only if they are currently "Scheduled" (status 0)
-        $todayPermits = Permit::whereDate('date_of_visit', $today)
-            ->where('status', 0) // Only update Scheduled permits
-            ->update(['status' => 1]); // Set to In Progress
-            
-        $updatedCount += $todayPermits;
-        $this->info("Updated {$todayPermits} permits to 'In Progress' for today.");
-        
-        // Update permits with past visit dates to "Cancelled" (status 3)
-        // Only if they are not already "Completed" (status 2) or "Cancelled" (status 3)
-        $pastPermits = Permit::whereDate('date_of_visit', '<', $today)
-            ->whereNotIn('status', [2, 3]) // Exclude Completed and Cancelled
-            ->update(['status' => 3]); // Set to Cancelled
-            
-        $updatedCount += $pastPermits;
-        $this->info("Updated {$pastPermits} permits to 'Cancelled' for past dates.");
-        
-        $this->info("Permit status update completed. Total permits updated: {$updatedCount}");
-        
-        // Log the update for audit purposes
+
+        $today    = now()->startOfDay();
+        $tomorrow = now()->endOfDay();
+
+        // ----------------------------------------------------------------
+        // 1. Scheduled → In Progress (visit date is today)
+        // ----------------------------------------------------------------
+        $scheduled = Permit::where('status', Permit::STATUS_SCHEDULED)
+            ->whereDate('date_of_visit', $today)
+            ->get();
+
+        foreach ($scheduled as $permit) {
+            $permit->update(['status' => Permit::STATUS_IN_PROGRESS]);
+            PermitLog::create([
+                'permit_id'  => $permit->id,
+                'status'     => Permit::STATUS_IN_PROGRESS,
+                'action'     => PermitLog::ACTION_ACCEPTED,
+                'changed_by' => $permit->created_by,
+                'message'    => 'Automatically activated — visit date reached.',
+                'red_alert'  => (bool) $permit->red_alert,
+            ]);
+        }
+
+        $this->info("Activated {$scheduled->count()} permits to In Progress.");
+
+        // ----------------------------------------------------------------
+        // 2. In Progress → Completed (auto-complete after 24hrs)
+        //    Only if: status is In Progress, visit date was yesterday or earlier,
+        //    and not On Hold
+        // ----------------------------------------------------------------
+        $autoComplete = Permit::where('status', Permit::STATUS_IN_PROGRESS)
+            ->whereDate('date_of_visit', '<', $today)
+            ->get();
+
+        foreach ($autoComplete as $permit) {
+            $permit->update([
+                'status'       => Permit::STATUS_COMPLETED,
+                'completed_at' => now(),
+            ]);
+            PermitLog::create([
+                'permit_id'  => $permit->id,
+                'status'     => Permit::STATUS_COMPLETED,
+                'action'     => PermitLog::ACTION_COMPLETED,
+                'changed_by' => $permit->created_by,
+                'message'    => 'Automatically completed — 24-hour visit period has elapsed.',
+                'red_alert'  => (bool) $permit->red_alert,
+            ]);
+        }
+
+        $this->info("Auto-completed {$autoComplete->count()} permits.");
+
+        // ----------------------------------------------------------------
+        // 3. Scheduled → Cancelled (missed — visit date passed, never activated)
+        //    Only Scheduled permits with past dates (shouldn't normally happen
+        //    since step 1 activates them, but handles edge cases like downtime)
+        // ----------------------------------------------------------------
+        $missed = Permit::where('status', Permit::STATUS_SCHEDULED)
+            ->whereDate('date_of_visit', '<', $today)
+            ->get();
+
+        foreach ($missed as $permit) {
+            $permit->update(['status' => Permit::STATUS_CANCELLED]);
+            PermitLog::create([
+                'permit_id'  => $permit->id,
+                'status'     => Permit::STATUS_CANCELLED,
+                'action'     => PermitLog::ACTION_CANCELLED,
+                'changed_by' => $permit->created_by,
+                'message'    => 'Automatically cancelled — visit date passed without activation.',
+                'red_alert'  => (bool) $permit->red_alert,
+            ]);
+        }
+
+        $this->info("Cancelled {$missed->count()} missed permits.");
+
+        $total = $scheduled->count() + $autoComplete->count() + $missed->count();
+        $this->info("Done. Total permits updated: {$total}");
+
         Log::info('Permit statuses updated', [
-            'today_in_progress' => $todayPermits,
-            'past_cancelled' => $pastPermits,
-            'total_updated' => $updatedCount,
-            'run_date' => $today->toDateString()
+            'activated'      => $scheduled->count(),
+            'auto_completed' => $autoComplete->count(),
+            'missed_cancelled' => $missed->count(),
+            'total'          => $total,
+            'run_at'         => now()->toDateTimeString(),
         ]);
-        
+
         return SymfonyCommand::SUCCESS;
     }
 }

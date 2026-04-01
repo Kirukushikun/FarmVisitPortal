@@ -10,6 +10,6 @@ Artisan::command('inspire', function () {
 
 // Schedule permit status update to run every day at midnight (00:00)
 Schedule::command('permits:update-statuses')
-    ->dailyAt('00:00')
+    ->dailyAt('00:01')
     ->description('Update permit statuses based on visit dates')
     ->withoutOverlapping();
