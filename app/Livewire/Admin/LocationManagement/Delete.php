@@ -45,14 +45,25 @@ class Delete extends Component
         }
 
         $locationName = (string) $location->name;
-        $location->delete();
 
-        Cache::forget(CacheKeys::locationsAll());
-        Cache::forget(CacheKeys::location((int) $this->locationId));
+        try {
+            $location->delete();
 
-        $this->closeModal();
-        $this->dispatch('showToast', message: "{$locationName} has been successfully deleted!", type: 'success');
-        $this->dispatch('refreshLocations');
+            Cache::forget(CacheKeys::locationsAll());
+            Cache::forget(CacheKeys::location((int) $this->locationId));
+
+            $this->closeModal();
+            $this->dispatch('showToast', message: "{$locationName} has been successfully deleted!", type: 'success');
+            $this->dispatch('refreshLocations');
+
+        } catch (QueryException $e) {
+            if ($e->getCode() === '23000') {
+                $this->dispatch('showToast', message: "Cannot delete {$locationName} because it is being used in existing permits.", type: 'error');
+                $this->closeModal();
+            } else {
+                throw $e;
+            }
+        }
     }
 
     public function render()
