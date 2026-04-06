@@ -6,6 +6,9 @@ use App\Models\Location;
 use App\Support\CacheKeys;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
+
 
 class Delete extends Component
 {
@@ -57,12 +60,8 @@ class Delete extends Component
             $this->dispatch('refreshLocations');
 
         } catch (QueryException $e) {
-            if ($e->getCode() === '23000') {
-                $this->dispatch('showToast', message: "Cannot delete {$locationName} because it is being used in existing permits.", type: 'error');
-                $this->closeModal();
-            } else {
-                throw $e;
-            }
+            $this->dispatch('showToast', message: "Cannot delete {$locationName} because it is being used in existing permits.", type: 'error');
+            $this->closeModal();
         }
     }
 
