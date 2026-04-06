@@ -31,6 +31,7 @@
                     // ----------------------------------------------------------------
                     // Permit data
                     // ----------------------------------------------------------------
+                    $created_by = $permit->createdBy?->first_name . ' ' . $permit->createdBy?->last_name ?? 'Unknown';
                     $dateFilled       = $permit->created_at?->format('F j, Y') ?? '';
                     $farm             = $permit->farmLocation?->name ?? '';
                     $farmType         = (int) ($permit->farmLocation?->farm_type ?? 0);
@@ -154,6 +155,7 @@
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                                     </button>
                                 </div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Permit created by: {{ $created_by }}</div>
                                 <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Date Filled: {{ $displayVal($dateFilled) }}</div>
                                 <div class="mt-4 space-y-3 text-sm">
                                     <div><div class="font-semibold text-gray-700 dark:text-gray-200">Farm</div><div class="text-gray-900 dark:text-white">{{ $displayVal($farm) }}</div></div>
@@ -192,7 +194,8 @@
                         </div>
 
                         {{-- DESKTOP / PRINT --}}
-                        <div class="hidden md:block print:block">
+                        <div class="hidden md:block print:block relative">
+                            <div class="text-sm text-gray-500 dark:text-gray-400 mt-0.5 absolute">Permit created by: {{ $created_by }}</div>
                             <div class="flex justify-center mb-2">
                                 <img src="{{ asset('images/BGC.png') }}" alt="BGC" class="h-20 w-48" />
                             </div>

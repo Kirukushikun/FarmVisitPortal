@@ -385,8 +385,21 @@
                     <div class="no-print w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 px-6 py-5"
                          x-data="{ showCompleteConfirm: false, showCancelConfirm: false, showHoldModal: false }">
                         <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">Actions</div>
+
+                        @if ($showAllActions && $permit->photos()->count() === 0)
+                            <div class="no-print w-full bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl px-5 py-3 flex items-center gap-3 mb-4">
+                                <svg class="w-5 h-5 text-yellow-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <div class="text-sm text-yellow-700 dark:text-yellow-400">
+                                    <span class="font-semibold">ID photo required.</span> Please attach at least one visitor ID photo before completing the permit.
+                                </div>
+                            </div>
+                        @endif
+
                         <div class="flex flex-col sm:flex-row gap-3">
 
+                            
                             {{-- Complete --}}
                             <button type="button" @click="showCompleteConfirm = true"
                                 @disabled(! $isAdmin && ! $isAcceptedByCurrentUser && (int) ($permit->received_by ?? 0) !== 0)

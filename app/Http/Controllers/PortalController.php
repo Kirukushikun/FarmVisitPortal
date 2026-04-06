@@ -222,6 +222,10 @@ class PortalController extends Controller
             return redirect()->back()->with('error', 'Permit cannot be completed.');
         }
 
+        if ($permit->photos()->count() === 0) {
+            return redirect()->back()->with('error', 'Please attach at least one visitor ID photo before completing the permit.');
+        }
+    
         $validated = $request->validate([
             'remarks' => ['nullable', 'string', 'max:5000'],
         ]);
