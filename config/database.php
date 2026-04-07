@@ -65,7 +65,7 @@ return [
                 'dump_binary_path' => env('DB_DUMP_BINARY_PATH', '/usr/bin'),
                 'use_single_transaction' => true,
                 'timeout' => 60,
-                'add_extra_option' => '--ssl-mode=DISABLED --no-tablespaces', // handles SSL + permissions
+                'add_extra_option' => '--no-tablespaces', // handles SSL + permissions
             ],
         ],
 
