@@ -52,16 +52,8 @@ class UpdatePermitStatuses extends Command
 
         foreach ($autoComplete as $permit) {
             $permit->update([
-                'status'       => Permit::STATUS_COMPLETED,
+                'status'       => Permit::STATUS_LAPSED,
                 'completed_at' => now(),
-            ]);
-            PermitLog::create([
-                'permit_id'  => $permit->id,
-                'status'     => Permit::STATUS_COMPLETED,
-                'action'     => PermitLog::ACTION_COMPLETED,
-                'changed_by' => $permit->created_by,
-                'message'    => 'Automatically completed — 24-hour visit period has elapsed.',
-                'red_alert'  => (bool) $permit->red_alert,
             ]);
         }
 
