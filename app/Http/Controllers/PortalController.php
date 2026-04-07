@@ -351,6 +351,65 @@ class PortalController extends Controller
         return redirect()->back()->with('success', 'Response submitted successfully.');
     }
 
+    public function resolveLapsedPermit(Request $request, Permit $permit): mixed
+    {
+        $user = $request->user();
+
+        // Authorization
+        if (! $this->isAdminType($user)) {
+            abort(403);
+        }
+
+        // Ensure permit is actually lapsed
+        if ((int) ($permit->status ?? 0) !== Permit::STATUS_LAPSED) {
+            return redirect()->back()->with('error', 'Permit is not lapsed.');
+        }
+
+        // Validate request
+        $validated = $request->validate([
+            'resolution_type' => ['required', 'in:entered,not_entered,unverified'],
+            'admin_response'  => ['required', 'string', 'max:5000'],
+        ]);
+
+        $remarks = trim($validated['admin_response']);
+
+        // Update permit
+        $permit->update([
+            'status'        => Permit::STATUS_RESOLVED, // make sure this exists (e.g. = 7)
+            'final_status'  => $validated['resolution_type'],
+            'resolved_by'   => (int) $user->id,
+            'resolved_at'   => now(),
+            'red_alert'     => false,
+        ]);
+
+        // Determine log action
+        $actionCode = match ($validated['resolution_type']) {
+            'entered'      => PermitLog::ACTION_RESOLVED_ENTERED,
+            'not_entered'  => PermitLog::ACTION_RESOLVED_NOT_ENTERED,
+            'unverified'   => PermitLog::ACTION_RESOLVED_UNVERIFIED,
+        };
+
+        // Build log message (important for audit readability)
+        $logMessage = match ($validated['resolution_type']) {
+            'entered'      => 'Resolved: Visitor confirmed ENTERED. ',
+            'not_entered'  => 'Resolved: Visitor confirmed DID NOT ENTER. ',
+            'unverified'   => 'Resolved: Outcome UNVERIFIED. ',
+        };
+
+        $logMessage .= 'Remarks: ' . $remarks;
+
+        // Save to permit logs
+        $this->addLog(
+            $permit,
+            $actionCode,
+            (int) $user->id,
+            $logMessage
+        );
+
+        return redirect()->back()->with('success', 'Permit resolved successfully.');
+    }
+
+
     /**
      * Admin overrides a rejection back to In Progress.
      * Only available when status === Cancelled AND last log action === Rejected.

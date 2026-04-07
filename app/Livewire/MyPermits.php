@@ -64,6 +64,10 @@ class MyPermits extends Component
             1 => 'In Progress',
             2 => 'Completed',
             3 => 'Cancelled',
+            4 => 'On Hold',
+            5 => 'Returned',
+            6 => 'Lapsed',
+            7 => 'Resolved',
         ];
         
         return $labels[$status] ?? 'Unknown';
@@ -79,6 +83,8 @@ class MyPermits extends Component
             3 => 'red',
             4 => 'orange',
             5 => 'purple',
+            6 => 'yellow',
+            7 => 'teal',
         ];
         
         return $colors[$status] ?? 'gray';

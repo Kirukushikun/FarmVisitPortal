@@ -18,6 +18,8 @@ class Permit extends Model
     const STATUS_CANCELLED   = 3;
     const STATUS_ON_HOLD     = 4;
     const STATUS_RETURNED    = 5;
+    const STATUS_LAPSED      = 6;
+    const STATUS_RESOLVED    = 7;
 
     protected $fillable = [
         'permit_id',

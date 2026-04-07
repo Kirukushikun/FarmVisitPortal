@@ -353,11 +353,34 @@
                                     $lc = match ((int) $log->action) {
                                         0 => 'gray', 1 => 'blue', 2 => 'orange',
                                         3, 7, 9 => 'green', 4, 8 => 'red',
-                                        5 => 'purple', 6 => 'blue', default => 'gray',
+                                        5 => 'purple', 6 => 'blue',
+                                        10, 11, 12 => 'yellow', default => 'gray',
                                     };
-                                    $lBg   = match ($lc) { 'green' => 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800', 'red' => 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800', 'orange' => 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800', 'blue' => 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800', 'purple' => 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800', default => 'bg-gray-50 dark:bg-gray-700/20 border-gray-200 dark:border-gray-700' };
-                                    $lDot  = match ($lc) { 'green' => 'bg-green-500', 'red' => 'bg-red-500', 'orange' => 'bg-orange-500', 'blue' => 'bg-blue-500', 'purple' => 'bg-purple-500', default => 'bg-gray-400' };
-                                    $lText = match ($lc) { 'green' => 'text-green-700 dark:text-green-400', 'red' => 'text-red-700 dark:text-red-400', 'orange' => 'text-orange-700 dark:text-orange-400', 'blue' => 'text-blue-700 dark:text-blue-400', 'purple' => 'text-purple-700 dark:text-purple-400', default => 'text-gray-600 dark:text-gray-400' };
+                                    $lBg   = match ($lc) { 
+                                        'green' => 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800', 
+                                        'red' => 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800', 
+                                        'orange' => 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800', 
+                                        'blue' => 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800', 
+                                        'purple' => 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800', 
+                                        'yellow' => 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800',
+                                        default => 'bg-gray-50 dark:bg-gray-700/20 border-gray-200 dark:border-gray-700' 
+                                    };
+                                    $lDot  = match ($lc) { 
+                                        'green' => 'bg-green-500', 'red' => 'bg-red-500', 
+                                        'orange' => 'bg-orange-500', 
+                                        'blue' => 'bg-blue-500', 
+                                        'purple' => 'bg-purple-500', 
+                                        'yellow' => 'bg-yellow-500',
+                                        default => 'bg-gray-400' 
+                                    };
+                                    $lText = match ($lc) { 'green' => 'text-green-700 dark:text-green-400', 
+                                        'red' => 'text-red-700 dark:text-red-400', 
+                                        'orange' => 'text-orange-700 dark:text-orange-400', 
+                                        'blue' => 'text-blue-700 dark:text-blue-400', 
+                                        'purple' => 'text-purple-700 dark:text-purple-400', 
+                                        'yellow' => 'text-yellow-700 dark:text-yellow-400',
+                                        default => 'text-gray-600 dark:text-gray-400' 
+                                    };
                                 @endphp
                                 <div class="flex gap-3 items-start rounded-lg border px-4 py-3 {{ $lBg }}">
                                     <div class="mt-1.5 w-2 h-2 rounded-full shrink-0 {{ $lDot }}"></div>

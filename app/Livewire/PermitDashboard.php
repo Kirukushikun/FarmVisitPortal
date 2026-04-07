@@ -30,10 +30,14 @@ class PermitDashboard extends Component
     public function getStatusLabel($status)
     {
         $labels = [
-            0 => 'Scheduled',
+           0 => 'Scheduled',
             1 => 'In Progress',
             2 => 'Completed',
             3 => 'Cancelled',
+            4 => 'On Hold',
+            5 => 'Returned',
+            6 => 'Lapsed',
+            7 => 'Resolved',
         ];
         
         return $labels[$status] ?? 'Unknown';
@@ -48,6 +52,8 @@ class PermitDashboard extends Component
             3 => 'red',
             4 => 'orange',
             5 => 'purple',
+            6 => 'yellow',
+            7 => 'teal',
         ];
         
         return $colors[$status] ?? 'gray';
