@@ -14,9 +14,9 @@ class Dashboard extends Component
 
     public int $perPage = 10;
 
-    public string $sortField = 'created_at';
+    public string $sortField = 'date_of_visit';
 
-    public string $sortDirection = 'desc';
+    public string $sortDirection = 'asc';
 
     public int $page = 1;
 
