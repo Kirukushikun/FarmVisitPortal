@@ -92,10 +92,10 @@ class MyPermits extends Component
 
     protected function baseQuery()
     {
-        $user = Auth::user();
+        
+        $farmLocationId = (int) session('selected_location_id', 0);
 
-        $query = Permit::with(['farmLocation', 'receivedBy'])
-            ->where('received_by', $user->id)
+        $query = Permit::where('farm_location_id', $farmLocationId)
             ->where('status', 2)
             ->orderBy('date_of_visit', 'desc');
 

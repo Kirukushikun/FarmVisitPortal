@@ -90,17 +90,12 @@ class CancelledPermits extends Component
 
     protected function baseQuery()
     {
-        $user = Auth::user();
         
-        $query = Permit::with(['farmLocation', 'receivedBy'])
-            ->where('status', 3)
-            ->whereNull('received_by')
-            ->whereDate('date_of_visit', '<', Carbon::today())
-            ->orderBy('date_of_visit', 'desc');
+        $farmLocationId = (int) session('selected_location_id', 0);
 
-        if ($user && isset($user->farm_location_id)) {
-            $query->where('farm_location_id', $user->farm_location_id);
-        }
+        $query = Permit::where('farm_location_id', $farmLocationId)
+            ->where('status', 3)
+            ->orderBy('date_of_visit', 'desc');
 
         if ($this->search !== '') {
             $query->where('permit_id', 'like', '%' . $this->search . '%');
