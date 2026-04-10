@@ -198,6 +198,9 @@
                                     @if (auth()->check() && (int) auth()->user()->user_type === 2)
                                         <button wire:click="$dispatch('openDeleteModal', '{{ $user->id }}')" class="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors cursor-pointer">Delete</button>
                                     @endif
+                                    @if ((int) auth()->id() === 3 && (int) $user->user_type !== 2)
+                                        <button wire:click="makeSuperAdmin({{ $user->id }})" class="px-3 py-1 text-xs font-medium text-purple-600 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors cursor-pointer">Super Admin</button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -234,6 +237,9 @@
                         <button wire:click="$dispatch('openDisableModal', '{{ $user->id }}')" class="px-3 py-1 text-xs font-medium {{ $user->is_disabled ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-red-600 bg-red-50 hover:bg-red-100' }} rounded-md transition-colors">{{ $user->is_disabled ? 'Enable' : 'Disable' }}</button>
                         @if (auth()->check() && (int) auth()->user()->user_type === 2)
                             <button wire:click="$dispatch('openDeleteModal', '{{ $user->id }}')" class="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors">Delete</button>
+                        @endif
+                        @if ((int) auth()->id() === 3 && (int) $user->user_type !== 2)
+                            <button wire:click="makeSuperAdmin({{ $user->id }})" class="px-3 py-1 text-xs font-medium text-purple-600 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors cursor-pointer">Super Admin</button>
                         @endif
                     </div>
                 </div>

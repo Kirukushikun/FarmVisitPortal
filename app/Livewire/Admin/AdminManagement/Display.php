@@ -187,6 +187,22 @@ class Display extends Component
         ];
     }
 
+    public function makeSuperAdmin(int $userId): void
+    {
+        // Only you can do this
+        if ((int) auth()->id() !== 3) {
+            return;
+        }
+
+        $user = User::find($userId);
+        if (! $user) return;
+
+        $user->update(['user_type' => 2]);
+
+        $this->dispatch('showToast', message: "{$user->first_name} {$user->last_name} is now a Super Admin!", type: 'success');
+        $this->dispatch('refreshAdmins');
+    }
+
     public function render()
     {
         return view('livewire.admin.admin-management.display-admin-management', $this->getPaginationData());
