@@ -7,6 +7,7 @@ use App\Models\Permit;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\Constants\UnitValue;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -28,17 +29,29 @@ class HomeDashboard extends Component
 
     public array $calendar = [];
 
+    // Status labels & colors matching Permit constants
+    protected const STATUS_META = [
+        Permit::STATUS_SCHEDULED   => ['label' => 'Scheduled',   'border' => '#3b82f6', 'bg' => 'rgba(59,130,246,0.10)',   'point' => '#3b82f6'],
+        Permit::STATUS_IN_PROGRESS => ['label' => 'In Progress', 'border' => '#f59e0b', 'bg' => 'rgba(245,158,11,0.10)',   'point' => '#f59e0b'],
+        Permit::STATUS_COMPLETED   => ['label' => 'Completed',   'border' => '#10b981', 'bg' => 'rgba(16,185,129,0.10)',   'point' => '#10b981'],
+        Permit::STATUS_CANCELLED   => ['label' => 'Cancelled',   'border' => '#ef4444', 'bg' => 'rgba(239,68,68,0.10)',    'point' => '#ef4444'],
+        Permit::STATUS_ON_HOLD     => ['label' => 'On Hold',     'border' => '#8b5cf6', 'bg' => 'rgba(139,92,246,0.10)',   'point' => '#8b5cf6'],
+        Permit::STATUS_RETURNED    => ['label' => 'Returned',    'border' => '#f97316', 'bg' => 'rgba(249,115,22,0.10)',   'point' => '#f97316'],
+        Permit::STATUS_LAPSED      => ['label' => 'Lapsed',      'border' => '#6b7280', 'bg' => 'rgba(107,114,128,0.10)', 'point' => '#6b7280'],
+        Permit::STATUS_RESOLVED    => ['label' => 'Resolved',    'border' => '#06b6d4', 'bg' => 'rgba(6,182,212,0.10)',   'point' => '#06b6d4'],
+    ];
+
     public function mount(): void
     {
         $this->calendarMonth = now()->format('Y-m');
-        $this->selectedDay = now()->toDateString();
+        $this->selectedDay   = now()->toDateString();
         $this->loadData();
     }
 
     public function setRange(string $range): void
     {
         $range = strtolower(trim($range));
-        if (!in_array($range, ['week', 'month', 'year'], true)) {
+        if (! in_array($range, ['week', 'month', 'year'], true)) {
             return;
         }
 
@@ -50,7 +63,7 @@ class HomeDashboard extends Component
     public function setPieRange(string $range): void
     {
         $range = strtolower(trim($range));
-        if (!in_array($range, ['year', 'overall'], true)) {
+        if (! in_array($range, ['year', 'overall'], true)) {
             return;
         }
 
@@ -62,12 +75,12 @@ class HomeDashboard extends Component
     public function setCalendarMonth(string $ym): void
     {
         $ym = trim($ym);
-        if (!preg_match('/^\d{4}-\d{2}$/', $ym)) {
+        if (! preg_match('/^\d{4}-\d{2}$/', $ym)) {
             return;
         }
 
         $this->calendarMonth = $ym;
-        $this->selectedDay = $ym === now()->format('Y-m') ? now()->toDateString() : null;
+        $this->selectedDay   = $ym === now()->format('Y-m') ? now()->toDateString() : null;
         $this->loadCalendar();
         $this->dispatch('adminHomeDashboardCalendarUpdated', calendar: $this->calendar);
     }
@@ -75,18 +88,17 @@ class HomeDashboard extends Component
     public function selectDay(string $day): void
     {
         $day = trim($day);
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $day)) {
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $day)) {
             return;
         }
 
         $this->selectedDay = $day;
-        
-        // Check if the selected day is in a different month
+
         $selectedMonth = Carbon::parse($day)->format('Y-m');
         if ($selectedMonth !== $this->calendarMonth) {
             $this->calendarMonth = $selectedMonth;
         }
-        
+
         $this->loadCalendar();
         $this->dispatch('adminHomeDashboardCalendarUpdated', calendar: $this->calendar);
     }
@@ -97,46 +109,70 @@ class HomeDashboard extends Component
         $this->dispatch('adminHomeDashboardUpdated', charts: $this->charts, pie: $this->pie, pieRange: $this->pieRange, cards: $this->cards, calendar: $this->calendar, range: $this->range);
     }
 
+    // -------------------------------------------------------------------------
+    // Department scope
+    // -------------------------------------------------------------------------
+
+    protected function departmentScope(Builder $query): Builder
+    {
+        $dept = auth()->user()?->department;
+
+        if (in_array($dept, ['PURCHASING', 'IT & SECURITY'], true)) {
+            return $query; // sees everything
+        }
+
+        return $query->where('permits.department', $dept);
+    }
+
+    protected function permitsQuery(): Builder
+    {
+        return $this->departmentScope(Permit::query());
+    }
+
+    // -------------------------------------------------------------------------
+    // Load
+    // -------------------------------------------------------------------------
+
     protected function loadData(): void
     {
-        $now = now();
-        $weekStart = $now->copy()->startOfWeek(UnitValue::SUNDAY);
-        $weekEnd = $weekStart->copy()->endOfWeek(UnitValue::SATURDAY);
+        $now        = now();
+        $weekStart  = $now->copy()->startOfWeek(UnitValue::SUNDAY);
+        $weekEnd    = $weekStart->copy()->endOfWeek(UnitValue::SATURDAY);
         $monthStart = $now->copy()->startOfMonth();
-        $monthEnd = $monthStart->copy()->endOfMonth();
-        $yearStart = $now->copy()->startOfYear();
-        $yearEnd = $now->copy()->endOfYear();
+        $monthEnd   = $monthStart->copy()->endOfMonth();
+        $yearStart  = $now->copy()->startOfYear();
+        $yearEnd    = $now->copy()->endOfYear();
 
         [$start, $end] = match ($this->range) {
             'month' => [$monthStart, $monthEnd],
-            'year' => [$yearStart, $yearEnd],
+            'year'  => [$yearStart, $yearEnd],
             default => [$weekStart, $weekEnd],
         };
 
-        $totalPermits = Permit::query()
+        $totalPermits = $this->permitsQuery()
             ->whereBetween('date_of_visit', [$start, $end])
             ->count();
 
         $locationsCount = Location::query()->count();
-        $usersCount = $this->baseUsersQuery()->count();
+        $usersCount     = $this->baseUsersQuery()->count();
 
         $this->cards = [
             'totals' => [
-                'users' => $usersCount,
+                'users'     => $usersCount,
                 'locations' => $locationsCount,
-                'permits' => $totalPermits,
+                'permits'   => $totalPermits,
             ],
         ];
 
         $this->charts = [
-            'week' => $this->weekNewEntitiesChart($weekStart, $weekEnd),
-            'month' => $this->monthNewEntitiesChart($monthStart, $monthEnd, (int) $now->daysInMonth),
-            'year' => $this->yearNewEntitiesChart($yearStart, $yearEnd),
+            'week'  => $this->weekStatusChart($weekStart, $weekEnd),
+            'month' => $this->monthStatusChart($monthStart, $monthEnd, (int) $now->daysInMonth),
+            'year'  => $this->yearStatusChart($yearStart, $yearEnd),
         ];
 
         $this->pie = [
-            'year' => $this->newEntitiesPieChart($yearStart, $yearEnd, $locationsCount, $usersCount),
-            'overall' => $this->newEntitiesPieChart(null, null, $locationsCount, $usersCount),
+            'year'    => $this->statusPieChart($yearStart, $yearEnd),
+            'overall' => $this->statusPieChart(null, null),
         ];
 
         $this->calendar = $this->buildCalendar($this->calendarMonth, $this->selectedDay);
@@ -147,221 +183,260 @@ class HomeDashboard extends Component
         $this->calendar = $this->buildCalendar($this->calendarMonth, $this->selectedDay);
     }
 
-    protected function newEntitiesPieChart(?Carbon $start, ?Carbon $end, ?int $cachedLocationsCount = null, ?int $cachedUsersCount = null): array
-    {
-        $permits = Permit::query();
-        $users = $this->baseUsersQuery();
-        $locations = Location::query();
+    // -------------------------------------------------------------------------
+    // Pie chart
+    // -------------------------------------------------------------------------
 
-        if ($start !== null && $end !== null) {
-            $permits->whereBetween('created_at', [$start, $end]);
-            $users->whereBetween('created_at', [$start, $end]);
-            $locations->whereBetween('created_at', [$start, $end]);
+    protected function statusPieChart(?Carbon $start, ?Carbon $end): array
+    {
+        $query = $this->permitsQuery()
+            ->select('status', DB::raw('COUNT(*) as total'))
+            ->groupBy('status');
+
+        if ($start && $end) {
+            $query->whereBetween('created_at', [$start, $end]);
         }
 
-        $permitsCount = (int) $permits->count();
-        $usersCount = $cachedUsersCount ?? (int) $users->count();
-        $locationsCount = $cachedLocationsCount ?? (int) $locations->count();
+        $rows = $query->get()->keyBy('status');
+
+        $labels     = [];
+        $data       = [];
+        $bgColors   = [];
+        $borders    = [];
+
+        foreach (self::STATUS_META as $statusCode => $meta) {
+            $labels[]   = $meta['label'];
+            $data[]     = (int) ($rows[$statusCode]->total ?? 0);
+            $bgColors[] = str_replace('0.10', '0.70', $meta['bg']);
+            $borders[]  = $meta['border'];
+        }
 
         return [
-            'labels' => ['Permits', 'Users', 'Farms'],
+            'labels'   => $labels,
             'datasets' => [
                 [
-                    'data' => [$permitsCount, $usersCount, $locationsCount],
-                    'backgroundColor' => [
-                        'rgba(249,115,22,0.70)',
-                        'rgba(59,130,246,0.70)',
-                        'rgba(16,185,129,0.70)',
-                    ],
-                    'borderColor' => ['#f97316', '#3b82f6', '#10b981'],
-                    'borderWidth' => 1,
+                    'data'            => $data,
+                    'backgroundColor' => $bgColors,
+                    'borderColor'     => $borders,
+                    'borderWidth'     => 1,
                 ],
             ],
         ];
     }
 
-    protected function weekNewEntitiesChart(Carbon $start, Carbon $end): array
+    // -------------------------------------------------------------------------
+    // Line charts
+    // -------------------------------------------------------------------------
+
+    protected function buildStatusLineDatasets(array $statusCounts, int $points, Carbon $start): array
     {
-        $labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        $datasets = [];
 
-        $permits = $this->countsByDayForModel(Permit::query(), $start, $end);
-        $users = $this->countsByDayForModel($this->baseUsersQuery(), $start, $end);
-        $locations = $this->countsByDayForModel(Location::query(), $start, $end);
+        foreach (self::STATUS_META as $statusCode => $meta) {
+            $pointData = [];
+            for ($i = 0; $i < $points; $i++) {
+                $key         = $start->copy()->addDays($i)->toDateString() . '_' . $statusCode;
+                $pointData[] = (int) ($statusCounts[$key] ?? 0);
+            }
 
-        $permitsData = [];
-        $usersData = [];
-        $locationsData = [];
-        for ($i = 0; $i < 7; $i++) {
-            $day = $start->copy()->addDays($i)->toDateString();
-            $permitsData[] = (int) ($permits[$day] ?? 0);
-            $usersData[] = (int) ($users[$day] ?? 0);
-            $locationsData[] = (int) ($locations[$day] ?? 0);
+            $datasets[] = [
+                'label'            => $meta['label'],
+                'data'             => $pointData,
+                'borderColor'      => $meta['border'],
+                'backgroundColor'  => $meta['bg'],
+                'tension'          => 0.35,
+                'fill'             => false,
+                'borderWidth'      => 3,
+                'pointBackgroundColor' => $meta['point'],
+                'pointBorderColor'     => '#ffffff',
+                'pointBorderWidth'     => 2,
+            ];
         }
 
+        return $datasets;
+    }
+
+    protected function buildStatusMonthDatasets(array $statusCounts, int $daysInMonth, Carbon $start): array
+    {
+        return $this->buildStatusLineDatasets($statusCounts, $daysInMonth, $start);
+    }
+
+    protected function countsByDayAndStatus(Carbon $start, Carbon $end): array
+    {
+        $rows = $this->permitsQuery()
+            ->selectRaw('DATE(date_of_visit) as day, status, COUNT(*) as total')
+            ->whereBetween('date_of_visit', [$start, $end])
+            ->groupBy('day', 'status')
+            ->get();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[$row->day . '_' . $row->status] = (int) $row->total;
+        }
+
+        return $out;
+    }
+
+    protected function countsByMonthAndStatus(Carbon $start, Carbon $end): array
+    {
+        $rows = $this->permitsQuery()
+            ->selectRaw('MONTH(date_of_visit) as m, status, COUNT(*) as total')
+            ->whereBetween('date_of_visit', [$start, $end])
+            ->groupBy('m', 'status')
+            ->get();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[$row->m . '_' . $row->status] = (int) $row->total;
+        }
+
+        return $out;
+    }
+
+    protected function weekStatusChart(Carbon $start, Carbon $end): array
+    {
+        $counts = $this->countsByDayAndStatus($start, $end);
+
         return [
-            'labels' => $labels,
-            'datasets' => [
-                [
-                    'label' => 'New Permits',
-                    'data' => $permitsData,
-                    'borderColor' => '#f97316',
-                    'backgroundColor' => 'rgba(249,115,22,0.10)',
-                    'tension' => 0.35,
-                    'fill' => false,
-                    'borderWidth' => 3,
-                    'pointBackgroundColor' => '#f97316',
-                    'pointBorderColor' => '#ffffff',
-                    'pointBorderWidth' => 2,
-                ],
-                [
-                    'label' => 'New Users',
-                    'data' => $usersData,
-                    'borderColor' => '#3b82f6',
-                    'backgroundColor' => 'rgba(59,130,246,0.10)',
-                    'tension' => 0.35,
-                    'fill' => false,
-                    'borderWidth' => 3,
-                    'pointBackgroundColor' => '#3b82f6',
-                    'pointBorderColor' => '#ffffff',
-                    'pointBorderWidth' => 2,
-                ],
-                [
-                    'label' => 'New Locations',
-                    'data' => $locationsData,
-                    'borderColor' => '#10b981',
-                    'backgroundColor' => 'rgba(16,185,129,0.10)',
-                    'tension' => 0.35,
-                    'fill' => false,
-                    'borderWidth' => 3,
-                    'pointBackgroundColor' => '#10b981',
-                    'pointBorderColor' => '#ffffff',
-                    'pointBorderWidth' => 2,
-                ],
-            ],
+            'labels'   => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+            'datasets' => $this->buildStatusLineDatasets($counts, 7, $start),
         ];
     }
 
-    protected function monthNewEntitiesChart(Carbon $start, Carbon $end, int $daysInMonth): array
+    protected function monthStatusChart(Carbon $start, Carbon $end, int $daysInMonth): array
     {
-        $labels = [];
-        for ($d = 1; $d <= $daysInMonth; $d++) {
-            $labels[] = (string) $d;
-        }
-
-        $permits = $this->countsByDayForModel(Permit::query(), $start, $end);
-        $users = $this->countsByDayForModel($this->baseUsersQuery(), $start, $end);
-        $locations = $this->countsByDayForModel(Location::query(), $start, $end);
-
-        $permitsData = [];
-        $usersData = [];
-        $locationsData = [];
-        for ($i = 0; $i < $daysInMonth; $i++) {
-            $day = $start->copy()->addDays($i)->toDateString();
-            $permitsData[] = (int) ($permits[$day] ?? 0);
-            $usersData[] = (int) ($users[$day] ?? 0);
-            $locationsData[] = (int) ($locations[$day] ?? 0);
-        }
+        $counts = $this->countsByDayAndStatus($start, $end);
+        $labels = array_map('strval', range(1, $daysInMonth));
 
         return [
-            'labels' => $labels,
-            'datasets' => [
-                [
-                    'label' => 'New Permits',
-                    'data' => $permitsData,
-                    'borderColor' => '#f97316',
-                    'backgroundColor' => 'rgba(249,115,22,0.10)',
-                    'tension' => 0.35,
-                    'fill' => false,
-                    'borderWidth' => 3,
-                    'pointBackgroundColor' => '#f97316',
-                    'pointBorderColor' => '#ffffff',
-                    'pointBorderWidth' => 2,
-                ],
-                [
-                    'label' => 'New Users',
-                    'data' => $usersData,
-                    'borderColor' => '#3b82f6',
-                    'backgroundColor' => 'rgba(59,130,246,0.10)',
-                    'tension' => 0.35,
-                    'fill' => false,
-                    'borderWidth' => 3,
-                    'pointBackgroundColor' => '#3b82f6',
-                    'pointBorderColor' => '#ffffff',
-                    'pointBorderWidth' => 2,
-                ],
-                [
-                    'label' => 'New Locations',
-                    'data' => $locationsData,
-                    'borderColor' => '#10b981',
-                    'backgroundColor' => 'rgba(16,185,129,0.10)',
-                    'tension' => 0.35,
-                    'fill' => false,
-                    'borderWidth' => 3,
-                    'pointBackgroundColor' => '#10b981',
-                    'pointBorderColor' => '#ffffff',
-                    'pointBorderWidth' => 2,
-                ],
-            ],
+            'labels'   => $labels,
+            'datasets' => $this->buildStatusMonthDatasets($counts, $daysInMonth, $start),
         ];
     }
 
-    protected function yearNewEntitiesChart(Carbon $start, Carbon $end): array
+    protected function yearStatusChart(Carbon $start, Carbon $end): array
     {
-        $permits = $this->countsByMonthForModel(Permit::query(), $start, $end);
-        $users = $this->countsByMonthForModel($this->baseUsersQuery(), $start, $end);
-        $locations = $this->countsByMonthForModel(Location::query(), $start, $end);
+        $rows = $this->permitsQuery()
+            ->selectRaw('MONTH(date_of_visit) as m, status, COUNT(*) as total')
+            ->whereBetween('date_of_visit', [$start, $end])
+            ->groupBy('m', 'status')
+            ->get();
 
-        $labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        $permitsData = [];
-        $usersData = [];
-        $locationsData = [];
-        for ($m = 1; $m <= 12; $m++) {
-            $permitsData[] = (int) ($permits[$m] ?? 0);
-            $usersData[] = (int) ($users[$m] ?? 0);
-            $locationsData[] = (int) ($locations[$m] ?? 0);
+        $raw = [];
+        foreach ($rows as $row) {
+            $raw[$row->m . '_' . $row->status] = (int) $row->total;
+        }
+
+        $datasets = [];
+        foreach (self::STATUS_META as $statusCode => $meta) {
+            $data = [];
+            for ($m = 1; $m <= 12; $m++) {
+                $data[] = (int) ($raw[$m . '_' . $statusCode] ?? 0);
+            }
+            $datasets[] = [
+                'label'               => $meta['label'],
+                'data'                => $data,
+                'borderColor'         => $meta['border'],
+                'backgroundColor'     => $meta['bg'],
+                'tension'             => 0.35,
+                'fill'                => false,
+                'borderWidth'         => 3,
+                'pointBackgroundColor' => $meta['point'],
+                'pointBorderColor'    => '#ffffff',
+                'pointBorderWidth'    => 2,
+            ];
         }
 
         return [
-            'labels' => $labels,
-            'datasets' => [
-                [
-                    'label' => 'New Permits',
-                    'data' => $permitsData,
-                    'borderColor' => '#f97316',
-                    'backgroundColor' => 'rgba(249,115,22,0.10)',
-                    'tension' => 0.35,
-                    'fill' => false,
-                    'borderWidth' => 3,
-                    'pointBackgroundColor' => '#f97316',
-                    'pointBorderColor' => '#ffffff',
-                    'pointBorderWidth' => 2,
-                ],
-                [
-                    'label' => 'New Users',
-                    'data' => $usersData,
-                    'borderColor' => '#3b82f6',
-                    'backgroundColor' => 'rgba(59,130,246,0.10)',
-                    'tension' => 0.35,
-                    'fill' => false,
-                    'borderWidth' => 3,
-                    'pointBackgroundColor' => '#3b82f6',
-                    'pointBorderColor' => '#ffffff',
-                    'pointBorderWidth' => 2,
-                ],
-                [
-                    'label' => 'New Locations',
-                    'data' => $locationsData,
-                    'borderColor' => '#10b981',
-                    'backgroundColor' => 'rgba(16,185,129,0.10)',
-                    'tension' => 0.35,
-                    'fill' => false,
-                    'borderWidth' => 3,
-                    'pointBackgroundColor' => '#10b981',
-                    'pointBorderColor' => '#ffffff',
-                    'pointBorderWidth' => 2,
-                ],
-            ],
+            'labels'   => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            'datasets' => $datasets,
         ];
+    }
+
+    // -------------------------------------------------------------------------
+    // Calendar
+    // -------------------------------------------------------------------------
+
+    protected function buildCalendar(string $ym, ?string $selectedDay): array
+    {
+        $monthStart = Carbon::createFromFormat('Y-m', $ym)->startOfMonth()->startOfDay();
+        $monthEnd   = $monthStart->copy()->endOfMonth()->endOfDay();
+
+        $counts = $this->countsByDayForCalendar($monthStart, $monthEnd);
+
+        $gridStart = $monthStart->copy()->startOfWeek(UnitValue::SUNDAY);
+        $gridEnd   = $monthEnd->copy()->endOfWeek(UnitValue::SATURDAY);
+
+        $days = [];
+        for ($d = $gridStart->copy(); $d->lte($gridEnd); $d->addDay()) {
+            $date      = $d->toDateString();
+            $inMonth   = $d->format('Y-m') === $ym;
+            $dayCounts = $counts[$date] ?? $this->emptyDayCounts();
+
+            $days[] = [
+                'date'        => $date,
+                'day'         => (int) $d->format('j'),
+                'in_month'    => $inMonth,
+                'is_today'    => $date === now()->toDateString(),
+                'is_selected' => $selectedDay !== null && $date === $selectedDay,
+                'counts'      => $dayCounts,
+            ];
+        }
+
+        $selected = null;
+        if ($selectedDay !== null) {
+            $selected = [
+                'date'   => $selectedDay,
+                'counts' => $counts[$selectedDay] ?? $this->emptyDayCounts(),
+            ];
+        }
+
+        return [
+            'month'       => $ym,
+            'month_label' => $monthStart->format('F Y'),
+            'grid'        => $days,
+            'selected'    => $selected,
+        ];
+    }
+
+    protected function emptyDayCounts(): array
+    {
+        $counts = ['total' => 0];
+        foreach (self::STATUS_META as $code => $meta) {
+            $counts[$code] = 0;
+        }
+
+        return $counts;
+    }
+
+    protected function countsByDayForCalendar(Carbon $start, Carbon $end): array
+    {
+        $rows = $this->permitsQuery()
+            ->selectRaw('DATE(date_of_visit) as day, status, COUNT(*) as total')
+            ->whereBetween('date_of_visit', [$start, $end])
+            ->groupBy('day', 'status')
+            ->get();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $day = (string) $row->day;
+            if (! isset($out[$day])) {
+                $out[$day] = $this->emptyDayCounts();
+            }
+            $out[$day][(int) $row->status] = (int) $row->total;
+            $out[$day]['total'] += (int) $row->total;
+        }
+
+        return $out;
+    }
+
+    // -------------------------------------------------------------------------
+    // Misc helpers
+    // -------------------------------------------------------------------------
+
+    protected function baseUsersQuery()
+    {
+        return User::query()->where('user_type', 0);
     }
 
     protected function countsByDayForModel($query, Carbon $start, Carbon $end): array
@@ -376,98 +451,6 @@ class HomeDashboard extends Component
         $out = [];
         foreach ($rows as $row) {
             $out[(string) $row->day] = (int) $row->total;
-        }
-
-        return $out;
-    }
-
-    protected function baseUsersQuery()
-    {
-        return User::query()->where('user_type', 0);
-    }
-
-    protected function countsByMonthForModel($query, Carbon $start, Carbon $end): array
-    {
-        $rows = $query
-            ->selectRaw('MONTH(created_at) as m')
-            ->addSelect(DB::raw('COUNT(*) as total'))
-            ->whereBetween('created_at', [$start, $end])
-            ->groupBy('m')
-            ->get();
-
-        $out = array_fill(1, 12, 0);
-        foreach ($rows as $row) {
-            $out[(int) $row->m] = (int) $row->total;
-        }
-
-        return $out;
-    }
-
-    protected function buildCalendar(string $ym, ?string $selectedDay): array
-    {
-        $monthStart = Carbon::createFromFormat('Y-m', $ym)->startOfMonth()->startOfDay();
-        $monthEnd = $monthStart->copy()->endOfMonth()->endOfDay();
-
-        $counts = $this->countsByDayForDerivedStatuses($monthStart, $monthEnd);
-
-        $gridStart = $monthStart->copy()->startOfWeek(UnitValue::SUNDAY);
-        $gridEnd = $monthEnd->copy()->endOfWeek(UnitValue::SATURDAY);
-
-        $days = [];
-        for ($d = $gridStart->copy(); $d->lte($gridEnd); $d->addDay()) {
-            $date = $d->toDateString();
-            $inMonth = $d->format('Y-m') === $ym;
-            $dayCounts = $counts[$date] ?? ['scheduled' => 0, 'in_progress' => 0, 'received' => 0, 'cancelled' => 0, 'total' => 0];
-
-            $days[] = [
-                'date' => $date,
-                'day' => (int) $d->format('j'),
-                'in_month' => $inMonth,
-                'is_today' => $date === now()->toDateString(),
-                'is_selected' => $selectedDay !== null && $date === $selectedDay,
-                'counts' => $dayCounts,
-            ];
-        }
-
-        $selected = null;
-        if ($selectedDay !== null) {
-            $selected = [
-                'date' => $selectedDay,
-                'counts' => $counts[$selectedDay] ?? ['scheduled' => 0, 'in_progress' => 0, 'received' => 0, 'cancelled' => 0, 'total' => 0],
-            ];
-        }
-
-        return [
-            'month' => $ym,
-            'month_label' => $monthStart->format('F Y'),
-            'grid' => $days,
-            'selected' => $selected,
-        ];
-    }
-
-    protected function countsByDayForDerivedStatuses(Carbon $start, Carbon $end): array
-    {
-        $rows = Permit::query()
-            ->selectRaw('DATE(date_of_visit) as day')
-            ->addSelect(DB::raw('COUNT(*) as total'))
-            ->addSelect(DB::raw('SUM(CASE WHEN date_of_visit > CURRENT_DATE THEN 1 ELSE 0 END) as scheduled'))
-            ->addSelect(DB::raw('SUM(CASE WHEN DATE(date_of_visit) = CURRENT_DATE AND received_by IS NULL AND status != 3 THEN 1 ELSE 0 END) as in_progress'))
-            ->addSelect(DB::raw('SUM(CASE WHEN date_of_visit <= CURRENT_DATE AND received_by IS NOT NULL THEN 1 ELSE 0 END) as received'))
-            ->addSelect(DB::raw('SUM(CASE WHEN (date_of_visit < CURRENT_DATE AND received_by IS NULL) OR (DATE(date_of_visit) = CURRENT_DATE AND status = 3) THEN 1 ELSE 0 END) as cancelled'))
-            ->whereBetween('date_of_visit', [$start, $end])
-            ->groupBy('day')
-            ->get();
-
-        $out = [];
-        foreach ($rows as $row) {
-            $day = (string) $row->day;
-            $out[$day] = [
-                'total' => (int) $row->total,
-                'scheduled' => (int) $row->scheduled,
-                'in_progress' => (int) $row->in_progress,
-                'received' => (int) $row->received,
-                'cancelled' => (int) $row->cancelled,
-            ];
         }
 
         return $out;

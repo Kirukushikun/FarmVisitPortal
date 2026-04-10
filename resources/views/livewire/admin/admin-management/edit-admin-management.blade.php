@@ -34,6 +34,28 @@
                         />
                     </div>
 
+                    <div class="mb-6">
+                        <x-dropdown
+                            label="Department"
+                            name="department"
+                            error-key="department"
+                            placeholder="Select department"
+                            wire:model.live="department"
+                            required
+                        >
+                            <option value="">Select Department</option>
+                            <option value="FOC">FOC</option>
+                            <option value="FEEDMILL">FEEDMILL</option>
+                            <option value="GENERAL SERVICES">GENERAL SERVICES</option>
+                            <option value="HUMAN RESOURCES">HUMAN RESOURCES</option>
+                            <option value="IT & SECURITY">IT & SECURITY</option>
+                            <option value="POULTRY">POULTRY</option>
+                            <option value="PURCHASING">PURCHASING</option>
+                            <option value="SALES & ANALYTICS">SALES & ANALYTICS</option>
+                            <option value="SWINE">SWINE</option>
+                        </x-dropdown>
+                    </div>
+
                     <div class="flex justify-end space-x-3">
                         <x-button
                             variant="outline-secondary"

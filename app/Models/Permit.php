@@ -25,6 +25,7 @@ class Permit extends Model
         'permit_id',
         'area_id',
         'farm_location_id',
+        'department',
         'names',
         'date_of_visit',
         'expected_duration_hours',

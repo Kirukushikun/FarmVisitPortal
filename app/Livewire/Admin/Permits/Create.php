@@ -156,6 +156,7 @@ class Create extends Component
             $permit = Permit::create([
                 'area_id' => $this->areaId,
                 'farm_location_id' => (int) $this->farmLocationId,
+                'department' => Auth::user()?->department,
                 'names' => $this->buildNamesPayload(),
                 'date_of_visit' => Carbon::parse($this->dateOfVisit),
                 'expected_duration_hours' => $durationHours,
