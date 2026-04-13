@@ -308,7 +308,7 @@
                                 {!! permitStatusPill((int) $permit->status) !!}
                                 @if(((int) $permit->status) === 2 && $permit->receivedBy)
                                     <p class="mt-1 text-[11px] md:text-xs text-slate-500 dark:text-slate-400">
-                                        Received by:
+                                        Assisted by:
                                         {{ trim(($permit->receivedBy->first_name ?? '') . ' ' . ($permit->receivedBy->last_name ?? '')) ?: ($permit->receivedBy->username ?? '') }}
                                     </p>
                                 @endif
