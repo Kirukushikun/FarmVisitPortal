@@ -389,14 +389,7 @@ class PortalController extends Controller
             'unverified'   => PermitLog::ACTION_RESOLVED_UNVERIFIED,
         };
 
-        // Build log message (important for audit readability)
-        $logMessage = match ($validated['resolution_type']) {
-            'entered'      => 'Resolved: Visitor confirmed ENTERED. ',
-            'not_entered'  => 'Resolved: Visitor confirmed DID NOT ENTER. ',
-            'unverified'   => 'Resolved: Outcome UNVERIFIED. ',
-        };
-
-        $logMessage .= 'Remarks: ' . $remarks;
+        $logMessage = $remarks;
 
         // Save to permit logs
         $this->addLog(
