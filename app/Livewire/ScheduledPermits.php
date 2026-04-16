@@ -64,6 +64,10 @@ class ScheduledPermits extends Component
             1 => 'In Progress',
             2 => 'Completed',
             3 => 'Cancelled',
+            4 => 'On Hold',
+            5 => 'Returned',
+            6 => 'Lapsed',
+            7 => 'Resolved',
         ];
         
         return $labels[$status] ?? 'Unknown';
@@ -78,6 +82,8 @@ class ScheduledPermits extends Component
             3 => 'red',
             4 => 'orange',
             5 => 'purple',
+            6 => 'yellow',
+            7 => 'teal',
         ];
         
         return $colors[$status] ?? 'gray';
@@ -85,16 +91,13 @@ class ScheduledPermits extends Component
 
     protected function baseQuery()
     {
-        $user = Auth::user();
-        
-        $query = Permit::with(['farmLocation', 'receivedBy'])
-            ->whereDate('date_of_visit', '>', Carbon::today())
+
+        $farmLocationId = (int) session('selected_location_id', 0);
+
+        $query = Permit::where('farm_location_id', $farmLocationId)
+            ->whereDate('date_of_visit', '>=', Carbon::today())
             ->where('status', 0)
             ->orderBy('date_of_visit', 'asc');
-
-        if ($user && isset($user->farm_location_id)) {
-            $query->where('farm_location_id', $user->farm_location_id);
-        }
 
         if ($this->search !== '') {
             $query->where('permit_id', 'like', '%' . $this->search . '%');

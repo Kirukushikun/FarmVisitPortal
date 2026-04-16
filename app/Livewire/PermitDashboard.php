@@ -30,10 +30,14 @@ class PermitDashboard extends Component
     public function getStatusLabel($status)
     {
         $labels = [
-            0 => 'Scheduled',
+           0 => 'Scheduled',
             1 => 'In Progress',
             2 => 'Completed',
             3 => 'Cancelled',
+            4 => 'On Hold',
+            5 => 'Returned',
+            6 => 'Lapsed',
+            7 => 'Resolved',
         ];
         
         return $labels[$status] ?? 'Unknown';
@@ -48,6 +52,8 @@ class PermitDashboard extends Component
             3 => 'red',
             4 => 'orange',
             5 => 'purple',
+            6 => 'yellow',
+            7 => 'teal',
         ];
         
         return $colors[$status] ?? 'gray';
@@ -55,21 +61,17 @@ class PermitDashboard extends Component
 
     public function render()
     {
-        $user = Auth::user();
-        
-        // Today's permits (in progress for today)
-        $todayQuery = Permit::with(['farmLocation', 'receivedBy'])
-            ->whereDate('date_of_visit', Carbon::today())
-            ->where('status', 1) // In Progress
-            ->orderBy('date_of_visit', 'asc');
+        $farmLocationId = (int) session('selected_location_id', 0);
 
-        if ($user && isset($user->farm_location_id)) {
-            $todayQuery->where('farm_location_id', $user->farm_location_id);
-        }
+        $todayQuery = Permit::where('farm_location_id', $farmLocationId)
+            ->whereDate('date_of_visit', Carbon::today())
+            ->whereIn('status', [1, 4]) // In Progress + On Hold
+            ->orderBy('date_of_visit', 'asc');
 
         if ($this->search) {
             $todayQuery->where('permit_id', 'like', '%' . $this->search . '%');
         }
+
 
         $todayPermits = $todayQuery->paginate(9);
 

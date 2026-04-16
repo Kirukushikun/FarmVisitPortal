@@ -14,6 +14,10 @@
                 return '<span style="display: inline-flex; align-items: center; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #fed7aa; color: #9a3412;">On Hold</span>';
             case 5:
                 return '<span style="display: inline-flex; align-items: center; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #ede9fe; color: #5b21b6;">Returned</span>';
+            case 6:
+                return '<span style="display: inline-flex; align-items: center; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #fef9c3; color: #854d0e;">Lapsed</span>';
+            case 7:
+                return '<span style="display: inline-flex; align-items: center; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #ccfbf1; color: #115e59;">Resolved</span>';
             default:
                 return '<span style="display: inline-flex; align-items: center; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: #f3f4f6; color: #374151;">Unknown</span>';
         }
@@ -304,7 +308,7 @@
                                 {!! permitStatusPill((int) $permit->status) !!}
                                 @if(((int) $permit->status) === 2 && $permit->receivedBy)
                                     <p class="mt-1 text-[11px] md:text-xs text-slate-500 dark:text-slate-400">
-                                        Received by:
+                                        Assisted by:
                                         {{ trim(($permit->receivedBy->first_name ?? '') . ' ' . ($permit->receivedBy->last_name ?? '')) ?: ($permit->receivedBy->username ?? '') }}
                                     </p>
                                 @endif

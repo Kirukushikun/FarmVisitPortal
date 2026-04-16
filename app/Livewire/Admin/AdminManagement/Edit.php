@@ -18,6 +18,9 @@ class Edit extends Component
     #[Validate('required|string|min:2|max:50')]
     public string $lastName = '';
 
+    #[Validate('required|in:FOC,FEEDMILL,GENERAL SERVICES,PURCHASING,HUMAN RESOURCES,IT & SECURITY,POULTRY,SALES & ANALYTICS,SWINE')]
+    public string $department = '';
+
     public bool $showModal = false;
 
     protected $listeners = ['openEditModal' => 'openModal'];
@@ -34,6 +37,7 @@ class Edit extends Component
         $this->userId = $userId;
         $this->firstName = (string) $user->first_name;
         $this->lastName = (string) $user->last_name;
+        $this->department = (string) $user->department;
         $this->resetValidation();
         $this->showModal = true;
     }
@@ -41,7 +45,7 @@ class Edit extends Component
     public function closeModal(): void
     {
         $this->showModal = false;
-        $this->reset(['userId', 'firstName', 'lastName']);
+        $this->reset(['userId', 'firstName', 'lastName', 'department']);
         $this->resetValidation();
     }
 
@@ -67,6 +71,7 @@ class Edit extends Component
             'first_name' => $this->firstName,
             'last_name' => $this->lastName,
             'username' => $username,
+            'department' => $this->department,
         ]);
 
         Cache::forget(CacheKeys::adminsAll());

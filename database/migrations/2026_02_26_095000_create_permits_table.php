@@ -26,7 +26,7 @@ return new class extends Migration
  
             $table->boolean('red_alert')->default(false);
             // Quick-access mirror of latest log state — kept for filtering/querying
-            // 0:Scheduled, 1:In Progress, 2:Completed, 3:Cancelled, 4:On Hold, 5:Returned
+            // 0:Scheduled, 1:In Progress, 2:Completed, 3:Cancelled, 4:On Hold, 5:Returned 6:Lapsed 7:Resolved
             $table->unsignedTinyInteger('status')->default(0);
  
             $table->foreignId('created_by')->constrained('users');

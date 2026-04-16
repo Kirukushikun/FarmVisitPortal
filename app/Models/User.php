@@ -22,6 +22,7 @@ class User extends Authenticatable
         'last_name',
         'username',
         'user_type',
+        'department',
         'is_disabled',
         'password',
     ];

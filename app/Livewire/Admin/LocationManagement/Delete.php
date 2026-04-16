@@ -6,6 +6,9 @@ use App\Models\Location;
 use App\Support\CacheKeys;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
+
 
 class Delete extends Component
 {
@@ -45,14 +48,21 @@ class Delete extends Component
         }
 
         $locationName = (string) $location->name;
-        $location->delete();
 
-        Cache::forget(CacheKeys::locationsAll());
-        Cache::forget(CacheKeys::location((int) $this->locationId));
+        try {
+            $location->delete();
 
-        $this->closeModal();
-        $this->dispatch('showToast', message: "{$locationName} has been successfully deleted!", type: 'success');
-        $this->dispatch('refreshLocations');
+            Cache::forget(CacheKeys::locationsAll());
+            Cache::forget(CacheKeys::location((int) $this->locationId));
+
+            $this->closeModal();
+            $this->dispatch('showToast', message: "{$locationName} has been successfully deleted!", type: 'success');
+            $this->dispatch('refreshLocations');
+
+        } catch (QueryException $e) {
+            $this->dispatch('showToast', message: "Cannot delete {$locationName} because it is being used in existing permits.", type: 'error');
+            $this->closeModal();
+        }
     }
 
     public function render()

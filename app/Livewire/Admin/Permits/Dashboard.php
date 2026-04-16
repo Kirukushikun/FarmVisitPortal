@@ -14,7 +14,7 @@ class Dashboard extends Component
 
     public int $perPage = 10;
 
-    public string $sortField = 'created_at';
+    public string $sortField = 'date_of_visit';
 
     public string $sortDirection = 'desc';
 
@@ -349,17 +349,27 @@ class Dashboard extends Component
     {
         $permits = Permit::query()->with(['receivedBy', 'farmLocation', 'createdBy']);
 
+        $user = Auth::user();
+        $allowedAllDepartments = ['PURCHASING', 'IT & SECURITY'];
+
+        if ($user && ! in_array($user->department, $allowedAllDepartments, true)) {
+            $permits->where('department', $user->department);
+        }
+
         $search = trim($this->search);
         if ($search !== '') {
             $permits->where(function (Builder $query) use ($search) {
                 $query
                     ->where('permit_id', 'like', '%' . $search . '%')
                     ->orWhere('area', 'like', '%' . $search . '%')
+                    ->orWhere('department', 'like', '%' . $search . '%')
                     ->orWhereHas('farmLocation', function (Builder $farmQuery) use ($search) {
                         $farmQuery->where('name', 'like', '%' . $search . '%');
                     })
                     ->orWhereHas('createdBy', function (Builder $userQuery) use ($search) {
-                        $userQuery->where('name', 'like', '%' . $search . '%');
+                        $userQuery->where('first_name', 'like', '%' . $search . '%')
+                            ->orWhere('last_name', 'like', '%' . $search . '%')
+                            ->orWhere('username', 'like', '%' . $search . '%');
                     });
             });
         }
@@ -401,6 +411,7 @@ class Dashboard extends Component
 
         return $permits;
     }
+
 
     public function getPaginationData(): array
     {

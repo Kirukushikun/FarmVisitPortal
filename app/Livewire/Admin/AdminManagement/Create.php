@@ -17,13 +17,17 @@ class Create extends Component
     #[Validate('required|string|min:2|max:50')]
     public string $lastName = '';
 
+    #[Validate('required|in:FOC,FEEDMILL,GENERAL SERVICES,PURCHASING,HUMAN RESOURCES,IT & SECURITY,POULTRY,SALES & ANALYTICS,SWINE')]
+    public string $department = '';
+
+
     public bool $showModal = false;
 
     protected $listeners = ['openCreateModal' => 'openModal'];
 
     public function openModal(): void
     {
-        $this->reset(['firstName', 'lastName']);
+        $this->reset(['firstName', 'lastName', 'department']);
         $this->resetValidation();
         $this->showModal = true;
     }
@@ -31,7 +35,7 @@ class Create extends Component
     public function closeModal(): void
     {
         $this->showModal = false;
-        $this->reset(['firstName', 'lastName']);
+        $this->reset(['firstName', 'lastName', 'department']);
         $this->resetValidation();
     }
 
@@ -51,6 +55,7 @@ class Create extends Component
         $user = User::create([
             'first_name' => $this->firstName,
             'last_name' => $this->lastName,
+            'department' => $this->department,
             'user_type' => 1,
             'is_disabled' => false,
             'username' => $username,

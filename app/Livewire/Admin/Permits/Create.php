@@ -10,8 +10,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
+use Livewire\WithFileUploads;
+use App\Models\PermitPhoto;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
+
 class Create extends Component
 {
+    use WithFileUploads;
+
     public int $currentStep = 1;
 
     /** @var int[] */
@@ -42,6 +50,7 @@ class Create extends Component
         ['origin' => '', 'names' => '', 'previous_farm' => '', 'date_visited' => ''],
     ];
 
+    public array $photos = [];
 
     protected array $messages = [
         'required' => 'Please fill in this field.',
@@ -147,6 +156,7 @@ class Create extends Component
             $permit = Permit::create([
                 'area_id' => $this->areaId,
                 'farm_location_id' => (int) $this->farmLocationId,
+                'department' => Auth::user()?->department,
                 'names' => $this->buildNamesPayload(),
                 'date_of_visit' => Carbon::parse($this->dateOfVisit),
                 'expected_duration_hours' => $durationHours,
@@ -158,6 +168,28 @@ class Create extends Component
                 'received_by' => $receivedBy,
                 'completed_at' => $completedAt,
             ]);
+
+            if (!empty($this->photos)) {
+                $timestamp = now()->format('Ymd_His');
+                foreach ($this->photos as $file) {
+                    $uuid = Str::uuid()->getHex();
+                    $ext = $file->getClientOriginalExtension() ?: 'jpg';
+                    $baseName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) ?: 'photo';
+                    $filename = "permit_{$permit->id}_{$timestamp}_{$baseName}-{$uuid}.{$ext}";
+                    $path = $file->storeAs('permit-photos', $filename, 'public');
+
+                    if ($path) {
+                        PermitPhoto::create([
+                            'permit_id'     => (int) $permit->id,
+                            'disk'          => 'public',
+                            'path'          => $path,
+                            'original_name' => $file->getClientOriginalName(),
+                            'mime_type'     => $file->getClientMimeType(),
+                            'size'          => $file->getSize(),
+                        ]);
+                    }
+                }
+            }
 
             $permitId = (string) ($permit->permit_id ?? '');
             $suffix = $permitId !== '' ? ' (' . $permitId . ')' : '';
@@ -249,6 +281,8 @@ class Create extends Component
                 'dateOfVisit' => ['required', 'date', 'after_or_equal:today'],
                 'expectedDurationHours' => ['required', 'numeric', 'gt:0'],
                 'purpose' => ['required', 'string', 'min:2'],
+                'photos'   => ['nullable', 'array'],
+                'photos.*' => ['image', 'max:15360'],
             ];
         }
 
@@ -315,6 +349,12 @@ class Create extends Component
     {
         $hours = (float) ($this->expectedDurationHours ?? 0);
         return $hours > 0 ? $hours : null;
+    }
+
+    public function removePhoto(int $index): void
+    {
+        array_splice($this->photos, $index, 1);
+        $this->photos = array_values($this->photos);
     }
 
     public function getGroupAlertsProperty(): array

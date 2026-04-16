@@ -53,7 +53,7 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
 
     Route::get('/admin/admins', [PortalController::class, 'adminAdmins'])->name('admin.admins');
 
-    Route::get('/admin/farms', [PortalController::class, 'adminLocations'])->name('admin.farms');
+    Route::get('/admin/locations', [PortalController::class, 'adminLocations'])->name('admin.locations');
 
     Route::get('/admin/permits', [PortalController::class, 'adminPermits'])->name('admin.permits.index');
 
@@ -64,6 +64,8 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
     Route::get('/admin/permits/{permit}', [PortalController::class, 'adminShowPermit'])->name('admin.permits.show');
 
     Route::post('/admin/permits/{permit}/respond', [PortalController::class, 'respondToHold'])->name('admin.permits.respond');
+
+    Route::post('/admin/permits/{permit}/resolve-lapsed', [PortalController::class, 'resolveLapsedPermit'])->name('admin.permits.resolve-lapsed');
     
     Route::post('/admin/permits/{permit}/resubmit', [PortalController::class, 'resubmitPermit'])->name('admin.permits.resubmit');
 

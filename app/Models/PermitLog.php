@@ -31,6 +31,9 @@ class PermitLog extends Model
     const ACTION_COMPLETED   = 7;
     const ACTION_CANCELLED   = 8;
     const ACTION_OVERRIDE    = 9;
+    const ACTION_RESOLVED_ENTERED     = 10;
+    const ACTION_RESOLVED_NOT_ENTERED = 11;
+    const ACTION_RESOLVED_UNVERIFIED  = 12;
 
     // Status constants (mirrored from Permit for convenience)
     const STATUS_SCHEDULED   = 0;
@@ -39,6 +42,8 @@ class PermitLog extends Model
     const STATUS_CANCELLED   = 3;
     const STATUS_ON_HOLD     = 4;
     const STATUS_RETURNED    = 5;
+    const STATUS_LAPSED      = 6;
+    const STATUS_RESOLVED    = 7;
 
     public function permit(): BelongsTo
     {
@@ -53,34 +58,40 @@ class PermitLog extends Model
     public function actionLabel(): string
     {
         return match ((int) $this->action) {
-            self::ACTION_CREATED     => 'Created',
-            self::ACTION_ACCEPTED    => 'Accepted',
-            self::ACTION_HELD        => 'Put On Hold',
-            self::ACTION_APPROVED    => 'Approved — Let Them In',
-            self::ACTION_REJECTED    => 'Rejected — Turned Away',
-            self::ACTION_RETURNED    => 'Returned for Correction',
-            self::ACTION_RESUBMITTED => 'Resubmitted',
-            self::ACTION_COMPLETED   => 'Completed',
-            self::ACTION_CANCELLED   => 'Did Not Arrive',
-            self::ACTION_OVERRIDE    => 'Override — Let Them In',
-            default                  => 'Unknown',
+            self::ACTION_CREATED              => 'Created',
+            self::ACTION_ACCEPTED             => 'Accepted',
+            self::ACTION_HELD                 => 'Put On Hold',
+            self::ACTION_APPROVED             => 'Approved — Let Them In',
+            self::ACTION_REJECTED             => 'Rejected — Turned Away',
+            self::ACTION_RETURNED             => 'Returned for Correction',
+            self::ACTION_RESUBMITTED          => 'Resubmitted',
+            self::ACTION_COMPLETED            => 'Completed',
+            self::ACTION_CANCELLED            => 'Did Not Arrive',
+            self::ACTION_OVERRIDE             => 'Override — Let Them In',
+            self::ACTION_RESOLVED_ENTERED     => 'Resolved — Visitor Entered',
+            self::ACTION_RESOLVED_NOT_ENTERED => 'Resolved — Visitor Did Not Enter',
+            self::ACTION_RESOLVED_UNVERIFIED  => 'Resolved — Outcome Unverified',
+            default                           => 'Unknown',
         };
     }
 
     public function actionColor(): string
     {
         return match ((int) $this->action) {
-            self::ACTION_CREATED     => 'gray',
-            self::ACTION_ACCEPTED    => 'blue',
-            self::ACTION_HELD        => 'orange',
-            self::ACTION_APPROVED    => 'green',
-            self::ACTION_REJECTED    => 'red',
-            self::ACTION_RETURNED    => 'purple',
-            self::ACTION_RESUBMITTED => 'blue',
-            self::ACTION_COMPLETED   => 'green',
-            self::ACTION_CANCELLED   => 'red',
-            self::ACTION_OVERRIDE    => 'green',
-            default                  => 'gray',
+            self::ACTION_CREATED              => 'gray',
+            self::ACTION_ACCEPTED             => 'blue',
+            self::ACTION_HELD                 => 'orange',
+            self::ACTION_APPROVED             => 'green',
+            self::ACTION_REJECTED             => 'red',
+            self::ACTION_RETURNED             => 'purple',
+            self::ACTION_RESUBMITTED          => 'blue',
+            self::ACTION_COMPLETED            => 'green',
+            self::ACTION_CANCELLED            => 'red',
+            self::ACTION_OVERRIDE             => 'green',
+            self::ACTION_RESOLVED_ENTERED     => 'teal',
+            self::ACTION_RESOLVED_NOT_ENTERED => 'red',
+            self::ACTION_RESOLVED_UNVERIFIED  => 'yellow',
+            default                           => 'gray',
         };
     }
 

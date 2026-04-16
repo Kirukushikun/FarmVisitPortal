@@ -31,6 +31,7 @@
                     // ----------------------------------------------------------------
                     // Permit data
                     // ----------------------------------------------------------------
+                    $created_by = $permit->createdBy?->first_name . ' ' . $permit->createdBy?->last_name ?? 'Unknown';
                     $dateFilled       = $permit->created_at?->format('F j, Y') ?? '';
                     $farm             = $permit->farmLocation?->name ?? '';
                     $farmType         = (int) ($permit->farmLocation?->farm_type ?? 0);
@@ -104,6 +105,7 @@
                     // ----------------------------------------------------------------
                     $viewer        = Auth::user();
                     $isAdmin       = in_array((int) ($viewer->user_type ?? 0), [1, 2], true);
+                    $isSuperAdmin = $viewer->user_type === 2;  
                     $currentStatus = (int) ($permit->status ?? 0);
 
                     $lastAdminLog  = $permit->logs->whereIn('action', [3, 4, 5, 9])->sortByDesc('created_at')->first();
@@ -154,6 +156,7 @@
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                                     </button>
                                 </div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Permit created by: {{ $created_by }}</div>
                                 <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Date Filled: {{ $displayVal($dateFilled) }}</div>
                                 <div class="mt-4 space-y-3 text-sm">
                                     <div><div class="font-semibold text-gray-700 dark:text-gray-200">Farm</div><div class="text-gray-900 dark:text-white">{{ $displayVal($farm) }}</div></div>
@@ -192,7 +195,8 @@
                         </div>
 
                         {{-- DESKTOP / PRINT --}}
-                        <div class="hidden md:block print:block">
+                        <div class="hidden md:block print:block relative">
+                            <div class="text-sm text-gray-500 dark:text-gray-400 mt-0.5 absolute">Permit created by: {{ $created_by }}</div>
                             <div class="flex justify-center mb-2">
                                 <img src="{{ asset('images/BGC.png') }}" alt="BGC" class="h-20 w-48" />
                             </div>
@@ -318,11 +322,34 @@
                                     $lc = match ((int) $log->action) {
                                         0 => 'gray', 1 => 'blue', 2 => 'orange',
                                         3, 7, 9 => 'green', 4, 8 => 'red',
-                                        5 => 'purple', 6 => 'blue', default => 'gray',
+                                        5 => 'purple', 6 => 'blue',
+                                        10, 11, 12 => 'yellow', default => 'gray',
                                     };
-                                    $lBg   = match ($lc) { 'green' => 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800', 'red' => 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800', 'orange' => 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800', 'blue' => 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800', 'purple' => 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800', default => 'bg-gray-50 dark:bg-gray-700/20 border-gray-200 dark:border-gray-700' };
-                                    $lDot  = match ($lc) { 'green' => 'bg-green-500', 'red' => 'bg-red-500', 'orange' => 'bg-orange-500', 'blue' => 'bg-blue-500', 'purple' => 'bg-purple-500', default => 'bg-gray-400' };
-                                    $lText = match ($lc) { 'green' => 'text-green-700 dark:text-green-400', 'red' => 'text-red-700 dark:text-red-400', 'orange' => 'text-orange-700 dark:text-orange-400', 'blue' => 'text-blue-700 dark:text-blue-400', 'purple' => 'text-purple-700 dark:text-purple-400', default => 'text-gray-600 dark:text-gray-400' };
+                                    $lBg   = match ($lc) { 
+                                        'green' => 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800', 
+                                        'red' => 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800', 
+                                        'orange' => 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800', 
+                                        'blue' => 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800', 
+                                        'purple' => 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800', 
+                                        'yellow' => 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800',
+                                        default => 'bg-gray-50 dark:bg-gray-700/20 border-gray-200 dark:border-gray-700' 
+                                    };
+                                    $lDot  = match ($lc) { 
+                                        'green' => 'bg-green-500', 'red' => 'bg-red-500', 
+                                        'orange' => 'bg-orange-500', 
+                                        'blue' => 'bg-blue-500', 
+                                        'purple' => 'bg-purple-500', 
+                                        'yellow' => 'bg-yellow-500',
+                                        default => 'bg-gray-400' 
+                                    };
+                                    $lText = match ($lc) { 'green' => 'text-green-700 dark:text-green-400', 
+                                        'red' => 'text-red-700 dark:text-red-400', 
+                                        'orange' => 'text-orange-700 dark:text-orange-400', 
+                                        'blue' => 'text-blue-700 dark:text-blue-400', 
+                                        'purple' => 'text-purple-700 dark:text-purple-400', 
+                                        'yellow' => 'text-yellow-700 dark:text-yellow-400',
+                                        default => 'text-gray-600 dark:text-gray-400' 
+                                    };
                                 @endphp
                                 <div class="flex gap-3 items-start rounded-lg border px-4 py-3 {{ $lBg }}">
                                     <div class="mt-1.5 w-2 h-2 rounded-full shrink-0 {{ $lDot }}"></div>
@@ -349,6 +376,60 @@
                      ADMIN ACTION PANEL — always last
                      ================================================================ --}}
                 @if ($isAdmin)
+
+                    {{-- Lapsed Permit --}}
+                    @if ($currentStatus === 6)
+                        @if($isSuperAdmin)
+                            <div class="no-print w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-yellow-200 dark:border-yellow-700 px-6 py-6">
+                                
+                                <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-4">
+                                    Resolve Lapsed Permit
+                                </div>
+
+                                <form method="POST" action="{{ route('admin.permits.resolve-lapsed', $permit) }}" x-data="{ action: '' }">
+                                    @csrf
+
+                                    {{-- Resolution Type --}}
+                                    <div class="mb-4">
+                                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                            Resolution Outcome
+                                        </label>
+                                        <select name="resolution_type" required
+                                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            
+                                            <option value="">Select outcome...</option>
+                                            <option value="entered">Visitor Entered (Late Log)</option>
+                                            <option value="not_entered">Visitor Did Not Enter</option>
+                                            <option value="unverified">Unverified / Unknown</option>
+                                        </select>
+                                    </div>
+
+                                    {{-- Remarks --}}
+                                    <div class="mb-4">
+                                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                            Resolution Remarks <span class="normal-case text-gray-400">(required)</span>
+                                        </label>
+                                        <textarea name="admin_response" rows="3" required
+                                            placeholder="Explain what happened (used for audit/IR)..."
+                                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                                    </div>
+
+                                    {{-- Submit --}}
+                                    <div class="flex flex-wrap gap-3">
+                                        <button type="submit"
+                                            class="inline-flex items-center px-4 py-2.5 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 cursor-pointer">
+                                            
+                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+
+                                            Resolve Permit
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        @endif
+                    @endif
 
                     {{-- Respond to Hold --}}
                     @if ($currentStatus === 4)
