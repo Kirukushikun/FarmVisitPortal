@@ -352,7 +352,7 @@ class Dashboard extends Component
         $user = Auth::user();
         $allowedAllDepartments = ['PURCHASING', 'IT & SECURITY'];
 
-        if ($user && ! in_array($user->department, $allowedAllDepartments, true)) {
+        if ($user && (int) $user->user_type !== 2 && ! in_array($user->department, $allowedAllDepartments, true)) {
             $permits->where('department', $user->department);
         }
 
