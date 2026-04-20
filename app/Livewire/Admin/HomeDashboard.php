@@ -115,9 +115,13 @@ class HomeDashboard extends Component
 
     protected function departmentScope(Builder $query): Builder
     {
-        $dept = auth()->user()?->department;
+        $user = auth()->user();
+        $dept = $user?->department;
 
-        if (in_array($dept, ['PURCHASING', 'IT & SECURITY'], true)) {
+        if (
+            $user?->user_type === 2 || // Super Admin
+            in_array($dept, ['PURCHASING', 'IT & SECURITY'], true)
+        ) {
             return $query; // sees everything
         }
 
