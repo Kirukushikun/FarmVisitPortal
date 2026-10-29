@@ -2,6 +2,8 @@
     $isAdmin = in_array((int) (Auth::user()->user_type ?? 0), [1, 2], true);
     // Guards: anywhere after login. Admins/creators: only inside the permit module.
     $showReminder = Auth::check() && (! $isAdmin || request()->routeIs('admin.permits.*', 'user.permits.*'));
+    // The permit view pages carry their own inline notice instead of the floating pill.
+    $showPill = ! request()->routeIs('admin.permits.show', 'user.permits.show');
 @endphp
 @if ($showReminder)
     <div
@@ -31,14 +33,30 @@
                 this.open = false;
             }
         }"
-        x-show="open"
-        style="display: none;"
-        x-on:keydown.escape.window="dismiss()"
-        class="fixed inset-0 z-9999 flex items-center justify-center p-4"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="photo-policy-title"
     >
+        @if ($showPill)
+        <button
+            type="button"
+            x-on:click="open = true"
+            class="fixed bottom-4 left-4 z-40 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-200 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-full shadow-sm hover:bg-red-100 dark:hover:bg-red-900/60 cursor-pointer"
+            title="Photography is strictly prohibited at all locations"
+        >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18M9.88 5.12A2 2 0 0111.5 4h1a2 2 0 011.6.8L15 6h2a2 2 0 012 2v7m-2.5 2.5A2 2 0 0115 18H7a2 2 0 01-2-2V8a2 2 0 012-2h.5M10.5 10.5a3 3 0 004 4" />
+            </svg>
+            No photography
+        </button>
+        @endif
+
+        <div
+            x-show="open"
+            style="display: none;"
+            x-on:keydown.escape.window="dismiss()"
+            class="fixed inset-0 z-9999 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="photo-policy-title"
+        >
         <div class="fixed inset-0 bg-black/60"></div>
 
         <div class="relative w-full max-w-md p-6 bg-white dark:bg-gray-800 shadow-xl dark:shadow-2xl rounded-lg">
@@ -68,6 +86,7 @@
                     I understand
                 </button>
             </div>
+        </div>
         </div>
     </div>
 @endif

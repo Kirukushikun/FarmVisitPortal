@@ -157,6 +157,7 @@
                                     </button>
                                 </div>
                                 <div class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Permit created by: {{ $created_by }}</div>
+                                <x-photo-notice class="mt-1" />
                                 <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Date Filled: {{ $displayVal($dateFilled) }}</div>
                                 <div class="mt-4 space-y-3 text-sm">
                                     <div><div class="font-semibold text-gray-700 dark:text-gray-200">Farm</div><div class="text-gray-900 dark:text-white">{{ $displayVal($farm) }}</div></div>
@@ -197,6 +198,7 @@
                         {{-- DESKTOP / PRINT --}}
                         <div class="hidden md:block print:block relative">
                             <div class="text-sm text-gray-500 dark:text-gray-400 mt-0.5 absolute">Permit created by: {{ $created_by }}</div>
+                            <x-photo-notice class="absolute right-0 mt-0.5" />
                             <div class="flex justify-center mb-2">
                                 <img src="{{ asset('images/BGC.png') }}" alt="BGC" class="h-20 w-48" />
                             </div>
