@@ -46,6 +46,8 @@
 
         <x-toast />
 
+        <x-photo-policy-reminder />
+
         <livewire:scripts />
     </body>
 </html>
